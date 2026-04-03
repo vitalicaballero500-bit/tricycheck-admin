@@ -15,7 +15,7 @@ function CustomModal({ isOpen, title, message, onConfirm, onCancel, type = 'warn
         <p className="text-sm text-slate-500 text-center mb-6">{message}</p>
         <div className="flex space-x-3">
           {onCancel && <button onClick={onCancel} className="flex-1 py-3 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">Cancel</button>}
-          <button onClick={onConfirm} className="flex-1 py-3 rounded-xl font-bold bg-angkasBlue text-white hover:bg-blue-600 shadow-lg">Confirm</button>
+          <button onClick={onConfirm} className="flex-1 py-3 rounded-xl font-bold bg-angkasBlue text-white hover:bg-emerald-600 shadow-lg">Confirm</button>
         </div>
       </div>
     </div>

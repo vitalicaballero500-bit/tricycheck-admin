@@ -106,7 +106,7 @@ const fetchTickets = async () => {
   // === KANBAN COLUMNS DEFINITION ===
   const columns = [
     { id: 'Open', title: 'Pending Reports', icon: <IoWarning className="text-orange-500"/>, color: 'border-t-orange-500', bg: 'bg-orange-50' },
-    { id: 'In Progress', title: 'Active Dispatch', icon: <IoFlash className="text-blue-500"/>, color: 'border-t-blue-500', bg: 'bg-blue-50' },
+    { id: 'In Progress', title: 'Active Dispatch', icon: <IoFlash className="text-emerald-500"/>, color: 'border-t-blue-500', bg: 'bg-emerald-50' },
     { id: 'Resolved', title: 'Resolved Cases', icon: <IoCheckmarkCircle className="text-green-500"/>, color: 'border-t-green-500', bg: 'bg-green-50' }
   ];
 
@@ -154,7 +154,7 @@ const fetchTickets = async () => {
                            className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow relative overflow-hidden group"
                         >
                            {/* Priority Indicator */}
-                           <div className={`absolute top-0 left-0 w-1.5 h-full ${ticket.priority === 'High' || ticket.priority === 'CRITICAL' ? 'bg-red-500' : ticket.priority === 'Medium' ? 'bg-yellow-400' : 'bg-blue-400'}`}></div>
+                           <div className={`absolute top-0 left-0 w-1.5 h-full ${ticket.priority === 'High' || ticket.priority === 'CRITICAL' ? 'bg-red-500' : ticket.priority === 'Medium' ? 'bg-yellow-400' : 'bg-emerald-400'}`}></div>
                            
                            <div className="pl-2">
                               <div className="flex justify-between items-start mb-2">
@@ -178,7 +178,7 @@ const fetchTickets = async () => {
                                  </div>
                                  
                                  {ticket.dispatchUnit && (
-                                    <div className="flex items-center space-x-1 text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded shadow-sm shrink-0">
+                                    <div className="flex items-center space-x-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded shadow-sm shrink-0">
                                        <IoShieldHalf /> <span>{ticket.dispatchUnit}</span>
                                     </div>
                                  )}
@@ -203,7 +203,7 @@ const fetchTickets = async () => {
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDispatchPrompt({ isOpen: false, ticketId: null, unitName: '' })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm z-10 p-6 animate-slide-up">
             <div className="flex justify-center mb-3">
-               <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center shadow-inner border border-blue-100">
+               <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center shadow-inner border border-emerald-100">
                   <IoFlash className="text-3xl" />
                </div>
             </div>
@@ -212,7 +212,7 @@ const fetchTickets = async () => {
             <input
                type="text"
                placeholder="e.g. Mobile Patrol 3 - Sgt. Cruz"
-               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-6 font-bold text-sm outline-none focus:border-angkasBlue focus:ring-4 focus:ring-blue-50 transition-all shadow-inner"
+               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-6 font-bold text-sm outline-none focus:border-angkasBlue focus:ring-4 focus:ring-emerald-50 transition-all shadow-inner"
                value={dispatchPrompt.unitName}
                onChange={e => setDispatchPrompt({...dispatchPrompt, unitName: e.target.value})}
                autoFocus
@@ -225,7 +225,7 @@ const fetchTickets = async () => {
                      setDispatchPrompt({ isOpen: false, ticketId: null, unitName: '' }); 
                   }} 
                   disabled={!dispatchPrompt.unitName.trim()}
-                  className="flex-[2] py-3.5 rounded-xl font-black bg-blue-500 text-white hover:bg-blue-600 shadow-[0_5px_15px_rgba(59,130,246,0.3)] active:scale-95 transition-transform disabled:bg-blue-300 disabled:shadow-none"
+                  className="flex-[2] py-3.5 rounded-xl font-black bg-emerald-500 text-white hover:bg-emerald-600 shadow-[0_5px_15px_rgba(59,130,246,0.3)] active:scale-95 transition-transform disabled:bg-emerald-300 disabled:shadow-none"
                >
                   Dispatch Unit
                </button>

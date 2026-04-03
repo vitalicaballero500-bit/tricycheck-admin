@@ -200,7 +200,7 @@ function AdminDashboard() {
   const menuItems = allMenuItems.filter(item => item.roles.includes(adminUser?.role));
 
   const getModuleColor = (module) => {
-    const colors = { fleet: 'bg-blue-100 text-blue-600 border-blue-200', passengers: 'bg-indigo-100 text-indigo-600 border-indigo-200', settings: 'bg-slate-800 text-white border-slate-700', reports: 'bg-orange-100 text-orange-600 border-orange-200', compliance: 'bg-red-100 text-red-600 border-red-200', staff: 'bg-purple-100 text-purple-600 border-purple-200' };
+    const colors = { fleet: 'bg-emerald-100 text-emerald-600 border-emerald-200', passengers: 'bg-indigo-100 text-indigo-600 border-indigo-200', settings: 'bg-slate-800 text-white border-slate-700', reports: 'bg-orange-100 text-orange-600 border-orange-200', compliance: 'bg-red-100 text-red-600 border-red-200', staff: 'bg-purple-100 text-purple-600 border-purple-200' };
     return colors[module] || 'bg-gray-100 text-gray-600 border-gray-200';
   };
 
@@ -283,7 +283,7 @@ function AdminDashboard() {
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unresolved Tickets</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-blue-50 text-angkasBlue flex items-center justify-center text-2xl shadow-sm border border-blue-100"><IoIdCard /></div></div>
+                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-angkasBlue flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoIdCard /></div></div>
                   <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeDrivers}</h3>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Drivers</p>
                 </div>
@@ -463,7 +463,7 @@ function AdminDashboard() {
                   <button onClick={handlePrint} disabled={isGenerating} className="flex-1 bg-white border-2 border-slate-200 text-slate-700 py-3.5 rounded-xl font-black text-sm flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all">
                      <IoPrint className="mr-2 text-lg" /> Print / PDF
                   </button>
-                  <button onClick={handleDownloadCSV} disabled={isGenerating} className="flex-1 bg-angkasBlue text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center shadow-lg hover:bg-blue-600 active:scale-95 transition-all">
+                  <button onClick={handleDownloadCSV} disabled={isGenerating} className="flex-1 bg-angkasBlue text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center shadow-lg hover:bg-emerald-600 active:scale-95 transition-all">
                      {isGenerating ? <span className="animate-pulse">Fetching...</span> : <><IoDownload className="mr-2 text-lg" /> CSV (Excel)</>}
                   </button>
                </div>

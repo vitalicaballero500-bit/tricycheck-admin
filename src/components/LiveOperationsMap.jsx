@@ -10,7 +10,7 @@ const getTodaColor = (toda) => {
   switch (toda) {
     case 'Calasiao Plaza TODA': return { bg: 'bg-red-500', shadow: 'shadow-red-500/50', border: 'border-red-600' };
     case 'Bued TODA': return { bg: 'bg-green-500', shadow: 'shadow-green-500/50', border: 'border-green-600' };
-    case 'San Miguel TODA': return { bg: 'bg-blue-500', shadow: 'shadow-blue-500/50', border: 'border-blue-600' };
+    case 'San Miguel TODA': return { bg: 'bg-emerald-500', shadow: 'shadow-blue-500/50', border: 'border-emerald-600' };
     case 'Robinsons TODA': return { bg: 'bg-yellow-400', shadow: 'shadow-yellow-500/50', border: 'border-yellow-500' };
     default: return { bg: 'bg-slate-500', shadow: 'shadow-slate-500/50', border: 'border-slate-600' };
   }
@@ -131,7 +131,7 @@ function LiveOperationsMap() {
                   <div className="text-center">
                     <p className="font-black text-sm text-slate-800">Body No. {driver.bodyNo}</p>
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{driver.name}</p>
-                    <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${driver.status === 'Available' ? 'text-green-600' : 'text-blue-600'}`}>{driver.status}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${driver.status === 'Available' ? 'text-green-600' : 'text-emerald-600'}`}>{driver.status}</span>
                   </div>
                 </Popup>
               </Marker>
@@ -155,7 +155,7 @@ function LiveOperationsMap() {
            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] font-bold text-slate-600">
               <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-red-500"></div><span>Calasiao Plaza</span></div>
               <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-green-500"></div><span>Bued</span></div>
-              <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div><span>San Miguel</span></div>
+              <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span>San Miguel</span></div>
               <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-yellow-400"></div><span>Robinsons</span></div>
            </div>
         </div>
@@ -194,7 +194,7 @@ function LiveOperationsMap() {
              </div>
              <div className="space-y-4">
                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase">Current Speed</span><span className="font-mono font-bold text-slate-800">{selectedDriver.speed}</span></div>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase">Status</span><span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${selectedDriver.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{selectedDriver.status}</span></div>
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase">Status</span><span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${selectedDriver.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-emerald-100 text-emerald-700'}`}>{selectedDriver.status}</span></div>
              </div>
              <button className="w-full mt-6 bg-red-50 text-red-600 font-bold py-3 rounded-xl border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-2"><IoWarning /> <span>Send Alert to Driver</span></button>
           </div>
@@ -217,7 +217,7 @@ function LiveOperationsMap() {
                ))}
                
                <div className="flex space-x-3 items-start">
-                  <div className="w-2 h-2 mt-1.5 rounded-full bg-blue-500 shrink-0"></div>
+                  <div className="w-2 h-2 mt-1.5 rounded-full bg-emerald-500 shrink-0"></div>
                   <div>
                      <p className="text-sm font-bold text-slate-800 leading-tight">Map engine synchronized.</p>
                      <p className="text-[10px] text-slate-400 font-bold mt-0.5">Tracking {activeDrivers.length} active drivers.</p>

@@ -96,7 +96,7 @@ function SystemSettings() {
                 {/* SETTING: BASE FARE */}
                 <div className="flex items-center justify-between bg-slate-50 p-6 rounded-2xl border border-slate-200">
                     <div className="flex items-center space-x-4">
-                        <div className="w-14 h-14 bg-blue-100 text-angkasBlue rounded-xl flex items-center justify-center text-3xl shadow-sm border border-blue-200">
+                        <div className="w-14 h-14 bg-emerald-100 text-angkasBlue rounded-xl flex items-center justify-center text-3xl shadow-sm border border-emerald-200">
                             <IoCash />
                         </div>
                         <div>

@@ -183,7 +183,7 @@ function FleetManagement() {
   const leaderboardDrivers = [...drivers].filter(d => d.status === 'Active').sort((a, b) => b.rating - a.rating);
 
   const PodiumCard = ({ driver, rank, color, isWinner }) => (
-    <div className={`relative flex flex-col items-center bg-white p-6 rounded-t-3xl border-t border-x border-slate-200 shadow-2xl w-56 ${isWinner ? 'h-[280px] z-10' : 'h-64 z-0'} transform transition-transform hover:-translate-y-2`}>
+    <div className={`relative flex flex-col items-center bg-white p-6 rounded-t-3xl border-t shadow-2xl w-56 ${isWinner ? 'h-[280px] z-10' : 'h-64 z-0'} transform transition-transform hover:-translate-y-2`}>
       <div className={`absolute -top-5 w-10 h-10 rounded-full flex items-center justify-center font-black text-white shadow-lg text-lg ${color}`}>#{rank}</div>
       <div className={`w-24 h-24 rounded-full border-4 shadow-inner overflow-hidden mb-4 mt-2 ${color.replace('bg-', 'border-')}`}>
          {driver.profilePicUrl ? <img src={driver.profilePicUrl} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-100 flex items-center justify-center text-4xl">👤</div>}
@@ -299,7 +299,7 @@ function FleetManagement() {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-blue-50 text-angkasBlue rounded-lg hover:bg-blue-100" title="Reset Password"><IoKey /></button>
+                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100" title="Reset Password"><IoKey /></button>
                           <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200" title="Edit Profile"><IoPencil /></button>
                         </td>
                       </tr>
@@ -362,7 +362,7 @@ function FleetManagement() {
                        </div>
                        <button 
                           onClick={() => openReviewsModal(driver)}
-                          className="bg-blue-50 text-angkasBlue p-3 rounded-xl hover:bg-blue-100 transition-colors"
+                          className="bg-emerald-50 text-angkasBlue p-3 rounded-xl hover:bg-emerald-100 transition-colors"
                           title="Read Passenger Reviews"
                        >
                           <IoChatbubbles className="text-xl" />
@@ -447,7 +447,7 @@ function FleetManagement() {
 
               <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100 mt-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-                <button type="submit" className="bg-angkasBlue text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-500 active:scale-95 transition-all">
+                <button type="submit" className="bg-angkasBlue text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all">
                   {isEditing ? 'Save Profile' : 'Register Driver'}
                 </button>
               </div>

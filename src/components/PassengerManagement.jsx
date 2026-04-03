@@ -123,7 +123,7 @@ function PassengerManagement() {
                   {/* === THE FIX: NEW PASSWORD RESET BUTTON === */}
                   <button 
                     onClick={() => handleResetPasswordClick(p._id, `${p.firstName} ${p.lastName}`)}
-                    className="inline-flex items-center justify-center p-2 bg-blue-50 text-angkasBlue rounded-lg hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center justify-center p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100 transition-colors"
                     title="Reset Password"
                   >
                     <IoKey />

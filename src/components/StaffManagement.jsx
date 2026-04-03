@@ -14,8 +14,9 @@ function StaffManagement() {
   const [targetAction, setTargetAction] = useState({ type: null, id: null, name: null, newStatus: null });
   const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false }));
 
+  // === THE FIX: Swapped Password for Email ===
   const [newStaff, setNewStaff] = useState({
-    firstName: '', lastName: '', username: '', password: '', role: 'secretary'
+    firstName: '', lastName: '', username: '', email: '', role: 'secretary'
   });
   
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
@@ -125,7 +126,7 @@ function StaffManagement() {
                 <td className="p-5 font-mono text-sm text-slate-500">{member.username}</td>
                 <td className="p-5">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    member.role === 'dispatcher' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
+                    member.role === 'dispatcher' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     {member.role}
                   </span>
@@ -141,7 +142,7 @@ function StaffManagement() {
                 <td className="p-5 pr-8 text-right space-x-2">
                   <button 
                     onClick={() => handleResetPasswordClick(member._id, member.firstName)}
-                    className="p-2 bg-blue-50 text-angkasBlue rounded-lg hover:bg-blue-100 transition-colors"
+                    className="p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100 transition-colors"
                     title="Reset Password"
                   >
                     <IoKey />
@@ -182,11 +183,13 @@ function StaffManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">First Name</label>
-                  <input required type="text" className="w-full p-3 bg-slate-50 border rounded-xl" value={newStaff.firstName} onChange={e => setNewStaff({...newStaff, firstName: e.target.value})} />
+                  {/* === THE FIX: LIVE REGEX FILTER (Blocks numbers as they type) === */}
+<input required type="text" className="w-full p-3 bg-slate-50 border rounded-xl" value={newStaff.firstName} onChange={e => setNewStaff({...newStaff, firstName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Last Name</label>
-                  <input required type="text" className="w-full p-3 bg-slate-50 border rounded-xl" value={newStaff.lastName} onChange={e => setNewStaff({...newStaff, lastName: e.target.value})} />
+                  {/* === THE FIX: LIVE REGEX FILTER (Blocks numbers as they type) === */}
+<input required type="text" className="w-full p-3 bg-slate-50 border rounded-xl" value={newStaff.lastName} onChange={e => setNewStaff({...newStaff, lastName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
                 </div>
               </div>
               
@@ -202,11 +205,17 @@ function StaffManagement() {
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">System Username</label>
                 <input required type="text" className="w-full p-3 bg-white border rounded-xl font-mono text-sm mb-3" placeholder="e.g. poso_juan" value={newStaff.username} onChange={e => setNewStaff({...newStaff, username: e.target.value})} />
                 
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Temporary Password</label>
-                <input required type="text" className="w-full p-3 bg-white border rounded-xl font-mono text-sm" placeholder="Set a secure password" value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} />
+                {/* === THE FIX: Removed Manual Password, Added Official Email === */}
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Official Email Address</label>
+                <input required type="email" className="w-full p-3 bg-white border rounded-xl font-mono text-sm" placeholder="e.g. admin@calasiao.gov.ph" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-4 flex items-start space-x-3">
+                 <IoShieldCheckmark className="text-angkasBlue text-xl shrink-0 mt-0.5" />
+                 <p className="text-xs font-medium text-slate-600">A cryptographically secure password will be auto-generated and emailed directly to this staff member.</p>
               </div>
 
-              <button type="submit" className="w-full bg-angkasBlue text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-blue-500 active:scale-95 transition-all mt-4">
+              <button type="submit" className="w-full bg-angkasBlue text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all mt-4">
                 Generate Secure Account
               </button>
             </form>
