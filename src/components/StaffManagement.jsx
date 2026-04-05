@@ -34,17 +34,49 @@ function StaffManagement() {
     }
   };
 
+  // === THE FIX: SECURE FRONTEND SUBMIT HANDLER (LOADING LOCK) ===
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 1. Lock the UI so the user knows an email is being sent
+    setModalState({ 
+        isOpen: true, 
+        title: "Provisioning Account...", 
+        message: "Generating secure credentials and dispatching official LGU email via Nodemailer. Please wait.", 
+        type: "info", 
+        isConfirm: false 
+    });
+
     try {
       const payload = { ...newStaff, adminId: adminUser._id || adminUser.id };
-      await axios.post('https://tricycheck-api.onrender.com/api/admin/staff', payload);
+      
+      const response = await axios.post('https://tricycheck-api.onrender.com/api/admin/staff', payload, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+      });
+
+      // 2. Clear the form and hide the add modal
+      setNewStaff({ firstName: '', lastName: '', username: '', email: '', role: 'secretary' });
       setIsModalOpen(false);
-      setNewStaff({ firstName: '', lastName: '', username: '', password: '', role: 'secretary' });
       fetchStaff();
-      setModalState({ isOpen: true, title: "Account Created", message: `Personnel account created successfully!`, type: "success", isConfirm: false });
+
+      // 3. Display Success (Overwrites the loading modal)
+      setModalState({
+        isOpen: true,
+        title: "Account Created!",
+        message: `Staff registered successfully. An email was sent to ${newStaff.email}.\n\n(Failsafe Temp Password: ${response.data.tempPassword})`,
+        type: "success",
+        isConfirm: false
+      });
+      
     } catch (error) {
-      setModalState({ isOpen: true, title: "Creation Failed", message: error.response?.data?.error || "Failed to create account.", type: "warning", isConfirm: false });
+      // 4. Handle exact errors (like Username Exists) and unlock UI
+      setModalState({
+        isOpen: true,
+        title: "Registration Failed",
+        message: error.response?.data?.error || "Failed to create account. Check connection.",
+        type: "warning",
+        isConfirm: false
+      });
     }
   };
 
@@ -88,7 +120,7 @@ function StaffManagement() {
       }
     }
   };
-
+  
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
       <div className="flex justify-between items-center mb-6">

@@ -28,6 +28,12 @@ function AdminLogin() {
         password: credentials.password 
       });
 
+      // === THE FIX: THE SECURITY CHECKPOINT ===
+      if (response.data.user.requiresPasswordChange) {
+          setError("SECURITY LOCKDOWN: Temporary password detected. You must click 'Forgot Administrator Password' below to generate your permanent security key.");
+          return; // Kills the login process instantly
+      }
+
       localStorage.setItem('adminToken', response.data.token);
       localStorage.setItem('adminUser', JSON.stringify(response.data.user));
       
@@ -55,16 +61,33 @@ function AdminLogin() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center relative overflow-hidden bg-slate-900">
       
+      {/* === THE FIX: LGU-GRADE MUNICIPAL BACKGROUND === */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-angkasBlue/20 rounded-full blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute inset-0 bg-green-900/70 mix-blend-multiply z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-green-900/60 to-slate-900/80 z-20"></div>
+        <img 
+            src="/calasiao-municipal.jpg" 
+            alt="Calasiao Municipal Hall" 
+            className="absolute inset-0 w-full h-full object-cover z-0 opacity-50 grayscale-[20%]" 
+            onError={(e) => { e.target.style.display = 'none'; }} 
+        />
+        {/* Subtle glowing accents for modern enterprise feel */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-400/20 rounded-full blur-[100px] animate-pulse z-20"></div>
       </div>
 
       <div className="w-full max-w-md p-8 bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/50 relative z-10 animate-slide-up mx-4">
         
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-posoDark to-slate-800 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 mb-6">
-             <img src="/poso-logo.jpg" alt="POSO Logo" className="w-14 h-14 object-contain rounded-full shadow-inner transform -rotate-3 bg-white p-1" />
+        <div className="flex flex-col items-center mb-8 text-center">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(0,177,79,0.3)] border-4 border-emerald-50 mb-6 relative">
+             <img 
+                 src="/poso-logo.jpg" 
+                 alt="POSO Logo" 
+                 className="w-20 h-20 object-contain rounded-full" 
+                 onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/1000/1000966.png'; }}
+             />
+             <div className="absolute -bottom-2 bg-emerald-600 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md border-2 border-white">
+                 Calasiao LGU
+             </div>
           </div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">TricyCheck</h1>
           <p className="text-xs font-bold text-angkasBlue uppercase tracking-[0.2em] mt-1">POSO Command Center</p>
