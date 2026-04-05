@@ -93,14 +93,15 @@ function StaffManagement() {
     setModalState({ isOpen: true, title: actionTitle, message: actionMsg, type: "warning", isConfirm: true });
   };
 
-  const handleResetPasswordClick = (id, name) => {
-    setTargetAction({ type: 'RESET', id, name });
-    setModalState({ isOpen: true, title: "Reset Password", message: `Generate a new temporary password for ${name}?`, type: "warning", isConfirm: true });
+  // === THE FIX: Requires Email Parameter ===
+  const handleResetPasswordClick = (id, name, email) => {
+    setTargetAction({ type: 'RESET', id, name, email }); 
+    setModalState({ isOpen: true, title: "Dispatch Recovery Link", message: `Send a secure password recovery link directly to ${name}'s official email (${email || 'Unknown'})?`, type: "warning", isConfirm: true });
   };
 
   const executeAction = async () => {
     closeModal();
-    const { type, id, name, newStatus } = targetAction;
+    const { type, id, name, newStatus, email } = targetAction; // Extracted email
     const currentAdminId = adminUser._id || adminUser.id;
 
     if (type === 'TOGGLE_STATUS') {
@@ -113,10 +114,19 @@ function StaffManagement() {
       }
     } else if (type === 'RESET') {
       try {
-        const response = await axios.put(`https://tricycheck-api.onrender.com/api/admin/users/${id}/reset-password`, { adminId: currentAdminId });
-        setTimeout(() => setModalState({ isOpen: true, title: "Reset Successful", message: `New Password: ${response.data.tempPassword} \n\nPlease provide this to the personnel.`, type: "success", isConfirm: false }), 300);
+        // === THE FIX: Direct-to-Inbox Cryptographic Dispatch ===
+        if (!email) throw new Error("This personnel account does not have a registered email address.");
+
+        // 1. Lock UI and show Loading State
+        setTimeout(() => setModalState({ isOpen: true, title: "Dispatching...", message: `Transmitting cryptographic link to ${email}. Please wait.`, type: "info", isConfirm: false }), 300);
+        
+        // 2. Call the backend Nodemailer Engine
+        await axios.post(`https://tricycheck-api.onrender.com/api/admin/forgot-password`, { email: email });
+        
+        // 3. Show Success
+        setTimeout(() => setModalState({ isOpen: true, title: "Transmission Successful", message: `A secure recovery link has been successfully dispatched to ${email}.`, type: "success", isConfirm: false }), 800);
       } catch (error) {
-        setTimeout(() => setModalState({ isOpen: true, title: "Action Failed", message: "Failed to reset password.", type: "warning", isConfirm: false }), 300);
+        setTimeout(() => setModalState({ isOpen: true, title: "Dispatch Failed", message: error.response?.data?.error || error.message || "Failed to dispatch recovery link.", type: "warning", isConfirm: false }), 800);
       }
     }
   };
@@ -144,6 +154,7 @@ function StaffManagement() {
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
               <th className="p-5 pl-8">Personnel Name</th>
               <th className="p-5">System Username</th>
+              <th className="p-5">Official Email</th> {/* === ADDED EMAIL HEADER === */}
               <th className="p-5">Security Clearance</th>
               <th className="p-5">Account Status</th>
               <th className="p-5 pr-8 text-right">Actions</th>
@@ -156,6 +167,7 @@ function StaffManagement() {
                   {member.firstName} {member.lastName}
                 </td>
                 <td className="p-5 font-mono text-sm text-slate-500">{member.username}</td>
+                <td className="p-5 text-sm font-medium text-slate-600">{member.email || 'No email attached'}</td> {/* === ADDED EMAIL DATA === */}
                 <td className="p-5">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                     member.role === 'dispatcher' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'
@@ -163,7 +175,6 @@ function StaffManagement() {
                     {member.role}
                   </span>
                 </td>
-                {/* === THE NEW STATUS BADGE === */}
                 <td className="p-5">
                   <span className={`px-3 py-1.5 rounded-md text-[10px] font-black tracking-wider shadow-sm flex items-center w-max ${
                     member.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
@@ -173,7 +184,7 @@ function StaffManagement() {
                 </td>
                 <td className="p-5 pr-8 text-right space-x-2">
                   <button 
-                    onClick={() => handleResetPasswordClick(member._id, member.firstName)}
+                    onClick={() => handleResetPasswordClick(member._id, member.firstName, member.email)}
                     className="p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100 transition-colors"
                     title="Reset Password"
                   >
