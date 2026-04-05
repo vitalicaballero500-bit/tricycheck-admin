@@ -1,7 +1,64 @@
-return (
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { IoPerson, IoLockClosed, IoEye, IoEyeOff, IoMail, IoClose } from "react-icons/io5";
+import axios from 'axios'; 
+
+function AdminLogin() {
+  const navigate = useNavigate();
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMsg, setForgotMsg] = useState({ text: '', type: '' });
+
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await axios.post('https://tricycheck-api.onrender.com/api/auth/admin-login', { 
+        username: credentials.username, 
+        password: credentials.password 
+      });
+
+      if (response.data.user.requiresPasswordChange) {
+          setError("SECURITY LOCKDOWN: Temporary password detected. You must click 'Forgot Credentials?' below to generate your permanent security key.");
+          setIsLoading(false);
+          return; 
+      }
+
+      localStorage.setItem('adminToken', response.data.token);
+      localStorage.setItem('adminUser', JSON.stringify(response.data.user));
+      
+      navigate('/dashboard');
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || 'Server connection failed. Please check your connection.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotMsg({ text: 'Verifying credentials...', type: 'info' });
+    try {
+      const res = await axios.post('https://tricycheck-api.onrender.com/api/admin/forgot-password', { email: forgotEmail });
+      setForgotMsg({ text: res.data.message || 'Recovery link dispatched.', type: 'success' });
+    } catch (err) {
+      setForgotMsg({ text: err.response?.data?.error || 'Failed to dispatch recovery link.', type: 'error' });
+    }
+  };
+
+  return (
     <div className="min-h-[100dvh] flex items-center justify-center relative overflow-hidden bg-slate-900">
       
-      {/* === THE FIX: CLEARER MUNICIPAL BACKGROUND === */}
+      {/* === LGU MUNICIPAL BACKGROUND === */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-emerald-950/40 z-10"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-transparent to-transparent z-20"></div>
@@ -13,7 +70,7 @@ return (
         />
       </div>
 
-      {/* === THE FIX: LGU PREMIUM EMERALD THEME === */}
+      {/* === LGU PREMIUM EMERALD THEME === */}
       <div className="w-full max-w-md p-8 bg-emerald-900/85 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-emerald-500/30 relative z-10 animate-slide-up mx-4">
         
         <div className="flex flex-col items-center mb-8 text-center">
@@ -153,3 +210,6 @@ return (
 
     </div>
   );
+}
+
+export default AdminLogin;
