@@ -214,15 +214,16 @@ function StaffManagement() {
         </table>
       </div>
 
+      {/* === THE FIX: VIEWPORT OVERFLOW BOUNDARIES === */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
-            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
+            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
               <h2 className="text-xl font-black">Issue Personnel Credentials</h2>
-              <button onClick={() => setIsModalOpen(false)}><IoClose className="text-2xl hover:text-red-400" /></button>
+              <button type="button" onClick={() => setIsModalOpen(false)}><IoClose className="text-2xl hover:text-red-400" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">First Name</label>
