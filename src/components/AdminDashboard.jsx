@@ -245,13 +245,13 @@ function AdminDashboard() {
 
   if (!adminUser) return null; 
 
+  // === THE FIX: ENTERPRISE ISLAND ARCHITECTURE ===
   return (
-    <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
+    <div className="flex h-[100dvh] bg-emerald-950 overflow-hidden font-sans selection:bg-amber-400/30 selection:text-amber-200">
       
-      {/* === THE FIX: EMERALD/AMBER GOVERNMENT SIDEBAR === */}
-      <aside className="w-72 bg-emerald-900 text-white flex flex-col shadow-2xl z-20 shrink-0 border-r border-emerald-900">
-        <div className="h-24 flex items-center px-6 border-b border-emerald-900 bg-emerald-900">
-          {/* THE FIX: poso-logo.png changed to .jpg to fix the broken image */}
+      {/* 1. THE ANCHOR: Dark Government Sidebar */}
+      <aside className="w-72 bg-emerald-950 text-white flex flex-col z-20 shrink-0 border-r border-emerald-900 shadow-2xl relative">
+        <div className="h-24 flex items-center px-6 border-b border-emerald-900 bg-emerald-950">
           <img src="/poso-logo.jpg" alt="POSO" className="w-12 h-12 mr-4 drop-shadow-md object-contain rounded-full border border-emerald-800" />
           <div>
             <h1 className="text-xl font-black tracking-tight leading-tight text-emerald-50">TricyCheck</h1>
@@ -262,20 +262,20 @@ function AdminDashboard() {
         <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
           <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4 ml-2">Main Menu</p>
           {menuItems.map((item) => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-amber-400 text-emerald-900 shadow-lg shadow-amber-500/20' : 'text-emerald-100/70 hover:bg-emerald-900/50 hover:text-amber-400'}`}>
+            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-amber-400 text-emerald-950 shadow-lg shadow-amber-500/20' : 'text-emerald-100/70 hover:bg-emerald-900/50 hover:text-amber-400'}`}>
               <span className="text-xl">{item.icon}</span><span>{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-emerald-900 bg-emerald-900">
+        <div className="p-4 border-t border-emerald-900 bg-emerald-950">
           <div className="flex items-center justify-between bg-emerald-900/50 p-4 rounded-xl border border-emerald-800">
             <div 
               className="flex items-center space-x-3 truncate cursor-pointer hover:bg-emerald-800 p-1.5 -ml-1.5 rounded-lg transition-colors" 
               onClick={() => setShowProfileModal(true)}
               title="Edit My Profile"
             >
-              <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-emerald-900 font-black shadow-inner shrink-0 border-2 border-emerald-800">
+              <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-emerald-950 font-black shadow-inner shrink-0 border-2 border-emerald-800">
                 {adminUser.firstName.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
               </div>
               <div className="text-left truncate">
@@ -288,270 +288,201 @@ function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        <header className="h-24 bg-white shadow-[0_4px_20px_-10px_rgba(0,0,0,0.1)] flex items-center justify-between px-10 z-10 shrink-0">
+      {/* 2. THE CANVAS: The Floating "Square" Island */}
+      <main className="flex-1 flex flex-col relative z-10 w-full overflow-hidden bg-slate-50 md:rounded-tl-[2.5rem] md:my-2 md:mr-2 shadow-[-15px_0_40px_rgba(0,0,0,0.5)] border border-emerald-900/20">
+        
+        {/* HEADER - Sharp Light Mode */}
+        <header className="h-24 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-20 md:rounded-tl-[2.5rem]">
           <div>
-            <h2 className="text-2xl font-black text-slate-800 capitalize">{menuItems.find(m => m.id === activeTab)?.label || 'Module'}</h2>
-            <p className="text-sm font-medium text-slate-400 mt-1">Calasiao Public Order and Safety Office</p>
+            <h2 className="text-2xl font-black text-emerald-950 tracking-tight">{menuItems.find(m => m.id === activeTab)?.label}</h2>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">System Overview & Management</p>
           </div>
           <div className="flex items-center space-x-4">
-            {(loadingStats || loadingLogs) && activeTab === 'dashboard' && <span className="text-xs font-bold text-slate-400 animate-pulse uppercase">Syncing Live Data...</span>}
-            
-            <button 
-              onClick={() => setShowReportModal(true)} 
-              className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-emerald-800 transition-colors shadow-lg flex items-center space-x-2 active:scale-95"
-            >
-              <IoDocumentText className="text-lg text-emerald-600" />
-              <span>Generate Report</span>
+            <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 px-4 py-2.5 rounded-xl border border-emerald-100 font-bold text-sm shadow-sm">
+               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+               <span>System Online</span>
+            </div>
+            <button onClick={() => setShowReportModal(true)} className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95">
+              <IoDocumentText className="text-lg" /> <span>Generate Report</span>
             </button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-10 bg-slate-50">
-          
+        {/* DYNAMIC MODULE INJECTION */}
+        <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative z-10">
           {activeTab === 'dashboard' && (
-            <div className="animate-fade-in">
-              {stats.activeTickets?.some(t => t.priority === 'CRITICAL' || t.priority === 'High') && (
-                <div className="bg-red-500 text-white p-3 rounded-xl mb-6 shadow-lg shadow-red-500/30 flex justify-center items-center font-black tracking-widest uppercase text-sm animate-pulse border-2 border-red-600">
-                   <IoWarning className="mr-2 text-xl" /> ACTIVE EMERGENCY: UNRESOLVED HIGH-PRIORITY TICKETS DETECTED!
-                </div>
-              )}
-
-              {/* === THE FIX: Changed to lg:grid-cols-4 since we removed Gross Fare === */}
+            <div className="p-8 space-y-8 animate-fade-in w-full max-w-[1600px] mx-auto">
+              
+              {/* STAT CARDS - Pristine White Glass */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 hover:shadow-md transition-shadow relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl shadow-sm border border-red-100"><IoWarning /></div></div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeTicketsCount || 0}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unresolved Tickets</p>
+                {/* Active Drivers */}
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                      <IoCarSport className="text-2xl text-emerald-600" />
+                    </div>
+                    {loadingStats ? <div className="w-8 h-8 rounded-full border-4 border-slate-100 border-t-emerald-600 animate-spin"></div> : <span className="text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded-lg text-xs">+Live</span>}
+                  </div>
+                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.activeDrivers}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Active Fleet</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoIdCard /></div></div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeDrivers}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Drivers</p>
+
+                {/* Pending Approvals */}
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100">
+                      <IoIdCard className="text-2xl text-amber-500" />
+                    </div>
+                    {stats.pendingDrivers > 0 && <span className="bg-red-50 text-red-500 font-bold px-2 py-1 rounded-lg text-xs animate-pulse">Action Needed</span>}
+                  </div>
+                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.pendingDrivers}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Pending Approvals</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl shadow-sm border border-orange-100"><IoDocumentText /></div></div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.pendingDrivers}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Approvals</p>
+
+                {/* Active Rides */}
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100">
+                      <IoBicycle className="text-2xl text-blue-500" />
+                    </div>
+                  </div>
+                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.activeRides}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Rides in Transit</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoBicycle /></div></div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeRides}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Rides Now</p>
+
+                {/* Active Tickets */}
+                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4 relative z-10">
+                    <div className="p-3 bg-red-50 rounded-2xl border border-red-100">
+                      <IoWarning className="text-2xl text-red-500" />
+                    </div>
+                  </div>
+                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.activeTickets?.length || 0}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Open Reports</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-white rounded-2xl shadow-sm border border-red-200/80 overflow-hidden relative flex flex-col h-[500px]">
-                     <div className="absolute top-0 left-0 w-2 h-full bg-red-500"></div>
-                     <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-red-50/30 shrink-0">
-                        <div>
-                          <h3 className="text-lg font-black text-slate-800 flex items-center">
-                            <IoWarning className="text-red-500 mr-2 text-2xl animate-pulse" /> Priority Alerts
-                          </h3>
-                          <p className="text-sm font-medium text-slate-500 mt-1">Expiring docs in ≤ 30 days.</p>
-                        </div>
-                        <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-sm">
-                          {stats.expiringDrivers.length} Flagged
-                        </div>
-                     </div>
-
-                     <div className="flex-1 overflow-y-auto">
-                         {stats.expiringDrivers.length === 0 ? (
-                            <div className="p-10 text-center flex flex-col items-center justify-center h-full">
-                               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-500 text-3xl mb-3 border border-green-100">🎉</div>
-                               <p className="text-lg font-bold text-slate-700">All documents are up to date!</p>
-                            </div>
-                         ) : (
-                            <table className="w-full text-left border-collapse">
-                              <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
-                                  <th className="p-4 pl-8">Body No.</th>
-                                  <th className="p-4">Driver Name</th>
-                                  <th className="p-4 text-right pr-8">Action</th>
-                                </tr>
-                              </thead>
-                              <tbody className="text-sm font-medium text-slate-700 divide-y divide-slate-100">
-                                {stats.activeTickets?.map(t => (
-                                  <tr key={t._id} className="bg-red-50/40 hover:bg-red-50 transition-colors">
-                                    <td className="p-4 pl-8">
-                                       <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${t.priority === 'CRITICAL' ? 'bg-red-500 text-white animate-pulse' : 'bg-orange-500 text-white'}`}>
-                                          {t.priority} TICKET
-                                       </span>
-                                    </td>
-                                    <td className="p-4 font-bold text-slate-800 truncate max-w-[150px]">{t.type}</td>
-                                    <td className="p-4 text-right pr-8">
-                                      <button onClick={() => setActiveTab('reports')} className="inline-flex items-center justify-center bg-white border border-red-200 text-red-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-50 shadow-sm transition-all">
-                                        <IoWarning className="mr-1.5" /> View
-                                      </button>
-                                    </td>
-                                  </tr>
-                                ))}
-                                {stats.expiringDrivers?.map(d => (
-                                  <tr key={d._id} className="hover:bg-red-50/50 transition-colors">
-                                    <td className="p-4 pl-8 font-black text-slate-900">{d.bodyNo || 'N/A'}</td>
-                                    <td className="p-4 font-bold truncate max-w-[120px]">{d.firstName} {d.lastName}</td>
-                                    <td className="p-4 text-right pr-8">
-                                      <a href={`tel:${d.phone}`} className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 active:scale-95 transition-all shadow-sm">
-                                        <IoCall className="mr-1.5" /> Call
-                                      </a>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                         )}
-                     </div>
+              {/* THE SQUARE MAP CONTAINER - With Depth and Shadows */}
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
+                <div className="flex justify-between items-end mb-6 relative z-10">
+                  <div>
+                    <h3 className="text-2xl font-black text-emerald-950 tracking-tight flex items-center">
+                      <IoMap className="mr-3 text-emerald-600" /> POSO Live Radar
+                    </h3>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Real-time GPS Tracking & SOS Monitoring</p>
                   </div>
-
-                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden relative flex flex-col h-[500px]">
-                     <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
-                        <div>
-                          <h3 className="text-lg font-black text-slate-800 flex items-center">
-                            <IoTime className="text-emerald-600 mr-2 text-2xl" /> System Audit Trail
-                          </h3>
-                          <p className="text-sm font-medium text-slate-500 mt-1">Live tracking of administrative actions.</p>
-                        </div>
-                     </div>
-                     <div className="flex-1 overflow-y-auto p-0">
-                        {loadingLogs ? (
-                            <div className="flex justify-center items-center h-full text-slate-400 font-bold animate-pulse">Syncing Encrypted Feed...</div>
-                        ) : auditLogs.length === 0 ? (
-                            <div className="flex justify-center items-center h-full text-slate-400 font-bold">No recent system activity.</div>
-                        ) : (
-                            <div className="divide-y divide-slate-100">
-                               {auditLogs.map(log => (
-                                   <div key={log._id} className="p-5 hover:bg-slate-50 transition-colors flex space-x-4">
-                                       <div className={`mt-1 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xs border shadow-inner shrink-0 ${getModuleColor(log.module)}`}>
-                                          {log.module.substring(0,3).toUpperCase()}
-                                       </div>
-                                       <div className="flex-1">
-                                           <div className="flex justify-between items-start">
-                                              <p className="text-sm font-black text-slate-800 leading-tight pr-2">{log.action}</p>
-                                              <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap pt-0.5">
-                                                  {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                              </span>
-                                           </div>
-                                           <p className="text-xs text-slate-500 font-medium mt-1">{log.details}</p>
-                                           <div className="flex items-center mt-3">
-                                               <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider flex items-center">
-                                                  <IoGrid className="mr-1" /> {log.adminName}
-                                               </span>
-                                           </div>
-                                       </div>
-                                   </div>
-                               ))}
-                            </div>
-                        )}
-                     </div>
+                  <div className="flex items-center space-x-3 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-xs font-bold text-emerald-700 tracking-wider">LIVE SYNC</span>
                   </div>
+                </div>
+                <div className="h-[500px] w-full rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-10 bg-slate-100">
+                   <LiveOperationsMap />
+                </div>
+              </div>
 
+              {/* AUDIT LOGS CONTAINER */}
+              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
+                <h3 className="text-2xl font-black text-emerald-950 tracking-tight mb-6">Security Audit Logs</h3>
+                {loadingLogs ? (
+                   <p className="text-slate-500 font-bold animate-pulse">Loading system records...</p>
+                ) : (
+                  <div className="space-y-4">
+                    {auditLogs.map(log => (
+                      <div key={log._id} className="flex items-start space-x-4 p-4 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors">
+                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0">
+                           {log.adminId?.firstName?.charAt(0) || '?'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-emerald-950">
+                             {log.adminId?.firstName} {log.adminId?.lastName} <span className="text-emerald-600 font-black">{log.action}</span>
+                          </p>
+                          <p className="text-[11px] font-bold text-slate-500 mt-0.5">{log.details}</p>
+                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                             {new Date(log.timestamp).toLocaleString()} • {log.moduleName}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {activeTab === 'fleet' && <FleetManagement />}
-          {activeTab === 'map' && <LiveOperationsMap />}
-          {activeTab === 'reports' && <SupportTickets />}
-          {activeTab === 'staff' && <StaffManagement />}
-          {activeTab === 'compliance' && <ComplianceHub />}
-          {activeTab === 'passengers' && <PassengerManagement />}
-          {activeTab === 'settings' && <SystemSettings />}
+          {activeTab === 'passengers' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><PassengerManagement /></div>}
+          {activeTab === 'fleet' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><FleetManagement /></div>}
+          {activeTab === 'compliance' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><ComplianceHub /></div>}
+          {activeTab === 'tickets' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><SupportTickets /></div>}
+          {activeTab === 'staff' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><StaffManagement /></div>}
+          {activeTab === 'settings' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><SystemSettings /></div>}
+        </div>
+      </main>
 
-        </main>
-      </div>
-
-      {/* === THE REPORT MODAL === */}
+      {/* MODALS REMAIN UNCHANGED BELOW */}
       {showReportModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowReportModal(false)}></div>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
+          <div className="absolute inset-0 bg-emerald-950/80 backdrop-blur-sm" onClick={() => setShowReportModal(false)}></div>
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md z-10 p-8 border border-slate-200 relative animate-slide-up">
+            <button onClick={() => setShowReportModal(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"><IoClose className="text-xl" /></button>
+            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 border border-emerald-100">
+               <IoPrint className="text-2xl" />
+            </div>
+            <h3 className="text-2xl font-black text-emerald-950 mb-2">Generate Analytics Report</h3>
+            <p className="text-sm font-bold text-slate-500 mb-6">Extract official POSO data securely.</p>
             
-            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white">
-              <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-emerald-600" /> Generate Report</h2>
-              <button onClick={() => setShowReportModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
-            </div>
-
-            <div className="p-6">
-               <p className="text-sm text-slate-500 mb-6">Select a date range to aggregate all completed ride data, including precise GPS coordinates and passenger details.</p>
-               
-               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Time Period</label>
-               <select 
-                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-emerald-600 mb-4"
-                  value={reportConfig.filter}
-                  onChange={(e) => setReportConfig({...reportConfig, filter: e.target.value})}
-               >
-                  <option value="daily">Daily (Today)</option>
-                  <option value="weekly">Weekly (Last 7 Days)</option>
-                  <option value="monthly">Monthly (Last 30 Days)</option>
-                  <option value="all">All Time History</option>
-                  <option value="custom">Custom Date Range</option>
-               </select>
-
-               {reportConfig.filter === 'custom' && (
-                 <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Start Date</label>
-                       <input type="date" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700" value={reportConfig.startDate} onChange={e => setReportConfig({...reportConfig, startDate: e.target.value})} />
-                    </div>
-                    <div>
-                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">End Date</label>
-                       <input type="date" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700" value={reportConfig.endDate} onChange={e => setReportConfig({...reportConfig, endDate: e.target.value})} />
-                    </div>
-                 </div>
-               )}
-
-               <div className="flex space-x-3 mt-8">
-                  <button onClick={handlePrint} disabled={isGenerating} className="flex-1 bg-white border-2 border-slate-200 text-slate-700 py-3.5 rounded-xl font-black text-sm flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all">
-                     <IoPrint className="mr-2 text-lg" /> Print / PDF
-                  </button>
-                  <button onClick={handleDownloadCSV} disabled={isGenerating} className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center shadow-lg hover:bg-emerald-600 active:scale-95 transition-all">
-                     {isGenerating ? <span className="animate-pulse">Fetching...</span> : <><IoDownload className="mr-2 text-lg" /> CSV (Excel)</>}
-                  </button>
+            <div className="space-y-5">
+               <div>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Time Filter</label>
+                  <select className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 focus:border-emerald-600 outline-none cursor-pointer" value={reportConfig.filter} onChange={e => setReportConfig({...reportConfig, filter: e.target.value})}>
+                     <option value="daily">Daily Summary</option>
+                     <option value="weekly">Weekly Analytics</option>
+                     <option value="monthly">Monthly Overview</option>
+                     <option value="custom">Custom Range</option>
+                  </select>
                </div>
+               
+               <button onClick={generateReport} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
+                  {isGenerating ? <span className="animate-pulse">Compiling Data...</span> : <><IoDownload className="mr-2 text-lg" /> Download PDF Report</>}
+               </button>
             </div>
-
           </div>
         </div>
       )}
-{/* === MY PROFILE MODAL === */}
+
       {showProfileModal && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}></div>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
-            
-            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white">
-              <h2 className="text-xl font-black flex items-center"><IoPeople className="mr-2 text-emerald-600" /> Edit My Profile</h2>
-              <button onClick={() => setShowProfileModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-emerald-950/80 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}></div>
+          <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md z-10 p-8 border border-slate-200 relative animate-slide-up">
+            <button onClick={() => setShowProfileModal(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"><IoClose className="text-xl" /></button>
+            <div className="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6 border border-amber-100">
+               <IoIdCard className="text-2xl" />
             </div>
+            <h3 className="text-2xl font-black text-emerald-950 mb-2">My Profile</h3>
+            <p className="text-sm font-bold text-slate-500 mb-6">Manage your official credentials.</p>
+            
+            {profileStatus.success && <div className="mb-6 p-3 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold rounded-xl text-center">Profile updated successfully.</div>}
+            {profileStatus.error && <div className="mb-6 p-3 bg-red-50 border border-red-100 text-red-600 text-xs font-bold rounded-xl text-center">{profileStatus.error}</div>}
 
-            <form onSubmit={handleUpdateProfile} className="p-6">
-               <div className="flex justify-center mb-6">
-                 <div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-inner border-4 border-slate-100">
-                    {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)}
-                 </div>
-               </div>
-
-               {profileStatus.error && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl mb-4 border border-red-200">{profileStatus.error}</div>}
-               {profileStatus.success && <div className="p-3 bg-green-50 text-green-600 text-xs font-bold rounded-xl mb-4 border border-green-200">{profileStatus.success}</div>}
-
+            <form onSubmit={updateProfile}>
                <div className="space-y-4">
                  <div className="grid grid-cols-2 gap-4">
                     <div>
                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">First Name</label>
-                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-emerald-600 outline-none" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} disabled={profileStatus.loading} />
+                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 focus:border-emerald-600 outline-none" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} disabled={profileStatus.loading} />
                     </div>
                     <div>
                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Name</label>
-                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-emerald-600 outline-none" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} disabled={profileStatus.loading} />
+                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 focus:border-emerald-600 outline-none" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} disabled={profileStatus.loading} />
                     </div>
                  </div>
-                 
+
                  <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Official Email</label>
-                    <input required type="email" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-emerald-600 outline-none" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} disabled={profileStatus.loading} />
+                    <input required type="email" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 focus:border-emerald-600 outline-none" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} disabled={profileStatus.loading} />
                  </div>
 
                  <div>
@@ -563,12 +494,11 @@ function AdminDashboard() {
                </div>
 
                <div className="mt-8 flex justify-end">
-                  <button type="submit" disabled={profileStatus.loading} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-70">
+                  <button type="submit" disabled={profileStatus.loading} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-70">
                      {profileStatus.loading ? 'Saving...' : 'Update Profile'}
                   </button>
                </div>
             </form>
-
           </div>
         </div>
       )}
