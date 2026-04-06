@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+// === THE FIX: COMPLETE ICON IMPORT ===
 import { 
   IoGrid, IoIdCard, IoMap, IoWarning, IoSettings, IoLogOut, 
-  IoDocumentText, IoBicycle, IoPeople, IoCall, IoTime, IoPrint, IoDownload, IoClose
+  IoDocumentText, IoBicycle, IoPeople, IoCall, IoTime, IoPrint, IoDownload, IoClose,
+  IoCarSport
 } from 'react-icons/io5';
 
 import PassengerManagement from './PassengerManagement';
@@ -17,7 +19,8 @@ import ComplianceHub from './ComplianceHub';
 function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [adminUser, setAdminUser] = useState(null);
+  // === THE FIX: SAFE LOCAL STORAGE INITIALIZATION ===
+  const [adminUser, setAdminUser] = useState(() => JSON.parse(localStorage.getItem('adminUser')) || {});
   
   const [stats, setStats] = useState({ activeDrivers: 0, pendingDrivers: 0, activeRides: 0, expiringDrivers: [] });
   const [loadingStats, setLoadingStats] = useState(true);
