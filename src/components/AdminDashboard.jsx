@@ -248,7 +248,7 @@ function AdminDashboard() {
 
   if (!adminUser) return null; 
 
-  // === THE FIX: RESTORED DUAL-FEED DASHBOARD OVERVIEW ===
+  // === THE FIX: PROPER MODULE SEPARATION & ROUTING ===
   return (
     <div className="flex h-[100dvh] bg-emerald-950 overflow-hidden font-sans selection:bg-amber-400/30 selection:text-amber-200">
       
@@ -313,10 +313,12 @@ function AdminDashboard() {
 
         {/* DYNAMIC MODULE INJECTION */}
         <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative z-10">
+          
+          {/* THE CLEAN OVERVIEW */}
           {activeTab === 'dashboard' && (
             <div className="p-8 space-y-8 animate-fade-in w-full max-w-[1600px] mx-auto">
               
-              {/* STAT CARDS - Pristine White Glass */}
+              {/* STAT CARDS */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Active Drivers */}
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
@@ -365,43 +367,6 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              {/* RESTORED: THE SQUARE MAP CONTAINER */}
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
-                <div className="flex justify-between items-end mb-6 relative z-10">
-                  <div>
-                    <h3 className="text-2xl font-black text-emerald-950 tracking-tight flex items-center">
-                      <IoMap className="mr-3 text-emerald-600" /> POSO Live Radar
-                    </h3>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Real-time GPS Tracking & SOS Monitoring</p>
-                  </div>
-                  <div className="flex items-center space-x-3 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-xs font-bold text-emerald-700 tracking-wider">LIVE SYNC</span>
-                  </div>
-                </div>
-                {/* Embedded LiveOperationsMap */}
-                <div className="h-[500px] w-full rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-10 bg-slate-100">
-                   <LiveOperationsMap />
-                </div>
-              </div>
-
-              {/* RESTORED: THE SUPPORT TICKETS FEED */}
-              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
-                <div className="mb-6 relative z-10">
-                  <h3 className="text-2xl font-black text-emerald-950 tracking-tight flex items-center">
-                    <IoWarning className="mr-3 text-red-500" /> Live Dispatch & Incident Feed
-                  </h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Direct view of passenger complaints and SOS requests</p>
-                </div>
-                {/* Embedded SupportTickets */}
-                <div className="w-full rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-10 bg-slate-50">
-                   <SupportTickets />
-                </div>
-              </div>
-
               {/* AUDIT LOGS CONTAINER */}
               <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
                 <h3 className="text-2xl font-black text-emerald-950 tracking-tight mb-6">Security Audit Logs</h3>
@@ -431,10 +396,14 @@ function AdminDashboard() {
             </div>
           )}
 
+          {/* ISOLATED TABS FOR MAP AND TICKETS */}
+          {activeTab === 'map' && <div className="p-6 animate-fade-in w-full h-[calc(100vh-6rem)] max-w-[1600px] mx-auto"><LiveOperationsMap /></div>}
+          {activeTab === 'reports' && <div className="p-6 animate-fade-in w-full h-[calc(100vh-6rem)] max-w-[1600px] mx-auto"><SupportTickets /></div>}
+          
+          {/* REMAINING TABS */}
           {activeTab === 'passengers' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><PassengerManagement /></div>}
           {activeTab === 'fleet' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><FleetManagement /></div>}
           {activeTab === 'compliance' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><ComplianceHub /></div>}
-          {activeTab === 'tickets' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><SupportTickets /></div>}
           {activeTab === 'staff' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><StaffManagement /></div>}
           {activeTab === 'settings' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><SystemSettings /></div>}
         </div>
