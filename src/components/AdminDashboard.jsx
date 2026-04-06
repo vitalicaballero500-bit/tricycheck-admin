@@ -248,41 +248,42 @@ function AdminDashboard() {
   return (
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       
-      {/* SIDEBAR */}
-      <aside className="w-72 bg-posoDark text-white flex flex-col shadow-2xl z-20 shrink-0">
-        <div className="h-24 flex items-center px-6 border-b border-slate-700/50 bg-slate-900/50">
-          <img src="/poso-logo.png" alt="POSO" className="w-12 h-12 mr-4 drop-shadow-md object-contain" />
+      {/* === THE FIX: EMERALD/AMBER GOVERNMENT SIDEBAR === */}
+      <aside className="w-72 bg-bg-emerald-900 text-white flex flex-col shadow-2xl z-20 shrink-0 border-r border-emerald-900">
+        <div className="h-24 flex items-center px-6 border-b border-emerald-900 bg-bg-emerald-900">
+          {/* THE FIX: poso-logo.png changed to .jpg to fix the broken image */}
+          <img src="/poso-logo.jpg" alt="POSO" className="w-12 h-12 mr-4 drop-shadow-md object-contain rounded-full border border-emerald-800" />
           <div>
-            <h1 className="text-xl font-black tracking-tight leading-tight">TricyCheck</h1>
-            <p className="text-[10px] font-bold text-angkasBlue uppercase tracking-widest">Admin Portal</p>
+            <h1 className="text-xl font-black tracking-tight leading-tight text-emerald-50">TricyCheck</h1>
+            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Admin Portal</p>
           </div>
         </div>
 
         <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 ml-2">Main Menu</p>
+          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4 ml-2">Main Menu</p>
           {menuItems.map((item) => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-angkasBlue text-white shadow-lg shadow-blue-500/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
+            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-amber-400 text-bg-emerald-900 shadow-lg shadow-amber-500/20' : 'text-emerald-100/70 hover:bg-emerald-900/50 hover:text-amber-400'}`}>
               <span className="text-xl">{item.icon}</span><span>{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-700/50 bg-slate-900/20">
-          <div className="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700">
+        <div className="p-4 border-t border-emerald-900 bg-bg-emerald-900">
+          <div className="flex items-center justify-between bg-emerald-900/50 p-4 rounded-xl border border-emerald-800">
             <div 
-              className="flex items-center space-x-3 truncate cursor-pointer hover:bg-slate-700 p-1.5 -ml-1.5 rounded-lg transition-colors" 
+              className="flex items-center space-x-3 truncate cursor-pointer hover:bg-emerald-800 p-1.5 -ml-1.5 rounded-lg transition-colors" 
               onClick={() => setShowProfileModal(true)}
               title="Edit My Profile"
             >
-              <div className="w-10 h-10 rounded-full bg-angkasBlue flex items-center justify-center text-white font-bold shadow-inner shrink-0">
+              <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-bg-emerald-900 font-black shadow-inner shrink-0 border-2 border-emerald-800">
                 {adminUser.firstName.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
               </div>
               <div className="text-left truncate">
-                <p className="text-sm font-bold text-white leading-tight truncate">{adminUser.firstName} {adminUser.lastName}</p>
-                <p className="text-[10px] text-green-400 font-bold tracking-wider uppercase">● {adminUser.role}</p>
+                <p className="text-sm font-bold text-emerald-50 leading-tight truncate">{adminUser.firstName} {adminUser.lastName}</p>
+                <p className="text-[10px] text-amber-400 font-bold tracking-wider uppercase">● {adminUser.role}</p>
               </div>
             </div>
-            <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors shrink-0 ml-2"><IoLogOut className="text-xl" /></button>
+            <button onClick={handleLogout} className="p-2 text-emerald-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors shrink-0 ml-2"><IoLogOut className="text-xl" /></button>
           </div>
         </div>
       </aside>
@@ -299,9 +300,9 @@ function AdminDashboard() {
             
             <button 
               onClick={() => setShowReportModal(true)} 
-              className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-700 transition-colors shadow-lg flex items-center space-x-2 active:scale-95"
+              className="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-emerald-800 transition-colors shadow-lg flex items-center space-x-2 active:scale-95"
             >
-              <IoDocumentText className="text-lg text-angkasBlue" />
+              <IoDocumentText className="text-lg text-emerald-600" />
               <span>Generate Report</span>
             </button>
           </div>
@@ -326,7 +327,7 @@ function AdminDashboard() {
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unresolved Tickets</p>
                 </div>
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-angkasBlue flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoIdCard /></div></div>
+                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoIdCard /></div></div>
                   <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeDrivers}</h3>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Drivers</p>
                 </div>
@@ -409,7 +410,7 @@ function AdminDashboard() {
                      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                         <div>
                           <h3 className="text-lg font-black text-slate-800 flex items-center">
-                            <IoTime className="text-angkasBlue mr-2 text-2xl" /> System Audit Trail
+                            <IoTime className="text-emerald-600 mr-2 text-2xl" /> System Audit Trail
                           </h3>
                           <p className="text-sm font-medium text-slate-500 mt-1">Live tracking of administrative actions.</p>
                         </div>
@@ -468,8 +469,8 @@ function AdminDashboard() {
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowReportModal(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
             
-            <div className="bg-posoDark p-6 flex justify-between items-center text-white">
-              <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-angkasBlue" /> Generate Report</h2>
+            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white">
+              <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-emerald-600" /> Generate Report</h2>
               <button onClick={() => setShowReportModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
             </div>
 
@@ -478,7 +479,7 @@ function AdminDashboard() {
                
                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Time Period</label>
                <select 
-                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-angkasBlue mb-4"
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-emerald-600 mb-4"
                   value={reportConfig.filter}
                   onChange={(e) => setReportConfig({...reportConfig, filter: e.target.value})}
                >
@@ -506,7 +507,7 @@ function AdminDashboard() {
                   <button onClick={handlePrint} disabled={isGenerating} className="flex-1 bg-white border-2 border-slate-200 text-slate-700 py-3.5 rounded-xl font-black text-sm flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all">
                      <IoPrint className="mr-2 text-lg" /> Print / PDF
                   </button>
-                  <button onClick={handleDownloadCSV} disabled={isGenerating} className="flex-1 bg-angkasBlue text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center shadow-lg hover:bg-emerald-600 active:scale-95 transition-all">
+                  <button onClick={handleDownloadCSV} disabled={isGenerating} className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center shadow-lg hover:bg-emerald-600 active:scale-95 transition-all">
                      {isGenerating ? <span className="animate-pulse">Fetching...</span> : <><IoDownload className="mr-2 text-lg" /> CSV (Excel)</>}
                   </button>
                </div>
@@ -521,14 +522,14 @@ function AdminDashboard() {
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
             
-            <div className="bg-posoDark p-6 flex justify-between items-center text-white">
-              <h2 className="text-xl font-black flex items-center"><IoPeople className="mr-2 text-angkasBlue" /> Edit My Profile</h2>
+            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white">
+              <h2 className="text-xl font-black flex items-center"><IoPeople className="mr-2 text-emerald-600" /> Edit My Profile</h2>
               <button onClick={() => setShowProfileModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
             </div>
 
             <form onSubmit={handleUpdateProfile} className="p-6">
                <div className="flex justify-center mb-6">
-                 <div className="w-20 h-20 bg-angkasBlue text-white rounded-full flex items-center justify-center text-3xl font-black shadow-inner border-4 border-slate-100">
+                 <div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl font-black shadow-inner border-4 border-slate-100">
                     {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)}
                  </div>
                </div>
@@ -540,17 +541,17 @@ function AdminDashboard() {
                  <div className="grid grid-cols-2 gap-4">
                     <div>
                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">First Name</label>
-                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-angkasBlue outline-none" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} disabled={profileStatus.loading} />
+                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-emerald-600 outline-none" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} disabled={profileStatus.loading} />
                     </div>
                     <div>
                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Name</label>
-                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-angkasBlue outline-none" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} disabled={profileStatus.loading} />
+                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-emerald-600 outline-none" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} disabled={profileStatus.loading} />
                     </div>
                  </div>
                  
                  <div>
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Official Email</label>
-                    <input required type="email" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-angkasBlue outline-none" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} disabled={profileStatus.loading} />
+                    <input required type="email" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-emerald-600 outline-none" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} disabled={profileStatus.loading} />
                  </div>
 
                  <div>
@@ -562,7 +563,7 @@ function AdminDashboard() {
                </div>
 
                <div className="mt-8 flex justify-end">
-                  <button type="submit" disabled={profileStatus.loading} className="w-full bg-angkasBlue text-white py-3.5 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-70">
+                  <button type="submit" disabled={profileStatus.loading} className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-70">
                      {profileStatus.loading ? 'Saving...' : 'Update Profile'}
                   </button>
                </div>

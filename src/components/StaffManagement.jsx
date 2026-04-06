@@ -136,13 +136,13 @@ function StaffManagement() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-black text-slate-800 flex items-center">
-            <IoShieldCheckmark className="text-angkasBlue mr-2" /> Access Control Matrix
+            <IoShieldCheckmark className="text-emerald-600 mr-2" /> Access Control Matrix
           </h2>
           <p className="text-sm font-medium text-slate-500">Manage POSO personnel system access and security roles.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-posoDark text-white px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg hover:bg-slate-800 active:scale-95 transition-all"
+          className="bg-bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg hover:bg-emerald-800 active:scale-95 transition-all"
         >
           <IoAdd className="text-lg mr-2" /> Issue Credentials
         </button>
@@ -185,7 +185,7 @@ function StaffManagement() {
                 <td className="p-5 pr-8 text-right space-x-2">
                   <button 
                     onClick={() => handleResetPasswordClick(member._id, member.firstName, member.email)}
-                    className="p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100 transition-colors"
+                    className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
                     title="Reset Password"
                   >
                     <IoKey />
@@ -218,7 +218,7 @@ function StaffManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
-            <div className="bg-posoDark p-6 flex justify-between items-center text-white">
+            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white">
               <h2 className="text-xl font-black">Issue Personnel Credentials</h2>
               <button onClick={() => setIsModalOpen(false)}><IoClose className="text-2xl hover:text-red-400" /></button>
             </div>
@@ -254,12 +254,12 @@ function StaffManagement() {
                 <input required type="email" className="w-full p-3 bg-white border rounded-xl font-mono text-sm" placeholder="e.g. admin@calasiao.gov.ph" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
               </div>
               
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mt-4 flex items-start space-x-3">
-                 <IoShieldCheckmark className="text-angkasBlue text-xl shrink-0 mt-0.5" />
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mt-4 flex items-start space-x-3">
+                 <IoShieldCheckmark className="text-emerald-600 text-xl shrink-0 mt-0.5" />
                  <p className="text-xs font-medium text-slate-600">A cryptographically secure password will be auto-generated and emailed directly to this staff member.</p>
               </div>
 
-              <button type="submit" className="w-full bg-angkasBlue text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all mt-4">
+              <button type="submit" className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all mt-4">
                 Generate Secure Account
               </button>
             </form>

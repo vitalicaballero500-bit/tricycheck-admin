@@ -72,7 +72,7 @@ function SupportTickets() {
       if (priority === 'CRITICAL') return 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]';
       if (priority === 'High') return 'bg-orange-500 text-white';
       if (priority === 'Medium') return 'bg-yellow-400 text-yellow-900';
-      return 'bg-emerald-400 text-emerald-950';
+      return 'bg-emerald-400 text-bg-emerald-900';
   };
 
   return (
@@ -82,7 +82,7 @@ function SupportTickets() {
       <div className="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col shrink-0 z-10">
          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
             <div>
-               <h2 className="text-xl font-black text-slate-800 flex items-center"><IoMegaphone className="mr-2 text-angkasBlue"/> Switchboard</h2>
+               <h2 className="text-xl font-black text-slate-800 flex items-center"><IoMegaphone className="mr-2 text-emerald-600"/> Switchboard</h2>
                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Active Dispatches</p>
             </div>
             <button onClick={fetchTickets} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-100 transition-colors"><IoTime className="text-lg"/></button>
@@ -98,7 +98,7 @@ function SupportTickets() {
                    <div 
                       key={ticket._id} 
                       onClick={() => setSelectedTicket(ticket)}
-                      className={`p-5 cursor-pointer transition-colors relative border-l-4 ${selectedTicket?._id === ticket._id ? 'bg-blue-50 border-l-angkasBlue' : 'hover:bg-slate-50 border-l-transparent'}`}
+                      className={`p-5 cursor-pointer transition-colors relative border-l-4 ${selectedTicket?._id === ticket._id ? 'bg-emerald-50 border-l-emerald-600' : 'hover:bg-slate-50 border-l-transparent'}`}
                    >
                       <div className="flex justify-between items-start mb-2">
                          <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${getPriorityColor(ticket.priority)}`}>
@@ -115,7 +115,7 @@ function SupportTickets() {
                          <span className={`text-[10px] font-black uppercase tracking-wider ${ticket.status === 'Resolved' ? 'text-green-500' : ticket.status === 'In Progress' ? 'text-blue-500' : 'text-orange-500'}`}>
                             ● {ticket.status}
                          </span>
-                         <IoArrowForward className={`text-lg transition-transform ${selectedTicket?._id === ticket._id ? 'text-angkasBlue translate-x-1' : 'text-slate-300'}`} />
+                         <IoArrowForward className={`text-lg transition-transform ${selectedTicket?._id === ticket._id ? 'text-emerald-600 translate-x-1' : 'text-slate-300'}`} />
                       </div>
                    </div>
                 ))
@@ -178,7 +178,7 @@ function SupportTickets() {
                         <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xl shadow-md shrink-0"><IoShieldHalf /></div>
                         <div>
                            <h3 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Responding Patrol Unit</h3>
-                           <p className="text-lg font-black text-emerald-950 leading-tight">{selectedTicket.dispatchUnit}</p>
+                           <p className="text-lg font-black text-bg-emerald-900 leading-tight">{selectedTicket.dispatchUnit}</p>
                         </div>
                      </div>
                   )}
@@ -189,7 +189,7 @@ function SupportTickets() {
                         {selectedTicket.status === 'Open' ? (
                            <button 
                               onClick={() => setDispatchPrompt({ isOpen: true, ticketId: selectedTicket._id, unitName: '' })} 
-                              className="flex-1 bg-angkasBlue text-white py-4 rounded-xl font-black shadow-lg hover:bg-blue-600 active:scale-95 transition-all flex items-center justify-center"
+                              className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center"
                            >
                               <IoFlash className="mr-2 text-xl" /> Dispatch Patrol Unit
                            </button>
@@ -236,7 +236,7 @@ function SupportTickets() {
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setDispatchPrompt({ isOpen: false, ticketId: null, unitName: '' })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm z-10 p-8 animate-slide-up">
             <div className="flex justify-center mb-4">
-               <div className="w-16 h-16 bg-blue-50 text-angkasBlue rounded-full flex items-center justify-center shadow-inner border border-blue-100">
+               <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shadow-inner border border-emerald-100">
                   <IoFlash className="text-3xl" />
                </div>
             </div>
@@ -245,7 +245,7 @@ function SupportTickets() {
             <input
                type="text"
                placeholder="e.g. Mobile Patrol 3 - Sgt. Cruz"
-               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-6 font-bold text-sm outline-none focus:border-angkasBlue transition-all shadow-inner"
+               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-6 font-bold text-sm outline-none focus:border-emerald-600 transition-all shadow-inner"
                value={dispatchPrompt.unitName}
                onChange={e => setDispatchPrompt({...dispatchPrompt, unitName: e.target.value})}
                autoFocus
@@ -258,7 +258,7 @@ function SupportTickets() {
                      setDispatchPrompt({ isOpen: false, ticketId: null, unitName: '' }); 
                   }} 
                   disabled={!dispatchPrompt.unitName.trim()}
-                  className="flex-[2] py-3.5 rounded-xl font-black bg-angkasBlue text-white hover:bg-blue-600 shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-[2] py-3.5 rounded-xl font-black bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg active:scale-95 transition-all disabled:opacity-50"
                >
                   Dispatch Unit
                </button>

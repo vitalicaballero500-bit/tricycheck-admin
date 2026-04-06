@@ -69,7 +69,7 @@ function SystemSettings() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-black text-slate-800 flex items-center">
-            <IoSettings className="text-angkasBlue mr-2" /> System Configuration
+            <IoSettings className="text-emerald-600 mr-2" /> System Configuration
           </h2>
           <p className="text-sm font-medium text-slate-500">Manage dynamic global variables like the LGU Fare Matrix.</p>
         </div>
@@ -96,7 +96,7 @@ function SystemSettings() {
                 {/* SETTING: BASE FARE */}
                 <div className="flex items-center justify-between bg-slate-50 p-6 rounded-2xl border border-slate-200">
                     <div className="flex items-center space-x-4">
-                        <div className="w-14 h-14 bg-emerald-100 text-angkasBlue rounded-xl flex items-center justify-center text-3xl shadow-sm border border-emerald-200">
+                        <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-3xl shadow-sm border border-emerald-200">
                             <IoCash />
                         </div>
                         <div>
@@ -109,7 +109,7 @@ function SystemSettings() {
                         <input 
                             type="number" 
                             min="0"
-                            className="w-24 text-3xl font-black text-angkasBlue p-2 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-angkasBlue text-center shadow-inner"
+                            className="w-24 text-3xl font-black text-emerald-600 p-2 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-center shadow-inner"
                             value={settings.baseFare}
                             onChange={(e) => setSettings({...settings, baseFare: e.target.value})}
                         />
@@ -132,7 +132,7 @@ function SystemSettings() {
                         <input 
                             type="number" 
                             min="0"
-                            className="w-24 text-3xl font-black text-angkasBlue p-2 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-angkasBlue text-center shadow-inner"
+                            className="w-24 text-3xl font-black text-emerald-600 p-2 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-center shadow-inner"
                             value={settings.perKmRate}
                             onChange={(e) => setSettings({...settings, perKmRate: e.target.value})}
                         />
@@ -146,7 +146,7 @@ function SystemSettings() {
             <button 
                 onClick={handleSave} 
                 disabled={isSaving || loading}
-                className="bg-posoDark text-white px-8 py-3.5 rounded-xl font-bold flex items-center space-x-2 shadow-lg hover:bg-slate-800 active:scale-95 transition-all disabled:bg-slate-400"
+                className="bg-bg-emerald-900 text-white px-8 py-3.5 rounded-xl font-bold flex items-center space-x-2 shadow-lg hover:bg-emerald-800 active:scale-95 transition-all disabled:bg-slate-400"
             >
                 {isSaving ? <span className="animate-pulse">Broadcasting...</span> : <><IoSave className="text-lg"/> <span>Save & Broadcast Matrix</span></>}
             </button>

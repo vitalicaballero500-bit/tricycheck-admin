@@ -205,16 +205,16 @@ function FleetManagement() {
       {/* === TOP TOGGLE ENGINE === */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex space-x-2 bg-slate-200/60 p-1.5 rounded-2xl w-max shadow-inner">
-           <button onClick={() => setViewMode('directory')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'directory' ? 'bg-white text-posoDark shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
+           <button onClick={() => setViewMode('directory')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'directory' ? 'bg-white text-bg-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
               <IoSearch className="text-lg"/> <span>Fleet Directory</span>
            </button>
-           <button onClick={() => setViewMode('leaderboard')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'leaderboard' ? 'bg-white text-posoDark shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
+           <button onClick={() => setViewMode('leaderboard')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'leaderboard' ? 'bg-white text-bg-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
               <IoPodium className="text-lg"/> <span>Performance Leaderboard</span>
            </button>
         </div>
 
         {viewMode === 'directory' && (
-          <button onClick={handleAddClick} className="bg-posoDark text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-slate-800 active:scale-95 shadow-md">
+          <button onClick={handleAddClick} className="bg-bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-emerald-800 active:scale-95 shadow-md">
             <IoAdd className="text-lg" /> <span>Register Driver</span>
           </button>
         )}
@@ -226,12 +226,12 @@ function FleetManagement() {
           <div className="flex justify-between items-center mb-4">
             <div className="relative w-72">
               <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
-              <input type="text" placeholder="Search Body No. or Name..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-angkasBlue text-sm shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <input type="text" placeholder="Search Body No. or Name..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-sm shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             
             <div className="flex space-x-3">
               <div className="relative">
-                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="appearance-none pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-angkasBlue text-sm shadow-sm font-bold text-slate-700 cursor-pointer">
+                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="appearance-none pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-sm shadow-sm font-bold text-slate-700 cursor-pointer">
                     <option value="Newest">Newest First</option>
                     <option value="Oldest">Oldest First</option>
                     <option value="A-Z">Name (A-Z)</option>
@@ -240,7 +240,7 @@ function FleetManagement() {
                  <IoSwapVertical className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none" />
               </div>
               <div className="relative">
-                 <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="appearance-none pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-angkasBlue text-sm shadow-sm font-bold text-slate-700 cursor-pointer">
+                 <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="appearance-none pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-sm shadow-sm font-bold text-slate-700 cursor-pointer">
                     <option value="All">All Drivers</option>
                     {!isSecretary && <option value="Online">🟢 Live Online</option>}
                     {!isSecretary && <option value="Offline">⚫ Offline</option>}
@@ -283,11 +283,11 @@ function FleetManagement() {
                            </div>
                            <div>
                              <p className="text-slate-800 leading-tight flex items-center">{driver.name}</p>
-                             <p className="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5 font-bold">Added by: <span className="text-angkasBlue">{driver.registeredBy}</span></p>
+                             <p className="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5 font-bold">Added by: <span className="text-emerald-600">{driver.registeredBy}</span></p>
                            </div>
                         </td>
 
-                        <td className="p-4 text-angkasBlue font-bold">{driver.homeToda}</td>
+                        <td className="p-4 text-emerald-600 font-bold">{driver.homeToda}</td>
                         <td className="p-4">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${driver.status === 'Active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-orange-100 text-orange-700 border-orange-200'}`}>
                             {driver.status}
@@ -300,8 +300,8 @@ function FleetManagement() {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver })} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100" title="View Full Info"><IoEye /></button>
-                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100" title="Reset Password"><IoKey /></button>
+                          <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver })} className="p-2 bg-emerald-50 text-blue-600 rounded-lg hover:bg-blue-100" title="View Full Info"><IoEye /></button>
+                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100" title="Reset Password"><IoKey /></button>
                           <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200" title="Edit Profile"><IoPencil /></button>
                         </td>
                       </tr>
@@ -364,7 +364,7 @@ function FleetManagement() {
                        </div>
                        <button 
                           onClick={() => openReviewsModal(driver)}
-                          className="bg-emerald-50 text-angkasBlue p-3 rounded-xl hover:bg-emerald-100 transition-colors"
+                          className="bg-emerald-50 text-emerald-600 p-3 rounded-xl hover:bg-emerald-100 transition-colors"
                           title="Read Passenger Reviews"
                        >
                           <IoChatbubbles className="text-xl" />
@@ -382,12 +382,12 @@ function FleetManagement() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl z-10 overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
-            <div className="bg-posoDark p-6 flex justify-between items-center text-white shrink-0">
+            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
               <div>
                 <h2 className="text-xl font-black">{isEditing ? 'Edit Driver Profile' : 'Register New Tricycle'}</h2>
                 <p className="text-xs text-slate-400 font-medium mt-1">POSO Secure File Vault System</p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition-colors"><IoClose className="text-xl" /></button>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-800 hover:bg-emerald-800 rounded-full transition-colors"><IoClose className="text-xl" /></button>
             </div>
 
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
@@ -433,15 +433,15 @@ function FleetManagement() {
                 
                 <div className="col-span-2 space-y-4 mt-2">
                    <div>
-                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Driver's License (Expiry & Scan)</label>{newDriver.licensePicUrl && <a href={newDriver.licensePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-angkasBlue font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
+                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Driver's License (Expiry & Scan)</label>{newDriver.licensePicUrl && <a href={newDriver.licensePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
                      <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.licenseExpiry} onChange={e => setNewDriver({...newDriver, licenseExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'licensePic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
                    </div>
                    <div>
-                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Tricycle OR/CR (Expiry & Scan)</label>{newDriver.orcrPicUrl && <a href={newDriver.orcrPicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-angkasBlue font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
+                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Tricycle OR/CR (Expiry & Scan)</label>{newDriver.orcrPicUrl && <a href={newDriver.orcrPicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
                      <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.orCrExpiry} onChange={e => setNewDriver({...newDriver, orCrExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'orcrPic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
                    </div>
                    <div>
-                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Franchise Permit (Expiry & Scan)</label>{newDriver.franchisePicUrl && <a href={newDriver.franchisePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-angkasBlue font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
+                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Franchise Permit (Expiry & Scan)</label>{newDriver.franchisePicUrl && <a href={newDriver.franchisePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
                      <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.franchisePermitExpiry} onChange={e => setNewDriver({...newDriver, franchisePermitExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'franchisePic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
                    </div>
                 </div>
@@ -449,7 +449,7 @@ function FleetManagement() {
 
               <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100 mt-4">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-                <button type="submit" className="bg-angkasBlue text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all">
+                <button type="submit" className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all">
                   {isEditing ? 'Save Profile' : 'Register Driver'}
                 </button>
               </div>
@@ -465,7 +465,7 @@ function FleetManagement() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg z-10 overflow-hidden animate-slide-up flex flex-col max-h-[80vh]">
              <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
                 <div>
-                   <h2 className="font-black text-slate-800 text-xl flex items-center"><IoChatbubbles className="mr-2 text-angkasBlue"/> Passenger Feedback</h2>
+                   <h2 className="font-black text-slate-800 text-xl flex items-center"><IoChatbubbles className="mr-2 text-emerald-600"/> Passenger Feedback</h2>
                    <p className="text-xs font-bold text-slate-500 mt-1">Reviewing: {reviewsModal.driverName}</p>
                 </div>
                 <button onClick={() => setReviewsModal({ isOpen: false, driverName: '', rating: 0 })} className="p-2 text-slate-400 hover:text-slate-600"><IoClose className="text-xl"/></button>
@@ -510,12 +510,12 @@ function FleetManagement() {
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setQuickViewModal({ isOpen: false, driver: null })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
-            <div className="bg-posoDark p-6 flex justify-between items-center text-white shrink-0">
+            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
                <div>
-                  <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-angkasBlue"/> Driver Personnel File</h2>
+                  <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-emerald-600"/> Driver Personnel File</h2>
                   <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Read-Only View</p>
                </div>
-               <button onClick={() => setQuickViewModal({ isOpen: false, driver: null })} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition-colors"><IoClose className="text-xl" /></button>
+               <button onClick={() => setQuickViewModal({ isOpen: false, driver: null })} className="p-2 bg-slate-800 hover:bg-emerald-800 rounded-full transition-colors"><IoClose className="text-xl" /></button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-8 space-y-6">
@@ -525,7 +525,7 @@ function FleetManagement() {
                   </div>
                   <div>
                      <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">{quickViewModal.driver.name}</h3>
-                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">BODY NO. <span className="text-angkasBlue font-black">{quickViewModal.driver.bodyNo || 'N/A'}</span> | {quickViewModal.driver.homeToda}</p>
+                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">BODY NO. <span className="text-emerald-600 font-black">{quickViewModal.driver.bodyNo || 'N/A'}</span> | {quickViewModal.driver.homeToda}</p>
                      <span className={`inline-block mt-2 px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full border ${quickViewModal.driver.status === 'Active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>{quickViewModal.driver.status}</span>
                   </div>
                </div>

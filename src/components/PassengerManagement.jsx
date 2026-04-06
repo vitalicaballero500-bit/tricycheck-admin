@@ -82,14 +82,14 @@ function PassengerManagement() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-black text-slate-800 flex items-center">
-            <IoPeople className="text-angkasBlue mr-2" /> Passenger Oversight
+            <IoPeople className="text-emerald-600 mr-2" /> Passenger Oversight
           </h2>
           <p className="text-sm font-medium text-slate-500">Manage registered commuters and account security.</p>
         </div>
         
         <div className="relative w-72">
           <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="text" placeholder="Search by name or phone..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-angkasBlue text-sm font-bold shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Search by name or phone..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-sm font-bold shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
       </div>
 
@@ -110,7 +110,7 @@ function PassengerManagement() {
                 <td className="p-5 font-mono text-sm text-slate-500">
                    <div className="flex items-center space-x-2">
                       <span>{p.phone}</span>
-                      <a href={`tel:${p.phone}`} className="opacity-0 group-hover:opacity-100 text-angkasBlue transition-opacity"><IoCall /></a>
+                      <a href={`tel:${p.phone}`} className="opacity-0 group-hover:opacity-100 text-emerald-600 transition-opacity"><IoCall /></a>
                    </div>
                 </td>
                 <td className="p-5">
@@ -123,7 +123,7 @@ function PassengerManagement() {
                   {/* === THE FIX: NEW PASSWORD RESET BUTTON === */}
                   <button 
                     onClick={() => handleResetPasswordClick(p._id, `${p.firstName} ${p.lastName}`)}
-                    className="inline-flex items-center justify-center p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100 transition-colors"
+                    className="inline-flex items-center justify-center p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
                     title="Reset Password"
                   >
                     <IoKey />
