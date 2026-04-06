@@ -50,8 +50,8 @@ function ResetPassword() {
       
       {/* === LGU MUNICIPAL BACKGROUND === */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-bg-emerald-900/40 z-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-bg-emerald-900 via-transparent to-transparent z-20"></div>
+        <div className="absolute inset-0 bg-emerald-900/40 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-emerald-900 via-transparent to-transparent z-20"></div>
         <img 
             src="/calasiao-municipal.jpg" 
             alt="Calasiao Municipal Hall" 
@@ -64,7 +64,7 @@ function ResetPassword() {
         
         {status.success ? (
             <div className="text-center py-8 animate-fade-in">
-                <div className="w-20 h-20 bg-bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-500/50">
+                <div className="w-20 h-20 bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-500/50">
                     <IoCheckmarkCircle className="text-5xl text-amber-400" />
                 </div>
                 <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Password Secured</h2>
@@ -103,7 +103,7 @@ function ResetPassword() {
                         <input 
                             type={showNew ? "text" : "password"} 
                             required
-                            className="w-full pl-11 pr-12 py-3.5 bg-bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
+                            className="w-full pl-11 pr-12 py-3.5 bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
                             placeholder="New Password"
                             value={passwords.new}
                             onChange={(e) => setPasswords({...passwords, new: e.target.value})}
@@ -126,7 +126,7 @@ function ResetPassword() {
                         <input 
                             type={showConfirm ? "text" : "password"} 
                             required
-                            className="w-full pl-11 pr-12 py-3.5 bg-bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
+                            className="w-full pl-11 pr-12 py-3.5 bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
                             placeholder="Confirm Password"
                             value={passwords.confirm}
                             onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
@@ -144,7 +144,7 @@ function ResetPassword() {
                     <button 
                         type="submit" 
                         disabled={status.loading}
-                        className={`w-full font-black text-base py-3.5 rounded-xl shadow-xl transition-all mt-6 flex justify-center items-center relative overflow-hidden ${status.loading ? 'bg-emerald-800 text-emerald-400 cursor-not-allowed' : 'bg-amber-400 text-bg-emerald-900 hover:bg-amber-300 active:scale-95 hover:shadow-amber-500/20'}`}
+                        className={`w-full font-black text-base py-3.5 rounded-xl shadow-xl transition-all mt-6 flex justify-center items-center relative overflow-hidden ${status.loading ? 'bg-emerald-800 text-emerald-400 cursor-not-allowed' : 'bg-amber-400 text-emerald-900 hover:bg-amber-300 active:scale-95 hover:shadow-amber-500/20'}`}
                     >
                         <span className="relative z-10">{status.loading ? 'Authenticating...' : 'Confirm Security Key'}</span>
                     </button>

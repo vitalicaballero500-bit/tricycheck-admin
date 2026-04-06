@@ -205,16 +205,16 @@ function FleetManagement() {
       {/* === TOP TOGGLE ENGINE === */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex space-x-2 bg-slate-200/60 p-1.5 rounded-2xl w-max shadow-inner">
-           <button onClick={() => setViewMode('directory')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'directory' ? 'bg-white text-bg-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
+           <button onClick={() => setViewMode('directory')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'directory' ? 'bg-white text-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
               <IoSearch className="text-lg"/> <span>Fleet Directory</span>
            </button>
-           <button onClick={() => setViewMode('leaderboard')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'leaderboard' ? 'bg-white text-bg-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
+           <button onClick={() => setViewMode('leaderboard')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'leaderboard' ? 'bg-white text-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
               <IoPodium className="text-lg"/> <span>Performance Leaderboard</span>
            </button>
         </div>
 
         {viewMode === 'directory' && (
-          <button onClick={handleAddClick} className="bg-bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-emerald-800 active:scale-95 shadow-md">
+          <button onClick={handleAddClick} className="bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-emerald-800 active:scale-95 shadow-md">
             <IoAdd className="text-lg" /> <span>Register Driver</span>
           </button>
         )}
@@ -382,7 +382,7 @@ function FleetManagement() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl z-10 overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
-            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
+            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
               <div>
                 <h2 className="text-xl font-black">{isEditing ? 'Edit Driver Profile' : 'Register New Tricycle'}</h2>
                 <p className="text-xs text-slate-400 font-medium mt-1">POSO Secure File Vault System</p>
@@ -510,7 +510,7 @@ function FleetManagement() {
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setQuickViewModal({ isOpen: false, driver: null })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
-            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
+            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
                <div>
                   <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-emerald-600"/> Driver Personnel File</h2>
                   <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Read-Only View</p>

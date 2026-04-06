@@ -72,7 +72,7 @@ function SupportTickets() {
       if (priority === 'CRITICAL') return 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]';
       if (priority === 'High') return 'bg-orange-500 text-white';
       if (priority === 'Medium') return 'bg-yellow-400 text-yellow-900';
-      return 'bg-emerald-400 text-bg-emerald-900';
+      return 'bg-emerald-400 text-emerald-900';
   };
 
   return (
@@ -178,7 +178,7 @@ function SupportTickets() {
                         <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xl shadow-md shrink-0"><IoShieldHalf /></div>
                         <div>
                            <h3 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Responding Patrol Unit</h3>
-                           <p className="text-lg font-black text-bg-emerald-900 leading-tight">{selectedTicket.dispatchUnit}</p>
+                           <p className="text-lg font-black text-emerald-900 leading-tight">{selectedTicket.dispatchUnit}</p>
                         </div>
                      </div>
                   )}

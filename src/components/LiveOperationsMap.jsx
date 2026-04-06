@@ -112,7 +112,7 @@ function LiveOperationsMap() {
             {['All', 'Available', 'On Trip'].map(f => (
               <button 
                 key={f} onClick={() => setFilter(f)}
-                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filter === f ? 'bg-white text-bg-emerald-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${filter === f ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
                 {f}
               </button>
@@ -165,7 +165,7 @@ function LiveOperationsMap() {
       <div className="w-full lg:w-80 flex flex-col space-y-6 shrink-0 z-10">
         
         {/* DATABASE-CONNECTED STATS */}
-        <div className="bg-bg-emerald-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div className="bg-emerald-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
            <div className="absolute -right-6 -top-6 text-slate-700/30"><IoSpeedometer className="text-9xl" /></div>
            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 relative z-10">Live Fleet Status</h3>
            <div className="grid grid-cols-2 gap-4 relative z-10">

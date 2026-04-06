@@ -60,8 +60,8 @@ function AdminLogin() {
       
       {/* === LGU MUNICIPAL BACKGROUND === */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-bg-emerald-900/40 z-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-bg-emerald-900 via-transparent to-transparent z-20"></div>
+        <div className="absolute inset-0 bg-emerald-900/40 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-emerald-900 via-transparent to-transparent z-20"></div>
         <img 
             src="/calasiao-municipal.jpg" 
             alt="Calasiao Municipal Hall" 
@@ -81,7 +81,7 @@ function AdminLogin() {
                  className="w-20 h-20 object-contain rounded-full" 
                  onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/1000/1000966.png'; }}
              />
-             <div className="absolute -bottom-2 bg-amber-400 text-bg-emerald-900 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md border-2 border-white">
+             <div className="absolute -bottom-2 bg-amber-400 text-emerald-900 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-md border-2 border-white">
                  Calasiao LGU
              </div>
           </div>
@@ -105,7 +105,7 @@ function AdminLogin() {
               <input 
                 type="text" 
                 required
-                className="w-full pl-11 pr-4 py-3.5 bg-bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
+                className="w-full pl-11 pr-4 py-3.5 bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
                 placeholder="System Username"
                 value={credentials.username}
                 onChange={(e) => setCredentials({...credentials, username: e.target.value})}
@@ -120,7 +120,7 @@ function AdminLogin() {
               <input 
                 type={showPassword ? "text" : "password"} 
                 required
-                className="w-full pl-11 pr-12 py-3.5 bg-bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
+                className="w-full pl-11 pr-12 py-3.5 bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
                 placeholder="••••••••"
                 value={credentials.password}
                 onChange={(e) => setCredentials({...credentials, password: e.target.value})}
@@ -149,7 +149,7 @@ function AdminLogin() {
           <button 
             type="submit" 
             disabled={isLoading}
-            className={`w-full font-black text-base py-3.5 rounded-xl shadow-xl transition-all mt-6 flex justify-center items-center relative overflow-hidden ${isLoading ? 'bg-emerald-800 text-emerald-400 cursor-not-allowed' : 'bg-amber-400 text-bg-emerald-900 hover:bg-amber-300 active:scale-95 hover:shadow-amber-500/20'}`}
+            className={`w-full font-black text-base py-3.5 rounded-xl shadow-xl transition-all mt-6 flex justify-center items-center relative overflow-hidden ${isLoading ? 'bg-emerald-800 text-emerald-400 cursor-not-allowed' : 'bg-amber-400 text-emerald-900 hover:bg-amber-300 active:scale-95 hover:shadow-amber-500/20'}`}
           >
             <span className="relative z-10">{isLoading ? 'Authenticating...' : 'Secure Access Login'}</span>
           </button>
@@ -165,13 +165,13 @@ function AdminLogin() {
       {/* === THE SECURE RECOVERY MODAL OVERLAY === */}
       {showForgot && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 animate-fade-in">
-          <div className="absolute inset-0 bg-bg-emerald-900/80 backdrop-blur-sm" onClick={() => setShowForgot(false)}></div>
+          <div className="absolute inset-0 bg-emerald-900/80 backdrop-blur-sm" onClick={() => setShowForgot(false)}></div>
           <div className="bg-emerald-900 border border-emerald-500/30 rounded-3xl shadow-2xl w-full max-w-sm z-10 p-6 animate-slide-up relative">
             <button onClick={() => setShowForgot(false)} className="absolute top-4 right-4 p-2 text-emerald-500/70 hover:text-emerald-300 transition-colors active:scale-90">
               <IoClose className="text-xl" />
             </button>
             
-            <div className="w-14 h-14 bg-bg-emerald-900 text-amber-400 rounded-full flex items-center justify-center mb-4 mx-auto shadow-inner border border-emerald-700/50">
+            <div className="w-14 h-14 bg-emerald-900 text-amber-400 rounded-full flex items-center justify-center mb-4 mx-auto shadow-inner border border-emerald-700/50">
                <IoMail className="text-2xl" />
             </div>
             <h3 className="text-xl font-black text-white text-center mb-2 tracking-tight">Admin Recovery</h3>
@@ -187,7 +187,7 @@ function AdminLogin() {
                   <input 
                     type="email" 
                     required
-                    className="w-full pl-11 pr-4 py-3.5 bg-bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold text-sm tracking-wide placeholder-emerald-600/60"
+                    className="w-full pl-11 pr-4 py-3.5 bg-emerald-900/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold text-sm tracking-wide placeholder-emerald-600/60"
                     placeholder="admin@calasiao.gov.ph"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
@@ -200,7 +200,7 @@ function AdminLogin() {
                   </div>
                )}
 
-               <button type="submit" className="w-full bg-amber-400 text-bg-emerald-900 font-black py-3.5 rounded-xl hover:bg-amber-300 active:scale-[0.98] transition-all shadow-lg">
+               <button type="submit" className="w-full bg-amber-400 text-emerald-900 font-black py-3.5 rounded-xl hover:bg-amber-300 active:scale-[0.98] transition-all shadow-lg">
                   Send Recovery Link
                </button>
             </form>

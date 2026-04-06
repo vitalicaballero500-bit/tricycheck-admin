@@ -142,7 +142,7 @@ function StaffManagement() {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg hover:bg-emerald-800 active:scale-95 transition-all"
+          className="bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold flex items-center shadow-lg hover:bg-emerald-800 active:scale-95 transition-all"
         >
           <IoAdd className="text-lg mr-2" /> Issue Credentials
         </button>
@@ -218,7 +218,7 @@ function StaffManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
-            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white">
+            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white">
               <h2 className="text-xl font-black">Issue Personnel Credentials</h2>
               <button onClick={() => setIsModalOpen(false)}><IoClose className="text-2xl hover:text-red-400" /></button>
             </div>

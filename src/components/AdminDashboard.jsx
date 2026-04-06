@@ -249,8 +249,8 @@ function AdminDashboard() {
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       
       {/* === THE FIX: EMERALD/AMBER GOVERNMENT SIDEBAR === */}
-      <aside className="w-72 bg-bg-emerald-900 text-white flex flex-col shadow-2xl z-20 shrink-0 border-r border-emerald-900">
-        <div className="h-24 flex items-center px-6 border-b border-emerald-900 bg-bg-emerald-900">
+      <aside className="w-72 bg-emerald-900 text-white flex flex-col shadow-2xl z-20 shrink-0 border-r border-emerald-900">
+        <div className="h-24 flex items-center px-6 border-b border-emerald-900 bg-emerald-900">
           {/* THE FIX: poso-logo.png changed to .jpg to fix the broken image */}
           <img src="/poso-logo.jpg" alt="POSO" className="w-12 h-12 mr-4 drop-shadow-md object-contain rounded-full border border-emerald-800" />
           <div>
@@ -262,20 +262,20 @@ function AdminDashboard() {
         <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
           <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4 ml-2">Main Menu</p>
           {menuItems.map((item) => (
-            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-amber-400 text-bg-emerald-900 shadow-lg shadow-amber-500/20' : 'text-emerald-100/70 hover:bg-emerald-900/50 hover:text-amber-400'}`}>
+            <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-amber-400 text-emerald-900 shadow-lg shadow-amber-500/20' : 'text-emerald-100/70 hover:bg-emerald-900/50 hover:text-amber-400'}`}>
               <span className="text-xl">{item.icon}</span><span>{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-emerald-900 bg-bg-emerald-900">
+        <div className="p-4 border-t border-emerald-900 bg-emerald-900">
           <div className="flex items-center justify-between bg-emerald-900/50 p-4 rounded-xl border border-emerald-800">
             <div 
               className="flex items-center space-x-3 truncate cursor-pointer hover:bg-emerald-800 p-1.5 -ml-1.5 rounded-lg transition-colors" 
               onClick={() => setShowProfileModal(true)}
               title="Edit My Profile"
             >
-              <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-bg-emerald-900 font-black shadow-inner shrink-0 border-2 border-emerald-800">
+              <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-emerald-900 font-black shadow-inner shrink-0 border-2 border-emerald-800">
                 {adminUser.firstName.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
               </div>
               <div className="text-left truncate">
@@ -469,7 +469,7 @@ function AdminDashboard() {
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowReportModal(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
             
-            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white">
+            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white">
               <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-emerald-600" /> Generate Report</h2>
               <button onClick={() => setShowReportModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
             </div>
@@ -522,7 +522,7 @@ function AdminDashboard() {
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
             
-            <div className="bg-bg-emerald-900 p-6 flex justify-between items-center text-white">
+            <div className="bg-emerald-900 p-6 flex justify-between items-center text-white">
               <h2 className="text-xl font-black flex items-center"><IoPeople className="mr-2 text-emerald-600" /> Edit My Profile</h2>
               <button onClick={() => setShowProfileModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
             </div>

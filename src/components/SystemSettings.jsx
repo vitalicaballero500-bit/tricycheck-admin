@@ -146,7 +146,7 @@ function SystemSettings() {
             <button 
                 onClick={handleSave} 
                 disabled={isSaving || loading}
-                className="bg-bg-emerald-900 text-white px-8 py-3.5 rounded-xl font-bold flex items-center space-x-2 shadow-lg hover:bg-emerald-800 active:scale-95 transition-all disabled:bg-slate-400"
+                className="bg-emerald-900 text-white px-8 py-3.5 rounded-xl font-bold flex items-center space-x-2 shadow-lg hover:bg-emerald-800 active:scale-95 transition-all disabled:bg-slate-400"
             >
                 {isSaving ? <span className="animate-pulse">Broadcasting...</span> : <><IoSave className="text-lg"/> <span>Save & Broadcast Matrix</span></>}
             </button>
