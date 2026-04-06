@@ -248,7 +248,7 @@ function AdminDashboard() {
 
   if (!adminUser) return null; 
 
-  // === THE FIX: ENTERPRISE ISLAND ARCHITECTURE ===
+  // === THE FIX: RESTORED DUAL-FEED DASHBOARD OVERVIEW ===
   return (
     <div className="flex h-[100dvh] bg-emerald-950 overflow-hidden font-sans selection:bg-amber-400/30 selection:text-amber-200">
       
@@ -279,7 +279,7 @@ function AdminDashboard() {
               title="Edit My Profile"
             >
               <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-emerald-950 font-black shadow-inner shrink-0 border-2 border-emerald-800">
-                {adminUser.firstName.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
+                {adminUser.firstName?.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
               </div>
               <div className="text-left truncate">
                 <p className="text-sm font-bold text-emerald-50 leading-tight truncate">{adminUser.firstName} {adminUser.lastName}</p>
@@ -317,7 +317,7 @@ function AdminDashboard() {
             <div className="p-8 space-y-8 animate-fade-in w-full max-w-[1600px] mx-auto">
               
               {/* STAT CARDS - Pristine White Glass */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {/* Active Drivers */}
                 <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4 relative z-10">
@@ -365,7 +365,7 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              {/* THE SQUARE MAP CONTAINER - With Depth and Shadows */}
+              {/* RESTORED: THE SQUARE MAP CONTAINER */}
               <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
                 <div className="flex justify-between items-end mb-6 relative z-10">
                   <div>
@@ -382,8 +382,23 @@ function AdminDashboard() {
                     <span className="text-xs font-bold text-emerald-700 tracking-wider">LIVE SYNC</span>
                   </div>
                 </div>
+                {/* Embedded LiveOperationsMap */}
                 <div className="h-[500px] w-full rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-10 bg-slate-100">
                    <LiveOperationsMap />
+                </div>
+              </div>
+
+              {/* RESTORED: THE SUPPORT TICKETS FEED */}
+              <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm relative overflow-hidden">
+                <div className="mb-6 relative z-10">
+                  <h3 className="text-2xl font-black text-emerald-950 tracking-tight flex items-center">
+                    <IoWarning className="mr-3 text-red-500" /> Live Dispatch & Incident Feed
+                  </h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Direct view of passenger complaints and SOS requests</p>
+                </div>
+                {/* Embedded SupportTickets */}
+                <div className="w-full rounded-[1.5rem] overflow-hidden border border-slate-200 shadow-inner relative z-10 bg-slate-50">
+                   <SupportTickets />
                 </div>
               </div>
 
@@ -425,7 +440,7 @@ function AdminDashboard() {
         </div>
       </main>
 
-      {/* MODALS REMAIN UNCHANGED BELOW */}
+      {/* MODALS */}
       {showReportModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-emerald-950/80 backdrop-blur-sm" onClick={() => setShowReportModal(false)}></div>
@@ -448,7 +463,7 @@ function AdminDashboard() {
                   </select>
                </div>
                
-               <button onClick={generateReport} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
+               <button onClick={handlePrint} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
                   {isGenerating ? <span className="animate-pulse">Compiling Data...</span> : <><IoDownload className="mr-2 text-lg" /> Download PDF Report</>}
                </button>
             </div>
