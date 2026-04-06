@@ -314,88 +314,157 @@ function AdminDashboard() {
         {/* DYNAMIC MODULE INJECTION */}
         <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative z-10">
           
-          {/* THE CLEAN OVERVIEW */}
+          {/* THE ORIGINAL DASHBOARD OVERVIEW RESTORED */}
           {activeTab === 'dashboard' && (
-            <div className="p-8 space-y-8 animate-fade-in w-full max-w-[1600px] mx-auto">
+            <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto">
               
-              {/* STAT CARDS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Active Drivers */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
-                      <IoCarSport className="text-2xl text-emerald-600" />
-                    </div>
-                    {loadingStats ? <div className="w-8 h-8 rounded-full border-4 border-slate-100 border-t-emerald-600 animate-spin"></div> : <span className="text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded-lg text-xs">+Live</span>}
-                  </div>
-                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.activeDrivers}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Active Fleet</p>
+              {/* RED EMERGENCY BANNER */}
+              {stats.activeTickets?.some(t => t.priority === 'CRITICAL' || t.priority === 'High') && (
+                <div className="bg-red-500 text-white p-3 rounded-xl mb-6 shadow-lg shadow-red-500/30 flex justify-center items-center font-black tracking-widest uppercase text-sm animate-pulse border-2 border-red-600">
+                   <IoWarning className="mr-2 text-xl" /> ACTIVE EMERGENCY: UNRESOLVED HIGH-PRIORITY TICKETS DETECTED!
                 </div>
+              )}
 
-                {/* Pending Approvals */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100">
-                      <IoIdCard className="text-2xl text-amber-500" />
-                    </div>
-                    {stats.pendingDrivers > 0 && <span className="bg-red-50 text-red-500 font-bold px-2 py-1 rounded-lg text-xs animate-pulse">Action Needed</span>}
-                  </div>
-                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.pendingDrivers}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Pending Approvals</p>
+              {/* STAT CARDS - Original Data & Terminology */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl shadow-sm border border-red-100"><IoWarning /></div></div>
+                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeTickets?.length || 0}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unresolved Tickets</p>
                 </div>
-
-                {/* Active Rides */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100">
-                      <IoBicycle className="text-2xl text-blue-500" />
-                    </div>
-                  </div>
-                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.activeRides}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Rides in Transit</p>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoIdCard /></div></div>
+                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeDrivers}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Drivers</p>
                 </div>
-
-                {/* Active Tickets */}
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4 relative z-10">
-                    <div className="p-3 bg-red-50 rounded-2xl border border-red-100">
-                      <IoWarning className="text-2xl text-red-500" />
-                    </div>
-                  </div>
-                  <h3 className="text-4xl font-black text-emerald-950 relative z-10">{stats.activeTickets?.length || 0}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest relative z-10 mt-1">Open Reports</p>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl shadow-sm border border-orange-100"><IoDocumentText /></div></div>
+                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.pendingDrivers}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Approvals</p>
+                </div>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoBicycle /></div></div>
+                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeRides}</h3>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Rides Now</p>
                 </div>
               </div>
 
-              {/* AUDIT LOGS CONTAINER */}
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-                <h3 className="text-2xl font-black text-emerald-950 tracking-tight mb-6">Security Audit Logs</h3>
-                {loadingLogs ? (
-                   <p className="text-slate-500 font-bold animate-pulse">Loading system records...</p>
-                ) : (
-                  <div className="space-y-4">
-                    {auditLogs.map(log => (
-                      <div key={log._id} className="flex items-start space-x-4 p-4 rounded-2xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors">
-                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0">
-                           {log.adminId?.firstName?.charAt(0) || '?'}
-                        </div>
+              {/* 2-COLUMN GRID: ALERTS & LOGS */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  
+                  {/* PRIORITY ALERTS */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-red-200/80 overflow-hidden relative flex flex-col h-[500px]">
+                     <div className="absolute top-0 left-0 w-2 h-full bg-red-500"></div>
+                     <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-red-50/30 shrink-0">
                         <div>
-                          <p className="text-sm font-bold text-emerald-950">
-                             {log.adminId?.firstName} {log.adminId?.lastName} <span className="text-emerald-600 font-black">{log.action}</span>
-                          </p>
-                          <p className="text-[11px] font-bold text-slate-500 mt-0.5">{log.details}</p>
-                          <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                             {new Date(log.timestamp).toLocaleString()} • {log.moduleName}
-                          </p>
+                          <h3 className="text-lg font-black text-slate-800 flex items-center">
+                            <IoWarning className="text-red-500 mr-2 text-2xl animate-pulse" /> Priority Alerts
+                          </h3>
+                          <p className="text-sm font-medium text-slate-500 mt-1">Expiring docs in ≤ 30 days.</p>
                         </div>
-                      </div>
-                    ))}
+                        <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-sm">
+                          {stats.expiringDrivers?.length || 0} Flagged
+                        </div>
+                     </div>
+
+                     <div className="flex-1 overflow-y-auto">
+                         {(!stats.expiringDrivers || stats.expiringDrivers.length === 0) && (!stats.activeTickets || stats.activeTickets.length === 0) ? (
+                            <div className="p-10 text-center flex flex-col items-center justify-center h-full">
+                               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-green-500 text-3xl mb-3 border border-green-100">🎉</div>
+                               <p className="text-lg font-bold text-slate-700">All systems safe and up to date!</p>
+                            </div>
+                         ) : (
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                                  <th className="p-4 pl-8">Body No. / Alert</th>
+                                  <th className="p-4">Driver / Details</th>
+                                  <th className="p-4 text-right pr-8">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-sm font-medium text-slate-700 divide-y divide-slate-100">
+                                {stats.activeTickets?.map(t => (
+                                  <tr key={t._id} className="bg-red-50/40 hover:bg-red-50 transition-colors">
+                                    <td className="p-4 pl-8">
+                                       <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${t.priority === 'CRITICAL' ? 'bg-red-500 text-white animate-pulse' : 'bg-orange-500 text-white'}`}>
+                                          {t.priority} TICKET
+                                       </span>
+                                    </td>
+                                    <td className="p-4 font-bold text-slate-800 truncate max-w-[150px]">{t.type}</td>
+                                    <td className="p-4 text-right pr-8">
+                                      <button onClick={() => setActiveTab('reports')} className="inline-flex items-center justify-center bg-white border border-red-200 text-red-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-50 shadow-sm transition-all">
+                                        <IoWarning className="mr-1.5" /> View
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                                {stats.expiringDrivers?.map(d => (
+                                  <tr key={d._id} className="hover:bg-red-50/50 transition-colors">
+                                    <td className="p-4 pl-8 font-black text-slate-900">{d.bodyNo || 'N/A'}</td>
+                                    <td className="p-4 font-bold truncate max-w-[120px]">{d.firstName} {d.lastName}</td>
+                                    <td className="p-4 text-right pr-8">
+                                      <a href={`tel:${d.phone}`} className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 active:scale-95 transition-all shadow-sm">
+                                        <IoCall className="mr-1.5" /> Call
+                                      </a>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                         )}
+                     </div>
                   </div>
-                )}
+
+                  {/* SYSTEM AUDIT TRAIL */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden relative flex flex-col h-[500px]">
+                     <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                        <div>
+                          <h3 className="text-lg font-black text-slate-800 flex items-center">
+                            <IoTime className="text-emerald-600 mr-2 text-2xl" /> System Audit Trail
+                          </h3>
+                          <p className="text-sm font-medium text-slate-500 mt-1">Live tracking of administrative actions.</p>
+                        </div>
+                     </div>
+                     <div className="flex-1 overflow-y-auto p-0">
+                        {loadingLogs ? (
+                            <div className="flex justify-center items-center h-full text-slate-400 font-bold animate-pulse">Syncing Encrypted Feed...</div>
+                        ) : auditLogs.length === 0 ? (
+                            <div className="flex justify-center items-center h-full text-slate-400 font-bold">No recent system activity.</div>
+                        ) : (
+                            <div className="divide-y divide-slate-100">
+                               {auditLogs.map(log => {
+                                   const colors = { fleet: 'bg-emerald-100 text-emerald-600 border-emerald-200', passengers: 'bg-indigo-100 text-indigo-600 border-indigo-200', settings: 'bg-slate-800 text-white border-slate-700', reports: 'bg-orange-100 text-orange-600 border-orange-200', compliance: 'bg-red-100 text-red-600 border-red-200', staff: 'bg-purple-100 text-purple-600 border-purple-200' };
+                                   const colorClass = colors[log.moduleName || log.module] || 'bg-gray-100 text-gray-600 border-gray-200';
+                                   return (
+                                   <div key={log._id} className="p-5 hover:bg-slate-50 transition-colors flex space-x-4">
+                                       <div className={`mt-1 w-12 h-12 rounded-full flex items-center justify-center font-bold text-xs border shadow-inner shrink-0 ${colorClass}`}>
+                                          {(log.moduleName || log.module || '?').substring(0,3).toUpperCase()}
+                                       </div>
+                                       <div className="flex-1">
+                                           <div className="flex justify-between items-start">
+                                              <p className="text-sm font-black text-slate-800 leading-tight pr-2">{log.action}</p>
+                                              <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap pt-0.5">
+                                                  {new Date(log.timestamp || log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                              </span>
+                                           </div>
+                                           <p className="text-xs text-slate-500 font-medium mt-1">{log.details}</p>
+                                           <div className="flex items-center mt-3">
+                                               <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider flex items-center">
+                                                  <IoGrid className="mr-1" /> {log.adminId?.firstName || log.adminName || '?'}
+                                               </span>
+                                           </div>
+                                       </div>
+                                   </div>
+                               )})}
+                            </div>
+                        )}
+                     </div>
+                  </div>
+
               </div>
             </div>
           )}
-
           {/* ISOLATED TABS FOR MAP AND TICKETS */}
           {activeTab === 'map' && <div className="p-6 animate-fade-in w-full h-[calc(100vh-6rem)] max-w-[1600px] mx-auto"><LiveOperationsMap /></div>}
           {activeTab === 'reports' && <div className="p-6 animate-fade-in w-full h-[calc(100vh-6rem)] max-w-[1600px] mx-auto"><SupportTickets /></div>}
