@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   IoSearch, IoAdd, IoPencil, IoKey, IoClose, IoWarning, IoCamera, IoEye, 
-  IoFilter, IoSwapVertical, IoStar, IoChatbubbles, IoPodium 
+  IoFilter, IoSwapVertical, IoStar, IoChatbubbles, IoPodium, IoDocumentText
 } from 'react-icons/io5';
 import CustomModal from './CustomModal';
 
@@ -26,6 +26,7 @@ function FleetManagement() {
   const [reviewsModal, setReviewsModal] = useState({ isOpen: false, driverName: '', rating: 0, driverId: null });
   const [liveReviews, setLiveReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [quickViewModal, setQuickViewModal] = useState({ isOpen: false, driver: null });
 
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
   const isSecretary = adminUser.role === 'secretary'; 
@@ -299,6 +300,7 @@ function FleetManagement() {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver })} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100" title="View Full Info"><IoEye /></button>
                           <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-angkasBlue rounded-lg hover:bg-emerald-100" title="Reset Password"><IoKey /></button>
                           <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200" title="Edit Profile"><IoPencil /></button>
                         </td>
@@ -503,7 +505,68 @@ function FleetManagement() {
           </div>
         </div>
       )}
+{/* === THE NEW QUICK-VIEW MODAL === */}
+      {quickViewModal.isOpen && quickViewModal.driver && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setQuickViewModal({ isOpen: false, driver: null })}></div>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
+            <div className="bg-posoDark p-6 flex justify-between items-center text-white shrink-0">
+               <div>
+                  <h2 className="text-xl font-black flex items-center"><IoDocumentText className="mr-2 text-angkasBlue"/> Driver Personnel File</h2>
+                  <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Read-Only View</p>
+               </div>
+               <button onClick={() => setQuickViewModal({ isOpen: false, driver: null })} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-full transition-colors"><IoClose className="text-xl" /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 space-y-6">
+               <div className="flex items-center space-x-6">
+                  <div className="w-24 h-24 rounded-full border-4 border-slate-100 overflow-hidden shadow-md shrink-0">
+                     {quickViewModal.driver.profilePicUrl ? <img src={quickViewModal.driver.profilePicUrl} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl">👤</div>}
+                  </div>
+                  <div>
+                     <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">{quickViewModal.driver.name}</h3>
+                     <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">BODY NO. <span className="text-angkasBlue font-black">{quickViewModal.driver.bodyNo || 'N/A'}</span> | {quickViewModal.driver.homeToda}</p>
+                     <span className={`inline-block mt-2 px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full border ${quickViewModal.driver.status === 'Active' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>{quickViewModal.driver.status}</span>
+                  </div>
+               </div>
 
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mobile Number</p>
+                     <p className="font-mono font-bold text-slate-700">{quickViewModal.driver.phone || 'N/A'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Plate Number</p>
+                     <p className="font-mono font-bold text-slate-700 uppercase">{quickViewModal.driver.plate || 'N/A'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">License Expiry</p>
+                     <p className={`font-bold ${!quickViewModal.driver.licenseExpiry ? 'text-red-500' : 'text-slate-700'}`}>{quickViewModal.driver.licenseExpiry || 'MISSING'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Franchise Expiry</p>
+                     <p className={`font-bold ${!quickViewModal.driver.franchisePermitExpiry ? 'text-red-500' : 'text-slate-700'}`}>{quickViewModal.driver.franchisePermitExpiry || 'MISSING'}</p>
+                  </div>
+               </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3 shrink-0">
+               <button 
+                  onClick={async () => {
+                     setQuickViewModal({ isOpen: false, driver: null });
+                     try {
+                        await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${quickViewModal.driver.id}/inform`, { adminId: adminUser._id || adminUser.id }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }});
+                        setModalState({ isOpen: true, title: "Warning Sent", message: "Official LGU warning email dispatched to driver.", type: "success" });
+                     } catch (err) { setModalState({ isOpen: true, title: "Dispatch Failed", message: "Driver missing email or connection failed.", type: "warning" }); }
+                  }}
+                  className="px-6 py-3 bg-red-50 text-red-600 border border-red-200 font-bold rounded-xl hover:bg-red-100 transition-colors flex items-center shadow-sm"
+               >
+                  <IoWarning className="mr-2" /> Inform Expiring Docs (Email)
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
       <CustomModal 
         isOpen={modalState.isOpen}
         title={modalState.title}

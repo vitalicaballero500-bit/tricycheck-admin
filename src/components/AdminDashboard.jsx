@@ -29,7 +29,46 @@ function AdminDashboard() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportConfig, setReportConfig] = useState({ filter: 'daily', startDate: '', endDate: '' });
   const [isGenerating, setIsGenerating] = useState(false);
+// === MY PROFILE EDITOR STATES ===
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileData, setProfileData] = useState({ firstName: '', lastName: '', email: '' });
+  const [profileStatus, setProfileStatus] = useState({ loading: false, error: '', success: '' });
 
+  // Sync modal data when opened
+  useEffect(() => {
+    if (adminUser && showProfileModal) {
+      setProfileData({
+         firstName: adminUser.firstName || '',
+         lastName: adminUser.lastName || '',
+         email: adminUser.email || ''
+      });
+      setProfileStatus({ loading: false, error: '', success: '' });
+    }
+  }, [adminUser, showProfileModal]);
+
+  const handleUpdateProfile = async (e) => {
+      e.preventDefault();
+      setProfileStatus({ loading: true, error: '', success: '' });
+      try {
+          const token = localStorage.getItem('adminToken');
+          const response = await axios.put('https://tricycheck-api.onrender.com/api/admin/profile', {
+              ...profileData,
+              adminId: adminUser._id || adminUser.id
+          }, {
+              headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          // F1 Sync: Update React State & LocalStorage instantly so UI changes without reload
+          const updatedUser = { ...adminUser, ...response.data.user };
+          localStorage.setItem('adminUser', JSON.stringify(updatedUser));
+          setAdminUser(updatedUser);
+          
+          setProfileStatus({ loading: false, error: '', success: 'Profile updated successfully!' });
+          setTimeout(() => setShowProfileModal(false), 2000);
+      } catch (err) {
+          setProfileStatus({ loading: false, error: err.response?.data?.error || 'Failed to update profile.', success: '' });
+      }
+  };
   useEffect(() => {
     const userString = localStorage.getItem('adminUser'); 
     if (userString) setAdminUser(JSON.parse(userString));
@@ -230,12 +269,16 @@ function AdminDashboard() {
 
         <div className="p-4 border-t border-slate-700/50 bg-slate-900/20">
           <div className="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700">
-            <div className="flex items-center space-x-3 truncate">
+            <div 
+              className="flex items-center space-x-3 truncate cursor-pointer hover:bg-slate-700 p-1.5 -ml-1.5 rounded-lg transition-colors" 
+              onClick={() => setShowProfileModal(true)}
+              title="Edit My Profile"
+            >
               <div className="w-10 h-10 rounded-full bg-angkasBlue flex items-center justify-center text-white font-bold shadow-inner shrink-0">
                 {adminUser.firstName.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
               </div>
               <div className="text-left truncate">
-                <p className="text-sm font-bold text-white leading-tight truncate">{adminUser.firstName}</p>
+                <p className="text-sm font-bold text-white leading-tight truncate">{adminUser.firstName} {adminUser.lastName}</p>
                 <p className="text-[10px] text-green-400 font-bold tracking-wider uppercase">● {adminUser.role}</p>
               </div>
             </div>
@@ -472,7 +515,62 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+{/* === MY PROFILE MODAL === */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setShowProfileModal(false)}></div>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up">
+            
+            <div className="bg-posoDark p-6 flex justify-between items-center text-white">
+              <h2 className="text-xl font-black flex items-center"><IoPeople className="mr-2 text-angkasBlue" /> Edit My Profile</h2>
+              <button onClick={() => setShowProfileModal(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
+            </div>
 
+            <form onSubmit={handleUpdateProfile} className="p-6">
+               <div className="flex justify-center mb-6">
+                 <div className="w-20 h-20 bg-angkasBlue text-white rounded-full flex items-center justify-center text-3xl font-black shadow-inner border-4 border-slate-100">
+                    {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)}
+                 </div>
+               </div>
+
+               {profileStatus.error && <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-xl mb-4 border border-red-200">{profileStatus.error}</div>}
+               {profileStatus.success && <div className="p-3 bg-green-50 text-green-600 text-xs font-bold rounded-xl mb-4 border border-green-200">{profileStatus.success}</div>}
+
+               <div className="space-y-4">
+                 <div className="grid grid-cols-2 gap-4">
+                    <div>
+                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">First Name</label>
+                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-angkasBlue outline-none" value={profileData.firstName} onChange={e => setProfileData({...profileData, firstName: e.target.value})} disabled={profileStatus.loading} />
+                    </div>
+                    <div>
+                       <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Last Name</label>
+                       <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-angkasBlue outline-none" value={profileData.lastName} onChange={e => setProfileData({...profileData, lastName: e.target.value})} disabled={profileStatus.loading} />
+                    </div>
+                 </div>
+                 
+                 <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Official Email</label>
+                    <input required type="email" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-slate-700 focus:border-angkasBlue outline-none" value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} disabled={profileStatus.loading} />
+                 </div>
+
+                 <div>
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Clearance Level (Role)</label>
+                    <div className="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl font-bold text-sm text-slate-500 cursor-not-allowed">
+                       {adminUser.role.toUpperCase()} (Cannot be changed)
+                    </div>
+                 </div>
+               </div>
+
+               <div className="mt-8 flex justify-end">
+                  <button type="submit" disabled={profileStatus.loading} className="w-full bg-angkasBlue text-white py-3.5 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-70">
+                     {profileStatus.loading ? 'Saving...' : 'Update Profile'}
+                  </button>
+               </div>
+            </form>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

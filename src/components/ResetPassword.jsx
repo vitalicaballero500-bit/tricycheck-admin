@@ -1,11 +1,10 @@
+// === THE FIX: COMPLETE VISUAL THEME OVERRIDE (LGU EMERALD) ===
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { IoLockClosed, IoEye, IoEyeOff, IoCheckmarkCircle, IoWarning } from "react-icons/io5";
 
 function ResetPassword() {
-  // === NEW FEATURE: URL PARAMETER EXTRACTION ===
-  // This physically rips the cryptographic token right out of the Gmail URL link
   const { token } = useParams(); 
   const navigate = useNavigate();
 
@@ -19,7 +18,6 @@ function ResetPassword() {
     e.preventDefault();
     setStatus({ loading: true, error: '', success: false });
 
-    // === FRONTEND VALIDATION MATRIX ===
     if (passwords.new.length < 8) {
         return setStatus({ loading: false, error: 'Password must be at least 8 characters long.', success: false });
     }
@@ -28,14 +26,12 @@ function ResetPassword() {
     }
 
     try {
-      // === THE FIX: SECURE TOKEN TRANSMISSION ===
       await axios.post(`https://tricycheck-api.onrender.com/api/admin/reset-password/${token}`, {
         newPassword: passwords.new
       });
 
       setStatus({ loading: false, error: '', success: true });
       
-      // Auto-redirect to login after 3 seconds
       setTimeout(() => {
           navigate('/');
       }, 3000);
@@ -52,50 +48,62 @@ function ResetPassword() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center relative overflow-hidden bg-slate-900">
       
-      {/* Background Animated Blobs */}
+      {/* === LGU MUNICIPAL BACKGROUND === */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-angkasBlue/20 rounded-full blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute inset-0 bg-emerald-950/40 z-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-transparent to-transparent z-20"></div>
+        <img 
+            src="/calasiao-municipal.jpg" 
+            alt="Calasiao Municipal Hall" 
+            className="absolute inset-0 w-full h-full object-cover z-0 opacity-80" 
+            onError={(e) => { e.target.style.display = 'none'; }} 
+        />
       </div>
 
-      <div className="w-full max-w-md p-8 bg-white/95 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/50 relative z-10 animate-slide-up mx-4">
+      <div className="w-full max-w-md p-8 bg-emerald-900/85 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-emerald-500/30 relative z-10 animate-slide-up mx-4">
         
         {status.success ? (
             <div className="text-center py-8 animate-fade-in">
-                <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border-4 border-white">
-                    <IoCheckmarkCircle className="text-5xl text-angkasBlue" />
+                <div className="w-20 h-20 bg-emerald-950 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-500/50">
+                    <IoCheckmarkCircle className="text-5xl text-amber-400" />
                 </div>
-                <h2 className="text-2xl font-black text-slate-800 mb-2">Password Secured</h2>
-                <p className="text-sm font-medium text-slate-500 mb-6 px-4">Your administrative clearance has been restored. Redirecting to the secure gateway...</p>
-                <div className="w-8 h-8 border-4 border-angkasBlue border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Password Secured</h2>
+                <p className="text-xs font-medium text-emerald-200/70 mb-6 px-4 leading-relaxed">Your administrative clearance has been restored. Redirecting to the secure gateway...</p>
+                <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
             </div>
         ) : (
             <>
+                {/* LGU HEADER LOGIC */}
                 <div className="flex flex-col items-center mb-8 text-center">
-                    <div className="w-16 h-16 bg-blue-50 text-angkasBlue rounded-full flex items-center justify-center mb-4 shadow-inner border border-blue-100">
-                        <IoLockClosed className="text-3xl" />
-                    </div>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">Create New Password</h1>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-2">POSO Admin Recovery</p>
+                  <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-[0_10px_25px_rgba(0,0,0,0.3)] border-4 border-emerald-400 mb-6 relative">
+                     <img 
+                         src="/poso-logo.jpg" 
+                         alt="POSO Logo" 
+                         className="w-16 h-16 object-contain rounded-full" 
+                         onError={(e) => { e.target.src = 'https://cdn-icons-png.flaticon.com/512/1000/1000966.png'; }}
+                     />
+                  </div>
+                  <h1 className="text-3xl font-black text-white tracking-tight">New Password</h1>
+                  <p className="text-xs font-black text-emerald-400 uppercase tracking-[0.15em] mt-1">POSO Admin Recovery</p>
                 </div>
 
                 {status.error && (
-                    <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl flex items-start">
-                        <IoWarning className="text-red-500 text-lg mr-2 shrink-0 mt-0.5" />
-                        <p className="text-xs font-bold text-red-700">{status.error}</p>
+                    <div className="mb-6 p-4 bg-red-500/20 border-l-4 border-red-500 rounded-r-xl flex items-start">
+                        <IoWarning className="text-red-400 text-lg mr-2 shrink-0 mt-0.5" />
+                        <p className="text-xs font-bold text-red-200">{status.error}</p>
                     </div>
                 )}
 
                 <form onSubmit={handleReset} className="space-y-4">
                     {/* New Password Field */}
                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-angkasBlue transition-colors">
-                            <IoLockClosed className="text-lg" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-500/70 group-focus-within:text-emerald-300 transition-colors">
+                            <IoLockClosed className="text-xl" />
                         </div>
                         <input 
                             type={showNew ? "text" : "password"} 
                             required
-                            className="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 border border-slate-200 rounded-xl outline-none focus:border-angkasBlue focus:ring-4 focus:ring-emerald-100/50 transition-all text-slate-800 font-bold tracking-widest text-sm"
+                            className="w-full pl-11 pr-12 py-3.5 bg-emerald-950/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
                             placeholder="New Password"
                             value={passwords.new}
                             onChange={(e) => setPasswords({...passwords, new: e.target.value})}
@@ -104,7 +112,7 @@ function ResetPassword() {
                         <button 
                             type="button" 
                             onClick={() => setShowNew(!showNew)}
-                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-emerald-500/70 hover:text-emerald-300 transition-colors"
                         >
                             {showNew ? <IoEyeOff className="text-xl" /> : <IoEye className="text-xl" />}
                         </button>
@@ -112,14 +120,14 @@ function ResetPassword() {
 
                     {/* Confirm Password Field */}
                     <div className="relative group">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-angkasBlue transition-colors">
-                            <IoLockClosed className="text-lg" />
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-500/70 group-focus-within:text-emerald-300 transition-colors">
+                            <IoLockClosed className="text-xl" />
                         </div>
                         <input 
                             type={showConfirm ? "text" : "password"} 
                             required
-                            className="w-full pl-11 pr-12 py-3.5 bg-slate-50/80 border border-slate-200 rounded-xl outline-none focus:border-angkasBlue focus:ring-4 focus:ring-emerald-100/50 transition-all text-slate-800 font-bold tracking-widest text-sm"
-                            placeholder="Confirm New Password"
+                            className="w-full pl-11 pr-12 py-3.5 bg-emerald-950/60 border border-emerald-700/50 rounded-xl outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 transition-all text-white font-bold tracking-widest text-sm placeholder-emerald-600/60"
+                            placeholder="Confirm Password"
                             value={passwords.confirm}
                             onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
                             disabled={status.loading}
@@ -127,7 +135,7 @@ function ResetPassword() {
                         <button 
                             type="button" 
                             onClick={() => setShowConfirm(!showConfirm)}
-                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-emerald-500/70 hover:text-emerald-300 transition-colors"
                         >
                             {showConfirm ? <IoEyeOff className="text-xl" /> : <IoEye className="text-xl" />}
                         </button>
@@ -136,9 +144,9 @@ function ResetPassword() {
                     <button 
                         type="submit" 
                         disabled={status.loading}
-                        className={`w-full text-white font-black text-base py-4 rounded-xl shadow-xl transition-all mt-6 flex justify-center items-center relative overflow-hidden ${status.loading ? 'bg-slate-500 cursor-not-allowed' : 'bg-angkasBlue hover:bg-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/30 active:scale-95'}`}
+                        className={`w-full font-black text-base py-3.5 rounded-xl shadow-xl transition-all mt-6 flex justify-center items-center relative overflow-hidden ${status.loading ? 'bg-emerald-800 text-emerald-400 cursor-not-allowed' : 'bg-amber-400 text-emerald-950 hover:bg-amber-300 active:scale-95 hover:shadow-amber-500/20'}`}
                     >
-                        {status.loading ? 'Securing Account...' : 'Confirm Security Key'}
+                        <span className="relative z-10">{status.loading ? 'Authenticating...' : 'Confirm Security Key'}</span>
                     </button>
                 </form>
             </>
