@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === THE FIX: Enterprise Global Text Highlight === */
+::selection {
+  background-color: #a7f3d0; /* Soft Emerald */
+  color: #064e3b; /* Deep Green Text */
+}
+
+/* Fallback for Mozilla */
+::-moz-selection {
+  background-color: #a7f3d0; 
+  color: #064e3b; 
+}
+
 body {
   background-color: #f1f5f9; /* Professional light slate background */
 }

@@ -108,33 +108,20 @@ function PassengerManagement() {
               <tr key={p._id} className="hover:bg-slate-50 transition-colors group">
                 <td className="p-5 pl-8 font-bold text-slate-800">{p.firstName} {p.lastName}</td>
                 <td className="p-5 font-mono text-sm text-slate-500">
-                   <div className="flex items-center space-x-2">
-                      <span>{p.phone}</span>
-                      <a href={`tel:${p.phone}`} className="opacity-0 group-hover:opacity-100 text-emerald-600 transition-opacity"><IoCall /></a>
-                   </div>
+                   <span className="bg-slate-100 px-3 py-1.5 rounded-lg font-bold text-slate-600">{p.phone}</span>
                 </td>
                 <td className="p-5">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.status === 'Banned' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {p.status || 'Active'}
                   </span>
                 </td>
-                <td className="p-5 pr-8 text-right space-x-2">
-                  
-                  {/* === THE FIX: NEW PASSWORD RESET BUTTON === */}
-                  <button 
-                    onClick={() => handleResetPasswordClick(p._id, `${p.firstName} ${p.lastName}`)}
-                    className="inline-flex items-center justify-center p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
-                    title="Reset Password"
-                  >
-                    <IoKey />
-                  </button>
-
+                <td className="p-5 pr-8 text-right">
                   {p.status === 'Banned' ? (
-                    <button onClick={() => handleStatusChangeClick(p._id, 'Active')} className="inline-flex items-center space-x-1 bg-green-50 text-green-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors">
+                    <button onClick={() => handleStatusChangeClick(p._id, 'Active')} className="inline-flex items-center space-x-1 bg-green-50 text-green-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors shadow-sm">
                       <IoLockOpen /> <span>Lift Ban</span>
                     </button>
                   ) : (
-                    <button onClick={() => handleStatusChangeClick(p._id, 'Banned')} className="inline-flex items-center space-x-1 bg-red-50 text-red-500 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors">
+                    <button onClick={() => handleStatusChangeClick(p._id, 'Banned')} className="inline-flex items-center space-x-1 bg-red-50 text-red-500 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm">
                       <IoHandRight /> <span>Ban Hammer</span>
                     </button>
                   )}
