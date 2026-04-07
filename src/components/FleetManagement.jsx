@@ -93,8 +93,9 @@ function FleetManagement() {
     const nameRegex = /^[A-Za-z\s\-ñÑ]{2,50}$/;
     if (!nameRegex.test(newDriver.firstName.trim())) return "Invalid First Name.";
     if (!nameRegex.test(newDriver.lastName.trim())) return "Invalid Last Name.";
-    const bodyNoRegex = /^\d{1,4}$/;
-    if (newDriver.bodyNo && !bodyNoRegex.test(newDriver.bodyNo.trim())) return "Invalid Body Number.";
+    // === THE FIX: UPGRADED REGEX TO ALLOW LETTERS, NUMBERS, AND DASHES (e.g., "ABC-123" or "0143") ===
+    const bodyNoRegex = /^[A-Za-z0-9\-\s]{1,10}$/; 
+    if (newDriver.bodyNo && !bodyNoRegex.test(newDriver.bodyNo.trim())) return "Invalid Body Number. Use letters and numbers only.";
     return null; 
   };
 
@@ -408,7 +409,8 @@ function FleetManagement() {
             </div>
 
             {/* === THE FIX: RESTORED THE SCROLLABLE FORM WRAPPER === */}
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
+            {/* === THE FIX: INJECTED min-h-0 TO FORCE SCROLL WHEEL ACTIVATION IN FLEX CONTAINERS === */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto min-h-0 p-8 relative">
               
               <div className="flex items-center space-x-6 mb-8 border-b pb-6">
                 <div className="relative group cursor-pointer shrink-0">
