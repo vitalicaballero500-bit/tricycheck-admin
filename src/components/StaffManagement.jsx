@@ -34,15 +34,15 @@ function StaffManagement() {
     }
   };
 
-  // === THE FIX: SECURE FRONTEND SUBMIT HANDLER (LOADING LOCK) ===
+  // === THE FIX: SECURE MAGIC LINK FRONTEND HANDLER ===
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 1. Lock the UI so the user knows an email is being sent
+    // 1. Lock the UI
     setModalState({ 
         isOpen: true, 
         title: "Provisioning Account...", 
-        message: "Generating secure credentials and dispatching official LGU email via Nodemailer. Please wait.", 
+        message: "Generating secure token and dispatching official LGU invitation. Please wait.", 
         type: "info", 
         isConfirm: false 
     });
@@ -50,30 +50,29 @@ function StaffManagement() {
     try {
       const payload = { ...newStaff, adminId: adminUser._id || adminUser.id };
       
-      const response = await axios.post('https://tricycheck-api.onrender.com/api/admin/staff', payload, {
+      await axios.post('https://tricycheck-api.onrender.com/api/admin/staff', payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       });
 
       // 2. Clear the form and hide the add modal
-      setNewStaff({ firstName: '', lastName: '', username: '', email: '', role: 'secretary' });
+      setNewStaff({ firstName: '', lastName: '', email: '', role: 'secretary' });
       setIsModalOpen(false);
       fetchStaff();
 
-      // 3. Display Success (Overwrites the loading modal)
+      // 3. Display Success (Secure Link Confirmation)
       setModalState({
         isOpen: true,
-        title: "Account Created!",
-        message: `Staff registered successfully. An email was sent to ${newStaff.email}.\n\n(Failsafe Temp Password: ${response.data.tempPassword})`,
+        title: "Account Provisioned!",
+        message: `Staff registered successfully. A secure invitation link has been dispatched to ${payload.email}. They must click it to initialize their security key.`,
         type: "success",
         isConfirm: false
       });
       
     } catch (error) {
-      // 4. Handle exact errors (like Username Exists) and unlock UI
       setModalState({
         isOpen: true,
         title: "Registration Failed",
-        message: error.response?.data?.error || "Failed to create account. Check connection.",
+        message: error.response?.data?.error || "Failed to provision account.",
         type: "warning",
         isConfirm: false
       });
@@ -257,7 +256,7 @@ function StaffManagement() {
               
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mt-4 flex items-start space-x-3">
                  <IoShieldCheckmark className="text-emerald-600 text-xl shrink-0 mt-0.5" />
-                 <p className="text-xs font-medium text-slate-600">A cryptographically secure password will be auto-generated and emailed directly to this staff member.</p>
+                 <p className="text-xs font-medium text-slate-600">A secure Invitation Link will be emailed directly to this staff member. They will use it to create their own secure password.</p>
               </div>
 
               <button type="submit" className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all mt-4">
