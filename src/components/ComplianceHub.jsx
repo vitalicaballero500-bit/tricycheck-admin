@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { IoWarning, IoAlertCircle, IoCall, IoCheckmarkCircle, IoDocumentText } from 'react-icons/io5';
+// === THE FIX: Import CustomModal and IoMail ===
+import { IoWarning, IoAlertCircle, IoCall, IoCheckmarkCircle, IoDocumentText, IoMail } from 'react-icons/io5';
+import CustomModal from './CustomModal';
 
 function ComplianceHub() {
   const [atRiskDrivers, setAtRiskDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // === THE FIX: Warning Modal & Email Dispatch Logic ===
+  const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
+  const [modalState, setModalState] = useState({ isOpen: false, title: "", message: "", type: "info" });
+  const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false }));
+
+  const sendWarningEmail = async (driverId) => {
+    setModalState({ isOpen: true, title: "Dispatching...", message: "Sending official LGU warning email...", type: "info", isConfirm: false });
+    try {
+      await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${driverId}/inform`, { 
+         adminId: adminUser._id || adminUser.id 
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }});
+      
+      setModalState({ isOpen: true, title: "Warning Sent", message: "Official LGU warning email successfully dispatched to driver.", type: "success" });
+    } catch (error) {
+      setModalState({ isOpen: true, title: "Dispatch Failed", message: error.response?.data?.error || "Driver missing email or connection failed.", type: "warning" });
+    }
+  };
 
   const fetchComplianceData = async () => {
     try {
@@ -106,9 +126,13 @@ function ComplianceHub() {
                         </div>
                       </div>
                     </div>
-                    <a href={`tel:${driver.phone}`} className="flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
-                      <IoCall /> <span>{driver.phone}</span>
-                    </a>
+                    {/* === THE FIX: Send Official Warning Email Button === */}
+                    <button 
+                      onClick={() => sendWarningEmail(driver._id)} 
+                      className="flex items-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm border border-red-100 active:scale-95"
+                    >
+                      <IoMail /> <span>Send Warning</span>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -139,19 +163,33 @@ function ComplianceHub() {
                         </div>
                       </div>
                     </div>
-                    <a href={`tel:${driver.phone}`} className="flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors">
-                      <IoCall /> <span>{driver.phone}</span>
-                    </a>
+                    {/* === THE FIX: Send Official Warning Email Button === */}
+                    <button 
+                      onClick={() => sendWarningEmail(driver._id)} 
+                      className="flex items-center space-x-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-sm border border-red-100 active:scale-95"
+                    >
+                      <IoMail /> <span>Send Warning</span>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
         </div>
-      )}
-    </div>
-  );
+      )}
+
+      {/* === THE FIX: Inject the Status Modal === */}
+      <CustomModal 
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onConfirm={closeModal}
+        onCancel={null}
+      />
+
+    </div>
+  );
 }
 
 export default ComplianceHub;

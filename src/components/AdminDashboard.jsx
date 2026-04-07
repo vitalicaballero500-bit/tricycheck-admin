@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 // === THE FIX: COMPLETE ICON IMPORT ===
+// === THE FIX: Added IoInformationCircle for the Compliance Bridge ===
 import { 
   IoGrid, IoIdCard, IoMap, IoWarning, IoSettings, IoLogOut, 
   IoDocumentText, IoBicycle, IoPeople, IoCall, IoTime, IoPrint, IoDownload, IoClose,
-  IoCarSport
+  IoCarSport, IoInformationCircle
 } from 'react-icons/io5';
 
 import PassengerManagement from './PassengerManagement';
@@ -403,10 +404,15 @@ function AdminDashboard() {
                                   <tr key={d._id} className="hover:bg-red-50/50 transition-colors">
                                     <td className="p-4 pl-8 font-black text-slate-900">{d.bodyNo || 'N/A'}</td>
                                     <td className="p-4 font-bold truncate max-w-[120px]">{d.firstName} {d.lastName}</td>
+                                    {/* === THE FIX: The Compliance Hub Teleporter === */}
                                     <td className="p-4 text-right pr-8">
-                                      <a href={`tel:${d.phone}`} className="inline-flex items-center justify-center bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-100 active:scale-95 transition-all shadow-sm">
-                                        <IoCall className="mr-1.5" /> Call
-                                      </a>
+                                       <button 
+                                          onClick={() => setActiveTab('compliance')} 
+                                          className="inline-flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 active:scale-95 transition-all shadow-sm"
+                                          title="Review Personnel File"
+                                       >
+                                          <IoInformationCircle className="mr-1.5 text-lg" /> Review
+                                       </button>
                                     </td>
                                   </tr>
                                 ))}
@@ -523,7 +529,8 @@ function AdminDashboard() {
             {profileStatus.success && <div className="mb-6 p-3 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold rounded-xl text-center">Profile updated successfully.</div>}
             {profileStatus.error && <div className="mb-6 p-3 bg-red-50 border border-red-100 text-red-600 text-xs font-bold rounded-xl text-center">{profileStatus.error}</div>}
 
-            <form onSubmit={updateProfile}>
+            {/* === THE FIX: Patched Fatal React Crash Vulnerability === */}
+            <form onSubmit={handleUpdateProfile}>
                <div className="space-y-4">
                  <div className="grid grid-cols-2 gap-4">
                     <div>
