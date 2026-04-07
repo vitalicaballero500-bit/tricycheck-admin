@@ -397,6 +397,8 @@ function FleetManagement() {
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl z-10 overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
+            
+            {/* MODAL HEADER */}
             <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
               <div>
                 <h2 className="text-xl font-black">{isEditing ? 'Edit Driver Profile' : 'Register New Tricycle'}</h2>
@@ -405,7 +407,23 @@ function FleetManagement() {
               <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-800 hover:bg-emerald-800 rounded-full transition-colors"><IoClose className="text-xl" /></button>
             </div>
 
-            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Personal Details</h3>
+            {/* === THE FIX: RESTORED THE SCROLLABLE FORM WRAPPER === */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
+              
+              <div className="flex items-center space-x-6 mb-8 border-b pb-6">
+                <div className="relative group cursor-pointer shrink-0">
+                  <div className="w-24 h-24 rounded-full bg-slate-100 border-4 border-slate-200 shadow-sm flex items-center justify-center overflow-hidden">
+                     {files.profilePic ? <img src={URL.createObjectURL(files.profilePic)} alt="Preview" className="w-full h-full object-cover" /> : newDriver.profilePicUrl ? <img src={newDriver.profilePicUrl} alt="Saved Profile" className="w-full h-full object-cover" /> : <IoCamera className="text-3xl text-slate-400" />}
+                  </div>
+                  <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'profilePic')} className="absolute inset-0 opacity-0 cursor-pointer" />
+                </div>
+                <div>
+                   <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Driver's 2x2 Photo</h3>
+                   <p className="text-xs text-slate-500 mt-1">Upload an official passport-sized photo of the driver for passenger identification.</p>
+                </div>
+              </div>
+
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Personal Details</h3>
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">First Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.firstName} onChange={e => setNewDriver({...newDriver, firstName: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Last Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.lastName} onChange={e => setNewDriver({...newDriver, lastName: e.target.value})} /></div>
@@ -427,7 +445,7 @@ function FleetManagement() {
                 )}
               </div>
 
-              {/* === THE FIX: NEW EMERGENCY & ACCOUNTABILITY SECTION === */}
+              {/* === THE NEW EMERGENCY & ACCOUNTABILITY SECTION === */}
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Emergency & Accountability</h3>
               <div className="grid grid-cols-2 gap-6 mb-8 bg-orange-50/40 p-6 rounded-2xl border border-orange-100">
                 <div className="col-span-2"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Official Email (For App Credentials)</label><input type="email" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" placeholder="e.g. driver@gmail.com" value={newDriver.email} onChange={e => setNewDriver({...newDriver, email: e.target.value})} /></div>
@@ -463,6 +481,16 @@ function FleetManagement() {
                    </div>
                 </div>
               </div>
+
+              {/* ACTION BUTTONS (Now correctly inside the form!) */}
+              <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100 mt-4">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
+                <button type="submit" className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all">
+                  {isEditing ? 'Save Profile' : 'Register Driver'}
+                </button>
+              </div>
+            </form>
+            
           </div>
         </div>,
         document.body
