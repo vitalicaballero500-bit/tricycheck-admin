@@ -2,16 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* === THE FIX: Enterprise Global Text Highlight === */
-::selection {
-  background-color: #a7f3d0; /* Soft Emerald */
-  color: #064e3b; /* Deep Green Text */
+/* === THE FIX: Enterprise Global Text Highlight (Nuclear Override) === */
+*::selection {
+  background-color: #a7f3d0 !important; /* Soft Emerald */
+  color: #064e3b !important; /* Deep Green Text */
 }
 
-/* Fallback for Mozilla */
-::-moz-selection {
-  background-color: #a7f3d0; 
-  color: #064e3b; 
+/* Fallback for Mozilla Firefox */
+*::-moz-selection {
+  background-color: #a7f3d0 !important; 
+  color: #064e3b !important; 
 }
 
 body {
