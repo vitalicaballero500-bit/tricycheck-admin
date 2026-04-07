@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom'; // <-- ADD THIS IMPORT
 import axios from 'axios';
 import { IoAdd, IoClose, IoShieldCheckmark, IoKey, IoBan, IoCheckmarkCircle } from 'react-icons/io5';
 import CustomModal from './CustomModal';
@@ -213,32 +214,30 @@ function StaffManagement() {
         </table>
       </div>
 
-      {/* === THE FIX: VIEWPORT OVERFLOW BOUNDARIES === */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* === THE FIX: REACT PORTAL TELEPORTATION === */}
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md z-10 overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
             <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
               <h2 className="text-xl font-black">Issue Personnel Credentials</h2>
-              <button type="button" onClick={() => setIsModalOpen(false)}><IoClose className="text-2xl hover:text-red-400" /></button>
+              <button type="button" onClick={() => setIsModalOpen(false)}><IoClose className="text-2xl hover:text-red-400 transition-colors" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">First Name</label>
-                  {/* === THE FIX: LIVE REGEX FILTER (Blocks numbers as they type) === */}
-<input required type="text" className="w-full p-3 bg-slate-50 border rounded-xl" value={newStaff.firstName} onChange={e => setNewStaff({...newStaff, firstName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
+                  <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500" value={newStaff.firstName} onChange={e => setNewStaff({...newStaff, firstName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Last Name</label>
-                  {/* === THE FIX: LIVE REGEX FILTER (Blocks numbers as they type) === */}
-<input required type="text" className="w-full p-3 bg-slate-50 border rounded-xl" value={newStaff.lastName} onChange={e => setNewStaff({...newStaff, lastName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
+                  <input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500" value={newStaff.lastName} onChange={e => setNewStaff({...newStaff, lastName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
                 </div>
               </div>
               
               <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Clearance Level (Role)</label>
-                <select className="w-full p-3 bg-slate-50 border rounded-xl font-bold text-sm" value={newStaff.role} onChange={e => setNewStaff({...newStaff, role: e.target.value})}>
+                <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 cursor-pointer" value={newStaff.role} onChange={e => setNewStaff({...newStaff, role: e.target.value})}>
                   <option value="secretary">Secretary (Fleet Management Only)</option>
                   <option value="dispatcher">Dispatcher (Live Map & SOS Only)</option>
                 </select>
@@ -251,7 +250,7 @@ function StaffManagement() {
                 </div>
                 
                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Official Email Address</label>
-                <input required type="email" className="w-full p-3 bg-white border rounded-xl font-mono text-sm" placeholder="e.g. admin@calasiao.gov.ph" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
+                <input required type="email" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono text-sm outline-none focus:border-emerald-500" placeholder="e.g. admin@calasiao.gov.ph" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} />
               </div>
               
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 mt-4 flex items-start space-x-3">
@@ -264,9 +263,9 @@ function StaffManagement() {
               </button>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body // <-- INJECTS AT THE ABSOLUTE ROOT
       )}
-
       <CustomModal 
         isOpen={modalState.isOpen}
         title={modalState.title}
