@@ -1,4 +1,6 @@
+// === THE FIX: ADDED REACT PORTAL IMPORT ===
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom'; // <-- THE TELEPORTER
 import axios from 'axios';
 import { 
   IoSearch, IoAdd, IoPencil, IoKey, IoClose, IoWarning, IoCamera, IoEye, 
@@ -378,8 +380,8 @@ function FleetManagement() {
       )}
 
       {/* === THE EXISTING DRIVER REGISTRATION MODAL === */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl z-10 overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
             <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
@@ -455,12 +457,13 @@ function FleetManagement() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* === THE NEW REVIEWS VIEWER MODAL === */}
-      {reviewsModal.isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      {reviewsModal.isOpen && createPortal(
+        <div className="fixed inset-0 z-[2010] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setReviewsModal({ isOpen: false, driverName: '', rating: 0 })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg z-10 overflow-hidden animate-slide-up flex flex-col max-h-[80vh]">
              <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
@@ -503,11 +506,13 @@ function FleetManagement() {
                 <p className="text-center text-xs font-bold text-slate-400 mt-6 italic">* Additional database integration required to pull live text reviews.</p>
              </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-{/* === THE NEW QUICK-VIEW MODAL === */}
-      {quickViewModal.isOpen && quickViewModal.driver && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4">
+
+      {/* === THE NEW QUICK-VIEW MODAL === */}
+      {quickViewModal.isOpen && quickViewModal.driver && createPortal(
+        <div className="fixed inset-0 z-[2020] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setQuickViewModal({ isOpen: false, driver: null })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl z-10 overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
             <div className="bg-emerald-900 p-6 flex justify-between items-center text-white shrink-0">
@@ -565,7 +570,8 @@ function FleetManagement() {
                </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       <CustomModal 
         isOpen={modalState.isOpen}

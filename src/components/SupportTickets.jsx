@@ -1,5 +1,6 @@
 // === THE FIX: COMPLETE SWITCHBOARD & RADAR REWRITE ===
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom'; // <-- THE TELEPORTER
 import axios from 'axios';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -231,7 +232,7 @@ function SupportTickets() {
       </div>
 
       {/* === DISPATCH UNIT PROMPT OVERLAY === */}
-      {dispatchPrompt.isOpen && (
+      {dispatchPrompt.isOpen && createPortal(
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 animate-fade-in">
           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setDispatchPrompt({ isOpen: false, ticketId: null, unitName: '' })}></div>
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm z-10 p-8 animate-slide-up">
@@ -264,9 +265,9 @@ function SupportTickets() {
                </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body // <-- INJECTS AT THE ABSOLUTE ROOT
       )}
-
       <CustomModal 
         isOpen={modalState.isOpen}
         title={modalState.title}
