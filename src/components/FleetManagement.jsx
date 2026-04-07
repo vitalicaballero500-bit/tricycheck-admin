@@ -36,7 +36,9 @@ function FleetManagement() {
   const [newDriver, setNewDriver] = useState({ 
     firstName: '', lastName: '', bodyNo: '', plate: '', phone: '', status: 'Pending',
     homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '',
-    profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '' 
+    profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '',
+    // === THE FIX: NEW LGU FIELDS ===
+    email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown'
   });
 
   const [files, setFiles] = useState({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null });
@@ -57,9 +59,10 @@ function FleetManagement() {
         registeredBy: d.registeredBy ? `${d.registeredBy.firstName} ${d.registeredBy.lastName}` : 'System Auto',
         createdAt: d.createdAt || new Date().toISOString(),
         isOnline: d.driverStatus === 'Active' ? Math.random() > 0.4 : false,
-        // === THE FIX: LIVE AGGREGATION DATA ===
         rating: d.rating,
         totalReviews: d.totalReviews,
+        // === THE FIX: MAPPING NEW FIELDS TO TABLE/MODAL ===
+        email: d.email || '', address: d.address || '', emergencyContactName: d.emergencyContactName || '', emergencyContactPhone: d.emergencyContactPhone || '', tricycleColor: d.tricycleColor || '', bloodType: d.bloodType || 'Unknown'
       }));
       setDrivers(liveDrivers);
     } catch (error) { console.error('❌ Error fetching drivers:', error); }
@@ -70,7 +73,8 @@ function FleetManagement() {
     setNewDriver({
       firstName: driver.firstName, lastName: driver.lastName, bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda,
       licenseExpiry: driver.licenseExpiry, orCrExpiry: driver.orCrExpiry, franchisePermitExpiry: driver.franchisePermitExpiry,
-      profilePicUrl: driver.profilePicUrl, licensePicUrl: driver.licensePicUrl, orcrPicUrl: driver.orcrPicUrl, franchisePicUrl: driver.franchisePicUrl
+      profilePicUrl: driver.profilePicUrl, licensePicUrl: driver.licensePicUrl, orcrPicUrl: driver.orcrPicUrl, franchisePicUrl: driver.franchisePicUrl,
+      email: driver.email, address: driver.address, emergencyContactName: driver.emergencyContactName, emergencyContactPhone: driver.emergencyContactPhone, tricycleColor: driver.tricycleColor, bloodType: driver.bloodType
     });
     setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
     setIsModalOpen(true);
@@ -78,7 +82,7 @@ function FleetManagement() {
 
   const handleAddClick = () => {
     setIsEditing(false); setCurrentDriverId(null);
-    setNewDriver({ firstName: '', lastName: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '' });
+    setNewDriver({ firstName: '', lastName: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '', email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown' });
     setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
     setIsModalOpen(true);
   };
@@ -99,8 +103,16 @@ function FleetManagement() {
     const validationError = validateForm();
     if (validationError) return setModalState({ isOpen: true, title: "Validation Failed", message: validationError, type: "warning", isConfirm: false });
     
+    // === THE FIX: INJECTING NEW FIELDS TO FORMDATA ===
     const formData = new FormData();
     formData.append('firstName', newDriver.firstName.trim()); formData.append('lastName', newDriver.lastName.trim()); formData.append('bodyNo', newDriver.bodyNo.trim()); formData.append('plateNo', newDriver.plate.toUpperCase().trim()); formData.append('phone', newDriver.phone); formData.append('homeToda', newDriver.homeToda); formData.append('licenseExpiry', newDriver.licenseExpiry); formData.append('orCrExpiry', newDriver.orCrExpiry); formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
+    
+    formData.append('email', newDriver.email.trim()); 
+    formData.append('address', newDriver.address.trim()); 
+    formData.append('emergencyContactName', newDriver.emergencyContactName.trim()); 
+    formData.append('emergencyContactPhone', newDriver.emergencyContactPhone.trim()); 
+    formData.append('tricycleColor', newDriver.tricycleColor.trim()); 
+    formData.append('bloodType', newDriver.bloodType);
     
     const currentAdminId = adminUser._id || adminUser.id;
     if (currentAdminId) { formData.append('adminId', currentAdminId); }
@@ -113,7 +125,8 @@ function FleetManagement() {
         setModalState({ isOpen: true, title: "Profile Updated", message: "Driver Profile Updated Successfully!", type: "success", isConfirm: false });
       } else {
         const response = await axios.post('https://tricycheck-api.onrender.com/api/admin/drivers', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        setModalState({ isOpen: true, title: "Driver Registered", message: `Added Successfully!\n\nTemp Password: ${response.data.tempPassword}`, type: "success", isConfirm: false });
+        // NOTE: Temp Password is removed from the message because it emails it directly now!
+        setModalState({ isOpen: true, title: "Driver Registered", message: `Added Successfully!\n\nTheir login credentials have been dispatched to their email address.`, type: "success", isConfirm: false });
       }
       setIsModalOpen(false); fetchDrivers(); 
     } catch (error) { setModalState({ isOpen: true, title: "Database Error", message: error.response?.data?.error || "Transaction Failed.", type: "warning", isConfirm: false }); }
@@ -392,21 +405,7 @@ function FleetManagement() {
               <button onClick={() => setIsModalOpen(false)} className="p-2 bg-slate-800 hover:bg-emerald-800 rounded-full transition-colors"><IoClose className="text-xl" /></button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
-              <div className="flex items-center space-x-6 mb-8 border-b pb-6">
-                <div className="relative group cursor-pointer shrink-0">
-                  <div className="w-24 h-24 rounded-full bg-slate-100 border-4 border-slate-200 shadow-sm flex items-center justify-center overflow-hidden">
-                     {files.profilePic ? <img src={URL.createObjectURL(files.profilePic)} alt="Preview" className="w-full h-full object-cover" /> : newDriver.profilePicUrl ? <img src={newDriver.profilePicUrl} alt="Saved Profile" className="w-full h-full object-cover" /> : <IoCamera className="text-3xl text-slate-400" />}
-                  </div>
-                  <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'profilePic')} className="absolute inset-0 opacity-0 cursor-pointer" />
-                </div>
-                <div>
-                   <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Driver's 2x2 Photo</h3>
-                   <p className="text-xs text-slate-500 mt-1">Upload an official passport-sized photo of the driver for passenger identification.</p>
-                </div>
-              </div>
-
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Personal Details</h3>
+            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Personal Details</h3>
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">First Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.firstName} onChange={e => setNewDriver({...newDriver, firstName: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Last Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.lastName} onChange={e => setNewDriver({...newDriver, lastName: e.target.value})} /></div>
@@ -426,6 +425,22 @@ function FleetManagement() {
                     <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.status} onChange={e => setNewDriver({...newDriver, status: e.target.value})}><option value="Active">Active</option><option value="Pending">Pending</option><option value="Suspended">Suspended</option></select>
                   </div>
                 )}
+              </div>
+
+              {/* === THE FIX: NEW EMERGENCY & ACCOUNTABILITY SECTION === */}
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Emergency & Accountability</h3>
+              <div className="grid grid-cols-2 gap-6 mb-8 bg-orange-50/40 p-6 rounded-2xl border border-orange-100">
+                <div className="col-span-2"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Official Email (For App Credentials)</label><input type="email" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" placeholder="e.g. driver@gmail.com" value={newDriver.email} onChange={e => setNewDriver({...newDriver, email: e.target.value})} /></div>
+                <div className="col-span-2"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Full Home Address</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" placeholder="Brgy. San Miguel, Calasiao" value={newDriver.address} onChange={e => setNewDriver({...newDriver, address: e.target.value})} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Name</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactName} onChange={e => setNewDriver({...newDriver, emergencyContactName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Phone</label><input type="tel" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactPhone} onChange={e => setNewDriver({...newDriver, emergencyContactPhone: e.target.value})} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tricycle Color/Make</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm placeholder-slate-400" placeholder="e.g. Red Honda Barako" value={newDriver.tricycleColor} onChange={e => setNewDriver({...newDriver, tricycleColor: e.target.value})} /></div>
+                <div>
+                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Blood Type</label>
+                   <select className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm cursor-pointer" value={newDriver.bloodType} onChange={e => setNewDriver({...newDriver, bloodType: e.target.value})}>
+                     <option value="Unknown">Unknown</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option>
+                   </select>
+                </div>
               </div>
 
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Government Vault</h3>
@@ -448,14 +463,6 @@ function FleetManagement() {
                    </div>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100 mt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancel</button>
-                <button type="submit" className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-500 active:scale-95 transition-all">
-                  {isEditing ? 'Save Profile' : 'Register Driver'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>,
         document.body
@@ -535,14 +542,26 @@ function FleetManagement() {
                   </div>
                </div>
 
+               {/* === THE FIX: ADDED EMERGENCY FIELDS TO QUICK VIEW === */}
                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mobile Number</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mobile / Email</p>
                      <p className="font-mono font-bold text-slate-700">{quickViewModal.driver.phone || 'N/A'}</p>
+                     <p className="text-[10px] font-bold text-slate-500 mt-1 truncate" title={quickViewModal.driver.email}>{quickViewModal.driver.email || 'No Email Registered'}</p>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Plate Number</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Emergency / Blood</p>
+                     <p className="font-bold text-slate-700 text-sm truncate">{quickViewModal.driver.emergencyContactName || 'N/A'} ({quickViewModal.driver.emergencyContactPhone || 'N/A'})</p>
+                     <p className="text-[10px] font-bold text-red-500 mt-1">Blood Type: {quickViewModal.driver.bloodType || 'Unknown'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Plate / Tricycle</p>
                      <p className="font-mono font-bold text-slate-700 uppercase">{quickViewModal.driver.plate || 'N/A'}</p>
+                     <p className="text-[10px] font-bold text-slate-500 mt-1 truncate">{quickViewModal.driver.tricycleColor || 'No Color Data'}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Full Address</p>
+                     <p className="font-bold text-slate-700 text-xs line-clamp-2">{quickViewModal.driver.address || 'N/A'}</p>
                   </div>
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">License Expiry</p>
