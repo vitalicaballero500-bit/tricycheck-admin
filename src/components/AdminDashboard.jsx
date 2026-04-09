@@ -499,17 +499,37 @@ function AdminDashboard() {
             <div className="space-y-5">
                <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Time Filter</label>
-                  <select className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 focus:border-emerald-600 outline-none cursor-pointer" value={reportConfig.filter} onChange={e => setReportConfig({...reportConfig, filter: e.target.value})}>
+                  <select className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 focus:border-emerald-600 outline-none cursor-pointer mb-3" value={reportConfig.filter} onChange={e => setReportConfig({...reportConfig, filter: e.target.value})}>
                      <option value="daily">Daily Summary</option>
                      <option value="weekly">Weekly Analytics</option>
                      <option value="monthly">Monthly Overview</option>
                      <option value="custom">Custom Range</option>
                   </select>
+                  
+                  {/* === THE FIX: DYNAMIC CALENDAR INJECTION === */}
+                  {reportConfig.filter === 'custom' && (
+                     <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                         <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Start Date</label>
+                            <input type="date" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 outline-none focus:border-emerald-600" value={reportConfig.startDate} onChange={e => setReportConfig({...reportConfig, startDate: e.target.value})} />
+                         </div>
+                         <div>
+                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">End Date</label>
+                            <input type="date" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm text-emerald-950 outline-none focus:border-emerald-600" value={reportConfig.endDate} onChange={e => setReportConfig({...reportConfig, endDate: e.target.value})} />
+                         </div>
+                     </div>
+                  )}
                </div>
                
-               <button onClick={handlePrint} disabled={isGenerating} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
-                  {isGenerating ? <span className="animate-pulse">Compiling Data...</span> : <><IoDownload className="mr-2 text-lg" /> Download PDF Report</>}
-               </button>
+               {/* === THE FIX: DUAL-ACTION EXPORT BUTTONS === */}
+               <div className="flex space-x-3 pt-2">
+                   <button onClick={handleDownloadCSV} disabled={isGenerating || (reportConfig.filter === 'custom' && (!reportConfig.startDate || !reportConfig.endDate))} className="flex-1 bg-slate-800 text-white py-4 rounded-xl font-black text-xs shadow-lg hover:bg-slate-700 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
+                      {isGenerating ? <span className="animate-pulse">Loading...</span> : <><IoDownload className="mr-1.5 text-lg" /> CSV (Excel)</>}
+                   </button>
+                   <button onClick={handlePrint} disabled={isGenerating || (reportConfig.filter === 'custom' && (!reportConfig.startDate || !reportConfig.endDate))} className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black text-xs shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50">
+                      {isGenerating ? <span className="animate-pulse">Loading...</span> : <><IoPrint className="mr-1.5 text-lg" /> Print / PDF</>}
+                   </button>
+               </div>
             </div>
           </div>
         </div>
