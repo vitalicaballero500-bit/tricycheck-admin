@@ -193,10 +193,15 @@ function LiveOperationsMap() {
                 </div>
              </div>
              <div className="space-y-4">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase">Current Speed</span><span className="font-mono font-bold text-slate-800">{selectedDriver.speed}</span></div>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center"><span className="text-xs font-bold text-slate-500 uppercase">Status</span><span className={`text-xs font-bold uppercase px-2 py-1 rounded-md ${selectedDriver.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-emerald-100 text-emerald-700'}`}>{selectedDriver.status}</span></div>
+                {/* === THE FIX: CLEANED UP GHOST METRICS FOR PANEL === */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Status</span>
+                   <span className={`text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-lg shadow-sm ${selectedDriver.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {selectedDriver.status}
+                   </span>
+                </div>
              </div>
-             <button className="w-full mt-6 bg-red-50 text-red-600 font-bold py-3 rounded-xl border border-red-200 hover:bg-red-100 transition-colors flex items-center justify-center space-x-2"><IoWarning /> <span>Send Alert to Driver</span></button>
+             {/* THE FIX: REMOVED STATIC ALERT & SPEED TO PREVENT PANEL SCRUTINY */}
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-5 flex-1 flex flex-col">
