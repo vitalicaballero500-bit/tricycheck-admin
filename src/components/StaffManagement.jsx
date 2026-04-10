@@ -107,8 +107,8 @@ function StaffManagement() {
     if (type === 'TOGGLE_STATUS') {
       try {
         await axios.put(`https://tricycheck-api.onrender.com/api/admin/staff/${id}/status`, 
-            { status: newStatus, adminId: currentAdminId }, 
-            { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+          { status: newStatus, adminId: currentAdminId },
+          { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
         );
         fetchStaff();
         setTimeout(() => setModalState({ isOpen: true, title: "Status Updated", message: `Personnel account is now ${newStatus}.`, type: "success", isConfirm: false }), 300);
