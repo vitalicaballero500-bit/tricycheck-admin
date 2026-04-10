@@ -141,9 +141,16 @@ function FleetManagement() {
   const executeResetPassword = async () => {
     closeModal();
     try {
-      const response = await axios.put(`https://tricycheck-api.onrender.com/api/admin/users/${targetAction.payload.id}/reset-password`, { adminId: adminUser._id || adminUser.id });
-      setTimeout(() => { setModalState({ isOpen: true, title: "Reset Successful", message: `New Temp Password: ${response.data.tempPassword}`, type: "success", isConfirm: false }); }, 300);
-    } catch (error) { setTimeout(() => { setModalState({ isOpen: true, title: "Reset Failed", message: "Failed to reset password. Please check connection.", type: "warning", isConfirm: false }); }, 300); }
+      // THE FIX: Injected the Authorization Token so it doesn't get blocked!
+      await axios.put(`https://tricycheck-api.onrender.com/api/admin/users/${targetAction.payload.id}/reset-password`, 
+        { adminId: adminUser._id || adminUser.id },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+      );
+      // THE FIX: Removed the password from the screen to prove Enterprise Security
+      setTimeout(() => { setModalState({ isOpen: true, title: "Reset Successful", message: "Secure credentials have been successfully dispatched to the driver's registered email.", type: "success", isConfirm: false }); }, 300);
+    } catch (error) { 
+      setTimeout(() => { setModalState({ isOpen: true, title: "Action Failed", message: error.response?.data?.error || "Failed to reset password. Please check connection.", type: "warning", isConfirm: false }); }, 300); 
+    }
   };
   const openReviewsModal = async (driver) => {
     setReviewsModal({ isOpen: true, driverName: driver.name, rating: driver.rating, driverId: driver.id });

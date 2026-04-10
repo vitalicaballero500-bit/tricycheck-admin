@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet'; 
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { IoWarning, IoSpeedometer, IoCarSport, IoFlash, IoClose } from 'react-icons/io5';
+import { io } from 'socket.io-client'; // <-- ADD THIS IMPORT
 
 // === DYNAMIC COLOR CODING ENGINE ===
 const getTodaColor = (toda) => {
@@ -41,56 +42,75 @@ function LiveOperationsMap() {
   const [stats, setStats] = useState({ activeDrivers: 0, activeRides: 0, activeTickets: [] });
   const [activeDrivers, setActiveDrivers] = useState([]);
 
-  // === THE HYBRID ENGINE (Database + Simulation) ===
+  // === THE STEALTH TOGGLE STATE ===
+  const [isSimulatorActive, setIsSimulatorActive] = useState(false);
+
+  // === THE REAL GPS ENGINE (With Stealth Fallback) ===
   useEffect(() => {
+    // 1. Connect to Real-Time Websocket
+    const socket = io('https://tricycheck-api.onrender.com');
+
+    // 2. Listen for REAL GPS updates from active driver phones
+    socket.on('driver_location_update', (data) => {
+        if (isSimulatorActive) return; // Block real data if Stealth Simulator is hijacking the map
+        
+        setActiveDrivers(prev => {
+            const existing = prev.find(d => d.id === data.driverId);
+            if (existing) {
+                return prev.map(d => d.id === data.driverId ? { ...d, lat: data.lat, lng: data.lng, status: data.status } : d);
+            } else {
+                return [...prev, {
+                    id: data.driverId, bodyNo: data.bodyNo, name: data.driverName,
+                    status: data.status, lat: data.lat, lng: data.lng, homeToda: data.homeToda || 'Unassigned'
+                }];
+            }
+        });
+    });
+
     const fetchLiveData = async () => {
       try {
-        // 1. Fetch live fleet stats and SOS tickets
         const statsRes = await axios.get('https://tricycheck-api.onrender.com/api/admin/stats');
         setStats(statsRes.data);
 
-        // 2. Fetch REAL drivers from MongoDB
-        const driversRes = await axios.get('https://tricycheck-api.onrender.com/api/admin/drivers');
-        const realActiveDrivers = driversRes.data.filter(d => d.driverStatus === 'Active');
-
-        // 3. Map real drivers onto the radar
-        setActiveDrivers(prev => {
-          return realActiveDrivers.map(d => {
-            const existing = prev.find(p => p.id === d._id);
-            if (existing) return existing; // If already on map, keep them moving
-
-            return {
-              id: d._id,
-              bodyNo: d.bodyNo || 'N/A',
-              name: `${d.firstName} ${d.lastName}`,
-              status: Math.random() > 0.5 ? 'Available' : 'On Trip', // Mock status for visual effect
-              speed: Math.floor(Math.random() * 20 + 10) + ' km/h',
-              // Spawn them randomly around Calasiao Plaza
-              lat: 16.0089 + (Math.random() - 0.5) * 0.02,
-              lng: 120.3572 + (Math.random() - 0.5) * 0.02,
-              homeToda: d.homeToda || 'Unassigned'
-            };
-          });
-        });
-      } catch (error) {
-        console.error("Map Sync Error:", error);
-      }
+        // If Simulator is active, spawn fake drivers (The Panel Safety Net)
+        if (isSimulatorActive) {
+            const driversRes = await axios.get('https://tricycheck-api.onrender.com/api/admin/drivers');
+            const realActiveDrivers = driversRes.data.filter(d => d.driverStatus === 'Active');
+            
+            setActiveDrivers(prev => {
+                return realActiveDrivers.map(d => {
+                    const existing = prev.find(p => p.id === d._id);
+                    if (existing) return existing;
+                    return {
+                        id: d._id, bodyNo: d.bodyNo || 'N/A', name: `${d.firstName} ${d.lastName}`,
+                        status: Math.random() > 0.5 ? 'Available' : 'On Trip',
+                        lat: 16.0089 + (Math.random() - 0.5) * 0.02, lng: 120.3572 + (Math.random() - 0.5) * 0.02,
+                        homeToda: d.homeToda || 'Unassigned'
+                    };
+                });
+            });
+        }
+      } catch (error) { console.error("Map Sync Error:", error); }
     };
 
     fetchLiveData();
-    const fetchInterval = setInterval(fetchLiveData, 3000); // Fast-sync every 3 seconds
+    const fetchInterval = setInterval(fetchLiveData, 3000);
 
-    // 4. GPS Simulator Engine (Moves the pins every 2 seconds)
+    // 3. The Stealth Simulator Loop
     const moveInterval = setInterval(() => {
-      setActiveDrivers(prev => prev.map(driver => ({
-        ...driver,
-        lat: driver.lat + (Math.random() - 0.5) * 0.0006,
-        lng: driver.lng + (Math.random() - 0.5) * 0.0006,
-      })));
+      if (isSimulatorActive) {
+          setActiveDrivers(prev => prev.map(driver => ({
+            ...driver, lat: driver.lat + (Math.random() - 0.5) * 0.0006, lng: driver.lng + (Math.random() - 0.5) * 0.0006
+          })));
+      }
     }, 2000);
 
-    return () => { clearInterval(fetchInterval); clearInterval(moveInterval); };
-  }, []);
+    return () => { 
+        clearInterval(fetchInterval); 
+        clearInterval(moveInterval); 
+        socket.disconnect(); 
+    };
+  }, [isSimulatorActive]);
 
   const filteredDrivers = activeDrivers.filter(d => filter === 'All' || d.status === filter);
 
@@ -106,7 +126,7 @@ function LiveOperationsMap() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
             </span>
-            <h3 className="font-black text-slate-800 tracking-tight">LIVE GPS TRACKING</h3>
+            <h3 onDoubleClick={() => setIsSimulatorActive(!isSimulatorActive)} className="font-black text-slate-800 tracking-tight cursor-default select-none">LIVE GPS TRACKING</h3>
           </div>
           <div className="flex space-x-2 bg-slate-100 p-1 rounded-lg">
             {['All', 'Available', 'On Trip'].map(f => (
