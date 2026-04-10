@@ -28,11 +28,11 @@ function StaffManagement() {
 
   const fetchStaff = async () => {
     try {
-      const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/staff');
+      const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/staff', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+      });
       setStaff(response.data);
-    } catch (error) {
-      console.error("Failed to fetch staff", error);
-    }
+    } catch (error) { console.error("Error fetching staff:", error); }
   };
 
   // === THE FIX: SECURE MAGIC LINK FRONTEND HANDLER ===
@@ -106,7 +106,10 @@ function StaffManagement() {
 
     if (type === 'TOGGLE_STATUS') {
       try {
-        await axios.put(`https://tricycheck-api.onrender.com/api/admin/staff/${id}/status`, { status: newStatus, adminId: currentAdminId });
+        await axios.put(`https://tricycheck-api.onrender.com/api/admin/staff/${id}/status`, 
+            { status: newStatus, adminId: currentAdminId }, 
+            { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+        );
         fetchStaff();
         setTimeout(() => setModalState({ isOpen: true, title: "Status Updated", message: `Personnel account is now ${newStatus}.`, type: "success", isConfirm: false }), 300);
       } catch (error) {
