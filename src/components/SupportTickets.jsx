@@ -138,12 +138,19 @@ function SupportTickets() {
                      </div>
                      <MapContainer center={[selectedTicket.location.lat, selectedTicket.location.lng]} zoom={16} zoomControl={false} style={{ height: "100%", width: "100%", zIndex: 0 }}>
                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        {/* === THE FIX: SNIPER OVERLAY (Core & Pulse) === */}
                         <CircleMarker 
                            center={[selectedTicket.location.lat, selectedTicket.location.lng]} 
-                           radius={12} 
-                           pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.5 }}
+                           radius={40} 
+                           pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.15, weight: 0 }}
+                           className="animate-ping"
+                        />
+                        <CircleMarker 
+                           center={[selectedTicket.location.lat, selectedTicket.location.lng]} 
+                           radius={4} 
+                           pathOptions={{ color: '#991b1b', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }}
                         >
-                           <Popup><span className="font-bold text-xs">Passenger Distress Location</span></Popup>
+                           <Popup><span className="font-bold text-xs">Exact Distress Coordinates</span></Popup>
                         </CircleMarker>
                      </MapContainer>
                   </div>
@@ -170,6 +177,28 @@ function SupportTickets() {
                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Complainant / Passenger</h3>
                      <p className="text-lg font-bold text-slate-800 mb-4">{selectedTicket.passengerId?.firstName || 'Unknown User'}</p>
                      
+                     {/* === THE FIX: TARGET ACQUISITION PANEL === */}
+                     {selectedTicket.driverId && (
+                        <div className="mb-6 p-5 bg-red-50/50 border border-red-100 rounded-2xl flex justify-between items-center">
+                           <div>
+                              <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Reported Driver</h3>
+                              <p className="text-base font-black text-red-900 leading-tight">{selectedTicket.driverId.firstName} {selectedTicket.driverId.lastName}</p>
+                              <p className="text-xs font-bold text-red-700 mt-0.5">Body No: {selectedTicket.driverId.bodyNo}</p>
+                           </div>
+                           <button 
+                              onClick={() => {
+                                  const targetId = selectedTicket.driverId._id || selectedTicket.driverId.id;
+                                  localStorage.setItem('teleportDriverId', targetId);
+                                  window.dispatchEvent(new CustomEvent('fleetTeleport'));
+                                  alert("Target Locked 🎯\n\nPlease click your 'Fleet Management' tab on the sidebar to execute the penalty.");
+                              }}
+                              className="px-5 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all flex items-center"
+                           >
+                              <IoWarning className="mr-2 text-lg"/> Investigate
+                           </button>
+                        </div>
+                     )}
+
                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Incident Report</h3>
                      <p className="text-sm font-medium text-slate-600 leading-relaxed bg-white p-4 rounded-xl border border-slate-100">{selectedTicket.description}</p>
                   </div>

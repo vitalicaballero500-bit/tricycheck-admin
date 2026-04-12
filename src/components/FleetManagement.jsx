@@ -49,6 +49,26 @@ function FleetManagement() {
 
   useEffect(() => { fetchDrivers(); }, []);
 
+  // === THE FIX: TELEMETRY RECEIVER ENGINE ===
+  useEffect(() => {
+      const checkTeleport = () => {
+          const teleportId = localStorage.getItem('teleportDriverId');
+          if (teleportId && drivers.length > 0) {
+              const targetDriver = drivers.find(d => d.id === teleportId);
+              if (targetDriver) {
+                  localStorage.removeItem('teleportDriverId'); // Clear the lock
+                  setViewMode('directory');
+                  setQuickViewModal({ isOpen: true, driver: targetDriver, activeTab: 'disciplinary' });
+              }
+          }
+      };
+
+      // Check on mount (when tab is clicked) and listen for live events
+      checkTeleport();
+      window.addEventListener('fleetTeleport', checkTeleport);
+      return () => window.removeEventListener('fleetTeleport', checkTeleport);
+  }, [drivers]);
+
   const fetchDrivers = async () => {
     try {
       const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/drivers');
