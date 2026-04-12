@@ -28,8 +28,12 @@ function FleetManagement() {
   const [reviewsModal, setReviewsModal] = useState({ isOpen: false, driverName: '', rating: 0, driverId: null });
   const [liveReviews, setLiveReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
-  const [quickViewModal, setQuickViewModal] = useState({ isOpen: false, driver: null });
-
+  // === THE FIX: Upgraded Quick View State to support Tabs ===
+  const [quickViewModal, setQuickViewModal] = useState({ isOpen: false, driver: null, activeTab: 'info' });
+  
+  // === NEW: PENALTY FORM STATE ===
+  const [penaltyForm, setPenaltyForm] = useState({ duration: '24h', reason: '', isSubmitting: false });
+  
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
   const isSecretary = adminUser.role === 'secretary'; 
 
@@ -322,10 +326,20 @@ function FleetManagement() {
                              {compliance.label}
                           </span>
                         </td>
-                        <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver })} className="p-2 bg-emerald-50 text-blue-600 rounded-lg hover:bg-blue-100" title="View Full Info"><IoEye /></button>
-                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100" title="Reset Password"><IoKey /></button>
-                          <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200" title="Edit Profile"><IoPencil /></button>
+                        <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
+                          {/* === THE FIX: RED HAMMER ACTION === */}
+                          <button 
+                             onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'disciplinary' })} 
+                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 shadow-sm" 
+                             title="Disciplinary Actions"
+                          >
+                             <IoWarning />
+                          </button>
+                          
+                          {/* === STANDARD ACTIONS === */}
+                          <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'info' })} className="p-2 bg-emerald-50 text-blue-600 rounded-lg hover:bg-blue-100 shadow-sm" title="View Full Info"><IoEye /></button>
+                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 shadow-sm" title="Reset Password"><IoKey /></button>
+                          <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 shadow-sm" title="Edit Profile"><IoPencil /></button>
                         </td>
                       </tr>
                     );
@@ -579,8 +593,25 @@ function FleetManagement() {
                   </div>
                </div>
 
-               {/* === THE FIX: ADDED EMERGENCY FIELDS TO QUICK VIEW === */}
-               <div className="grid grid-cols-2 gap-4">
+               {/* === THE FIX: INTENT-BASED TAB NAVIGATION === */}
+               <div className="flex border-b border-slate-200 mb-6">
+                   <button 
+                       className={`px-6 py-3 font-black uppercase tracking-widest text-[10px] transition-all ${quickViewModal.activeTab === 'info' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
+                       onClick={() => setQuickViewModal({...quickViewModal, activeTab: 'info'})}
+                   >
+                       Personnel File
+                   </button>
+                   <button 
+                       className={`px-6 py-3 font-black uppercase tracking-widest text-[10px] transition-all ${quickViewModal.activeTab === 'disciplinary' ? 'text-red-600 border-b-2 border-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+                       onClick={() => setQuickViewModal({...quickViewModal, activeTab: 'disciplinary'})}
+                   >
+                       Disciplinary Actions
+                   </button>
+               </div>
+
+               {/* === TAB 1: PERSONNEL INFO === */}
+               {quickViewModal.activeTab === 'info' && (
+                  <div className="grid grid-cols-2 gap-4 animate-fade-in">
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mobile / Email</p>
                      <p className="font-mono font-bold text-slate-700">{quickViewModal.driver.phone || 'N/A'}</p>
@@ -608,7 +639,62 @@ function FleetManagement() {
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Franchise Expiry</p>
                      <p className={`font-bold ${!quickViewModal.driver.franchisePermitExpiry ? 'text-red-500' : 'text-slate-700'}`}>{quickViewModal.driver.franchisePermitExpiry || 'MISSING'}</p>
                   </div>
-               </div>
+                  </div>
+               )}
+
+               {/* === TAB 2: DISCIPLINARY ACTIONS === */}
+               {quickViewModal.activeTab === 'disciplinary' && (
+                  <div className="animate-fade-in bg-red-50/50 p-6 rounded-2xl border border-red-100">
+                      <h4 className="font-black text-red-900 text-lg mb-2 flex items-center"><IoWarning className="mr-2"/> Deploy Penalty</h4>
+                      <p className="text-xs font-medium text-red-700 mb-6 leading-relaxed">Suspending a driver will immediately force-logout their application and prohibit them from accepting dispatch requests until the suspension timer expires.</p>
+                      
+                      <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Penalty Duration</label>
+                      <select 
+                          className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm mb-4 outline-none focus:border-red-500 shadow-sm cursor-pointer"
+                          value={penaltyForm.duration}
+                          onChange={(e) => setPenaltyForm({...penaltyForm, duration: e.target.value})}
+                      >
+                          <option value="24h">24 Hours (Minor Violation)</option>
+                          <option value="3d">3 Days (Moderate Violation)</option>
+                          <option value="7d">7 Days (Severe Violation)</option>
+                          <option value="permanent">Permanent Ban (Critical Violation)</option>
+                      </select>
+
+                      <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Reason for Suspension / Ticket Ref.</label>
+                      <input 
+                          type="text" 
+                          placeholder="e.g. Overcharging Fare - Reference Ticket #1024" 
+                          className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm outline-none focus:border-red-500 shadow-sm"
+                          value={penaltyForm.reason}
+                          onChange={(e) => setPenaltyForm({...penaltyForm, reason: e.target.value})}
+                      />
+
+                      <button 
+                          className="mt-6 w-full py-4 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 flex justify-center items-center"
+                          disabled={!penaltyForm.reason || penaltyForm.isSubmitting}
+                          onClick={async () => {
+                              setPenaltyForm({...penaltyForm, isSubmitting: true});
+                              try {
+                                  await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${quickViewModal.driver.id}/suspend`, {
+                                      duration: penaltyForm.duration,
+                                      reason: penaltyForm.reason,
+                                      adminId: adminUser._id || adminUser.id
+                                  }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }});
+                                  
+                                  setQuickViewModal({ isOpen: false, driver: null, activeTab: 'info' });
+                                  setModalState({ isOpen: true, title: "Justice Served", message: "Penalty deployed successfully. The driver has been securely locked out of the application.", type: "success" });
+                                  fetchDrivers(); // Refresh table to instantly show the RED suspended tag!
+                              } catch (error) {
+                                  setModalState({ isOpen: true, title: "Execution Failed", message: "Could not deploy penalty. Check server connection.", type: "warning" });
+                              } finally {
+                                  setPenaltyForm({...penaltyForm, isSubmitting: false, reason: ''});
+                              }
+                          }}
+                      >
+                          {penaltyForm.isSubmitting ? "EXECUTING BAN..." : "CONFIRM SUSPENSION"}
+                      </button>
+                  </div>
+               )}
             </div>
 
             <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3 shrink-0">
