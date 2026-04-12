@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom'; // <-- THE TELEPORTER
 import axios from 'axios';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet'; // === THE FIX: Required for Custom HTML Radar ===
 import { 
   IoWarning, IoCheckmarkCircle, IoTime, IoShieldHalf, 
   IoLocationSharp, IoClose, IoFlash, IoPerson, IoMegaphone, IoArrowForward
@@ -138,20 +139,21 @@ function SupportTickets() {
                      </div>
                      <MapContainer center={[selectedTicket.location.lat, selectedTicket.location.lng]} zoom={16} zoomControl={false} style={{ height: "100%", width: "100%", zIndex: 0 }}>
                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                        {/* === THE FIX: SNIPER OVERLAY (Core & Pulse) === */}
-                        <CircleMarker 
-                           center={[selectedTicket.location.lat, selectedTicket.location.lng]} 
-                           radius={40} 
-                           pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.15, weight: 0 }}
-                           className="animate-ping"
-                        />
-                        <CircleMarker 
-                           center={[selectedTicket.location.lat, selectedTicket.location.lng]} 
-                           radius={4} 
-                           pathOptions={{ color: '#991b1b', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }}
+                        {/* === THE FIX: PERFECTLY CENTERED HTML SNIPER RADAR === */}
+                        <Marker 
+                           position={[selectedTicket.location.lat, selectedTicket.location.lng]}
+                           icon={L.divIcon({
+                              className: 'bg-transparent border-none',
+                              html: `<div class="relative flex items-center justify-center w-20 h-20">
+                                       <span class="absolute inline-flex w-full h-full rounded-full bg-red-500 opacity-40 animate-ping"></span>
+                                       <div class="relative w-4 h-4 bg-red-600 rounded-full border-2 border-white shadow-lg"></div>
+                                     </div>`,
+                              iconSize: [80, 80],
+                              iconAnchor: [40, 40]
+                           })}
                         >
                            <Popup><span className="font-bold text-xs">Exact Distress Coordinates</span></Popup>
-                        </CircleMarker>
+                        </Marker>
                      </MapContainer>
                   </div>
                ) : (
@@ -190,7 +192,14 @@ function SupportTickets() {
                                   const targetId = selectedTicket.driverId._id || selectedTicket.driverId.id;
                                   localStorage.setItem('teleportDriverId', targetId);
                                   window.dispatchEvent(new CustomEvent('fleetTeleport'));
-                                  alert("Target Locked 🎯\n\nPlease click your 'Fleet Management' tab on the sidebar to execute the penalty.");
+                                  
+                                  setModalState({ isOpen: true, title: "Target Locked 🎯", message: "Driver profile acquired. Re-routing Command Center to Fleet Disciplinary Matrix...", type: "success" });
+                                  
+                                  // Auto-trigger tab change after 1.5 seconds!
+                                  setTimeout(() => {
+                                      closeModal();
+                                      window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'Fleet' }));
+                                  }, 1500);
                               }}
                               className="px-5 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all flex items-center"
                            >

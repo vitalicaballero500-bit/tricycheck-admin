@@ -77,6 +77,13 @@ function AdminDashboard() {
     const userString = localStorage.getItem('adminUser'); 
     if (userString) setAdminUser(JSON.parse(userString));
     else setAdminUser({ firstName: 'Super', lastName: 'Admin', role: 'superadmin' });
+
+    // === THE FIX: AUTO-TELEPORTER LISTENER ===
+    // This listens for the Sniper Radar's command and forces the sidebar to switch tabs!
+    const handleForcedTab = (e) => setActiveTab(e.detail); 
+    window.addEventListener('forceDashboardTabChange', handleForcedTab);
+    
+    return () => window.removeEventListener('forceDashboardTabChange', handleForcedTab);
   }, []);
 
   useEffect(() => {

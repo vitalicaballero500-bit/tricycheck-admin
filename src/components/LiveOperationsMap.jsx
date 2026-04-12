@@ -157,14 +157,23 @@ function LiveOperationsMap() {
               </Marker>
             ))}
 
-            {/* 🚨 SOS RADAR: Draws a red zone over active emergencies */}
+            {/* 🚨 SOS RADAR: Draws a perfectly centered red pulse over active emergencies */}
             {stats.activeTickets?.filter(t => t.priority === 'CRITICAL' && t.location?.lat).map(ticket => (
-              <Circle 
-                key={ticket._id} 
-                center={[ticket.location.lat, ticket.location.lng]} 
-                radius={30} // 400 meter search radius
-                pathOptions={{ color: 'red', fillColor: 'red', fillOpacity: 0.3, dashArray: '10, 10' }} 
-              />
+               <Marker 
+                  key={ticket._id} 
+                  position={[ticket.location.lat, ticket.location.lng]} 
+                  icon={L.divIcon({
+                      className: 'bg-transparent border-none',
+                      html: `<div class="relative flex items-center justify-center w-24 h-24">
+                               <span class="absolute inline-flex w-full h-full rounded-full bg-red-500 opacity-40 animate-ping"></span>
+                               <div class="relative w-4 h-4 bg-red-600 rounded-full border-[3px] border-white shadow-[0_0_15px_rgba(220,38,38,0.8)]"></div>
+                             </div>`,
+                      iconSize: [96, 96],
+                      iconAnchor: [48, 48]
+                  })}
+               >
+                  <Popup><span className="font-bold text-xs">🚨 CRITICAL SOS ACTIVE</span></Popup>
+               </Marker>
             ))}
           </MapContainer>
         </div>
