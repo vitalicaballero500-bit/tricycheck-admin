@@ -198,12 +198,13 @@ function SupportTickets() {
                                   // Auto-trigger tab change after 1.5 seconds!
                                   setTimeout(() => {
                                       closeModal();
-                                      window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'Fleet' }));
+                                      // === THE FIX: STRICT LOWERCASE 'fleet' TO MATCH DASHBOARD STATE ===
+                                      window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
                                   }, 1500);
                               }}
                               className="px-5 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all flex items-center"
                            >
-                              <IoWarning className="mr-2 text-lg"/> Investigate
+                              <IoWarning className="mr-2 text-lg"/> Investigate Driver Profile
                            </button>
                         </div>
                      )}
