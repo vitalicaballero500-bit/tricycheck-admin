@@ -118,14 +118,54 @@ function FleetManagement() {
     const phoneRegex = /^(09|\+639)\d{9}$/; // Philippine Mobile Number Format
     const bodyNoRegex = /^[A-Za-z0-9\-\s]{1,15}$/;
 
+    // === 1. PERSONAL DETAILS VALIDATION ===
     if (!nameRegex.test(newDriver.firstName.trim())) return "Invalid First Name. Use letters only.";
     if (!nameRegex.test(newDriver.lastName.trim())) return "Invalid Last Name. Use letters only.";
-    if (!phoneRegex.test(newDriver.phone.trim())) return "Invalid Phone Number. Must be a valid 11-digit PH mobile (e.g., 09123456789).";
+    if (!phoneRegex.test(newDriver.phone.trim())) return "Invalid Main Phone Number. Must be a valid 11-digit PH mobile (e.g., 09123456789).";
+    
+    // === 2. EMERGENCY CONTACT VALIDATION ===
+    if (newDriver.emergencyContactName && !nameRegex.test(newDriver.emergencyContactName.trim())) {
+        return "Invalid Emergency Contact Name. Use letters only.";
+    }
+    if (newDriver.emergencyContactPhone && !phoneRegex.test(newDriver.emergencyContactPhone.trim())) {
+        return "Invalid Emergency Contact Phone. Must be a valid 11-digit PH mobile.";
+    }
+
+    // === 3. GOVERNMENT & FLEET VALIDATION ===
     if (newDriver.homeToda === 'Unassigned') return "Please assign the driver to a valid TODA.";
     if (!newDriver.plate.trim()) return "Plate Number or temporary MV file number is required.";
     if (newDriver.bodyNo && !bodyNoRegex.test(newDriver.bodyNo.trim())) return "Invalid Body Number. Use letters and numbers only.";
     
-    return null; 
+    // === 4. STRICT CHRONOLOGICAL VALIDATION (DATE ENGINE) ===
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Lock timezone to exactly midnight today
+
+    // License Check
+    if (!newDriver.licenseExpiry) return "Driver's License Expiration Date is mandatory.";
+    if (new Date(newDriver.licenseExpiry) < today) return "Rejected: The Driver's License provided is already expired.";
+
+    // OR/CR Check
+    if (!newDriver.orCrExpiry) return "Tricycle OR/CR Expiration Date is mandatory.";
+    if (new Date(newDriver.orCrExpiry) < today) return "Rejected: The Tricycle OR/CR provided is already expired.";
+
+    // Franchise Check
+    if (!newDriver.franchisePermitExpiry) return "Franchise Permit Expiration Date is mandatory.";
+    if (new Date(newDriver.franchisePermitExpiry) < today) return "Rejected: The Franchise Permit provided is already expired.";
+
+    // === 5. PHYSICAL DOCUMENT SCAN VAULT VALIDATION ===
+    // If registering a NEW driver, they MUST upload all files.
+    // If editing, they must upload a file ONLY IF they deleted the old one.
+    if (!isEditing) {
+        if (!files.licensePic) return "Driver's License scan/photo is required.";
+        if (!files.orcrPic) return "Tricycle OR/CR scan/photo is required.";
+        if (!files.franchisePic) return "Franchise Permit scan/photo is required.";
+    } else {
+        if (!files.licensePic && !newDriver.licensePicUrl) return "Driver's License scan is missing.";
+        if (!files.orcrPic && !newDriver.orcrPicUrl) return "Tricycle OR/CR scan is missing.";
+        if (!files.franchisePic && !newDriver.franchisePicUrl) return "Franchise Permit scan is missing.";
+    }
+
+    return null; // Gateway Passed
   };
 
   const handleSubmit = async (e) => {
