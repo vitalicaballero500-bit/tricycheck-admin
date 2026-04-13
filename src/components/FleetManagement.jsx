@@ -114,12 +114,17 @@ function FleetManagement() {
   const handleFileChange = (e, fileType) => { setFiles({ ...files, [fileType]: e.target.files[0] }); };
 
   const validateForm = () => {
-    const nameRegex = /^[A-Za-z\s\-ñÑ]{2,50}$/;
-    if (!nameRegex.test(newDriver.firstName.trim())) return "Invalid First Name.";
-    if (!nameRegex.test(newDriver.lastName.trim())) return "Invalid Last Name.";
-    // === THE FIX: UPGRADED REGEX TO ALLOW LETTERS, NUMBERS, AND DASHES (e.g., "ABC-123" or "0143") ===
-    const bodyNoRegex = /^[A-Za-z0-9\-\s]{1,10}$/; 
+    const nameRegex = /^[A-Za-z\s\-ñÑ.]{2,50}$/;
+    const phoneRegex = /^(09|\+639)\d{9}$/; // Philippine Mobile Number Format
+    const bodyNoRegex = /^[A-Za-z0-9\-\s]{1,15}$/;
+
+    if (!nameRegex.test(newDriver.firstName.trim())) return "Invalid First Name. Use letters only.";
+    if (!nameRegex.test(newDriver.lastName.trim())) return "Invalid Last Name. Use letters only.";
+    if (!phoneRegex.test(newDriver.phone.trim())) return "Invalid Phone Number. Must be a valid 11-digit PH mobile (e.g., 09123456789).";
+    if (newDriver.homeToda === 'Unassigned') return "Please assign the driver to a valid TODA.";
+    if (!newDriver.plate.trim()) return "Plate Number or temporary MV file number is required.";
     if (newDriver.bodyNo && !bodyNoRegex.test(newDriver.bodyNo.trim())) return "Invalid Body Number. Use letters and numbers only.";
+    
     return null; 
   };
 

@@ -37,6 +37,17 @@ function SystemSettings() {
   }, []);
 
   const handleSave = async () => {
+    // === THE FIX: ENTERPRISE GATEKEEPER VALIDATION ===
+    const base = Number(settings.baseFare);
+    const perKm = Number(settings.perKmRate);
+
+    if (isNaN(base) || isNaN(perKm) || settings.baseFare === "" || settings.perKmRate === "") {
+        return setModalState({ isOpen: true, title: "Invalid Input", message: "Fare values cannot be blank.", type: "warning" });
+    }
+    if (base < 0 || perKm < 0) {
+        return setModalState({ isOpen: true, title: "Invalid Math", message: "Fares cannot be negative numbers.", type: "warning" });
+    }
+
     setIsSaving(true);
     try {
       await axios.put('https://tricycheck-api.onrender.com/api/admin/settings', {
