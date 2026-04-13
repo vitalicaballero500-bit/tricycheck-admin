@@ -115,7 +115,7 @@ function FleetManagement() {
 
   const validateForm = () => {
     const nameRegex = /^[A-Za-z\s\-ñÑ.]{2,50}$/;
-    const phoneRegex = /^(09|\+639)\d{9}$/; // Philippine Mobile Number Format
+    const phoneRegex = /^(09|\+639)\d{9}$/; // Philippine Mobile
     const bodyNoRegex = /^[A-Za-z0-9\-\s]{1,15}$/;
 
     // === 1. PERSONAL DETAILS VALIDATION ===
@@ -123,25 +123,36 @@ function FleetManagement() {
     if (!nameRegex.test(newDriver.lastName.trim())) return "Invalid Last Name. Use letters only.";
     if (!phoneRegex.test(newDriver.phone.trim())) return "Invalid Main Phone Number. Must be a valid 11-digit PH mobile.";
     
-    // === 2. EMERGENCY CONTACT VALIDATION ===
+    // === 2. FLEXIBLE EMERGENCY CONTACT (ZERO-EXCLUSION) ===
+    // If they type a name, it must be letters. But it CAN be left totally blank!
     if (newDriver.emergencyContactName && !nameRegex.test(newDriver.emergencyContactName.trim())) {
         return "Invalid Emergency Contact Name. Use letters only.";
     }
+    // If they type a phone, it must be valid. But it CAN be left totally blank!
     if (newDriver.emergencyContactPhone && !phoneRegex.test(newDriver.emergencyContactPhone.trim())) {
         return "Invalid Emergency Contact Phone. Must be a valid 11-digit PH mobile.";
     }
 
-    // === 3. GOVERNMENT & FLEET VALIDATION ===
+    // === 3. NEW STRICT DEMOGRAPHICS ===
+    // Email is 100% Optional. BloodType defaults to 'Unknown'.
+    if (!newDriver.address || !newDriver.address.trim()) {
+        return "Full Home Address is strictly required for LGU accountability.";
+    }
+    if (!newDriver.tricycleColor || !newDriver.tricycleColor.trim()) {
+        return "Tricycle Color/Make is strictly required (e.g., 'Red Honda TMX').";
+    }
+
+    // === 4. GOVERNMENT & FLEET VALIDATION ===
     if (newDriver.homeToda === 'Unassigned') return "Please assign the driver to a valid TODA.";
     if (!newDriver.plate.trim()) return "Plate Number or temporary MV file number is required.";
     if (newDriver.bodyNo && !bodyNoRegex.test(newDriver.bodyNo.trim())) return "Invalid Body Number. Use letters and numbers only.";
     
-    // === 4. STRICT CHRONOLOGICAL VALIDATION (MAX 10 YEARS) ===
+    // === 5. STRICT CHRONOLOGICAL VALIDATION (MAX 10 YEARS) ===
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Lock timezone to exactly midnight today
+    today.setHours(0, 0, 0, 0); 
     
     const maxFutureDate = new Date();
-    maxFutureDate.setFullYear(today.getFullYear() + 10); // 10-year maximum legal validity
+    maxFutureDate.setFullYear(today.getFullYear() + 10); 
     maxFutureDate.setHours(0, 0, 0, 0);
 
     // License Check
@@ -162,9 +173,7 @@ function FleetManagement() {
     if (franchiseDate < today) return "Rejected: The Franchise Permit provided is already expired.";
     if (franchiseDate > maxFutureDate) return "Rejected: Franchise Permit expiration exceeds the 10-year legal maximum.";
 
-    // === 5. PHYSICAL DOCUMENT SCAN VAULT VALIDATION ===
-    // If registering a NEW driver, they MUST upload all files.
-    // If editing, they must upload a file ONLY IF they deleted the old one.
+    // === 6. PHYSICAL DOCUMENT SCAN VAULT VALIDATION ===
     if (!isEditing) {
         if (!files.licensePic) return "Driver's License scan/photo is required.";
         if (!files.orcrPic) return "Tricycle OR/CR scan/photo is required.";
