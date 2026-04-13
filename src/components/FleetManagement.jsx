@@ -121,7 +121,7 @@ function FleetManagement() {
     // === 1. PERSONAL DETAILS VALIDATION ===
     if (!nameRegex.test(newDriver.firstName.trim())) return "Invalid First Name. Use letters only.";
     if (!nameRegex.test(newDriver.lastName.trim())) return "Invalid Last Name. Use letters only.";
-    if (!phoneRegex.test(newDriver.phone.trim())) return "Invalid Main Phone Number. Must be a valid 11-digit PH mobile (e.g., 09123456789).";
+    if (!phoneRegex.test(newDriver.phone.trim())) return "Invalid Main Phone Number. Must be a valid 11-digit PH mobile.";
     
     // === 2. EMERGENCY CONTACT VALIDATION ===
     if (newDriver.emergencyContactName && !nameRegex.test(newDriver.emergencyContactName.trim())) {
@@ -136,21 +136,31 @@ function FleetManagement() {
     if (!newDriver.plate.trim()) return "Plate Number or temporary MV file number is required.";
     if (newDriver.bodyNo && !bodyNoRegex.test(newDriver.bodyNo.trim())) return "Invalid Body Number. Use letters and numbers only.";
     
-    // === 4. STRICT CHRONOLOGICAL VALIDATION (DATE ENGINE) ===
+    // === 4. STRICT CHRONOLOGICAL VALIDATION (MAX 10 YEARS) ===
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Lock timezone to exactly midnight today
+    
+    const maxFutureDate = new Date();
+    maxFutureDate.setFullYear(today.getFullYear() + 10); // 10-year maximum legal validity
+    maxFutureDate.setHours(0, 0, 0, 0);
 
     // License Check
     if (!newDriver.licenseExpiry) return "Driver's License Expiration Date is mandatory.";
-    if (new Date(newDriver.licenseExpiry) < today) return "Rejected: The Driver's License provided is already expired.";
+    const licenseDate = new Date(newDriver.licenseExpiry);
+    if (licenseDate < today) return "Rejected: The Driver's License provided is already expired.";
+    if (licenseDate > maxFutureDate) return "Rejected: License expiration date exceeds the 10-year legal maximum.";
 
     // OR/CR Check
     if (!newDriver.orCrExpiry) return "Tricycle OR/CR Expiration Date is mandatory.";
-    if (new Date(newDriver.orCrExpiry) < today) return "Rejected: The Tricycle OR/CR provided is already expired.";
+    const orcrDate = new Date(newDriver.orCrExpiry);
+    if (orcrDate < today) return "Rejected: The Tricycle OR/CR provided is already expired.";
+    if (orcrDate > maxFutureDate) return "Rejected: OR/CR expiration date exceeds the 10-year legal maximum.";
 
     // Franchise Check
     if (!newDriver.franchisePermitExpiry) return "Franchise Permit Expiration Date is mandatory.";
-    if (new Date(newDriver.franchisePermitExpiry) < today) return "Rejected: The Franchise Permit provided is already expired.";
+    const franchiseDate = new Date(newDriver.franchisePermitExpiry);
+    if (franchiseDate < today) return "Rejected: The Franchise Permit provided is already expired.";
+    if (franchiseDate > maxFutureDate) return "Rejected: Franchise Permit expiration exceeds the 10-year legal maximum.";
 
     // === 5. PHYSICAL DOCUMENT SCAN VAULT VALIDATION ===
     // If registering a NEW driver, they MUST upload all files.
