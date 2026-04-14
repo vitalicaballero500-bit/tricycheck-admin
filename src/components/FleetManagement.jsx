@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom'; // <-- THE TELEPORTER
 import axios from 'axios';
+// Add IoShieldCheckmark to your existing imports:
 import { 
   IoSearch, IoAdd, IoPencil, IoKey, IoClose, IoWarning, IoCamera, IoEye, 
-  IoFilter, IoSwapVertical, IoStar, IoChatbubbles, IoPodium, IoDocumentText
+  IoFilter, IoSwapVertical, IoStar, IoChatbubbles, IoPodium, IoDocumentText, IoShieldCheckmark
 } from 'react-icons/io5';
 import CustomModal from './CustomModal';
 
@@ -411,13 +412,13 @@ function FleetManagement() {
                           </span>
                         </td>
                         <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
-                          {/* === THE FIX: RED HAMMER ACTION === */}
+                          {/* === THE FIX: CONTEXTUAL RED HAMMER / GREEN SHIELD === */}
                           <button 
                              onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'disciplinary' })} 
-                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 shadow-sm" 
-                             title="Disciplinary Actions"
+                             className={`p-2 rounded-lg shadow-sm transition-colors ${driver.status === 'Suspended' ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`} 
+                             title={driver.status === 'Suspended' ? "Lift Suspension" : "Disciplinary Actions"}
                           >
-                             <IoWarning />
+                             {driver.status === 'Suspended' ? <IoShieldCheckmark /> : <IoWarning />}
                           </button>
                           
                           {/* === STANDARD ACTIONS === */}
@@ -726,58 +727,92 @@ function FleetManagement() {
                   </div>
                )}
 
-               {/* === TAB 2: DISCIPLINARY ACTIONS === */}
+               {/* === TAB 2: DISCIPLINARY ACTIONS (STATE AWARE) === */}
                {quickViewModal.activeTab === 'disciplinary' && (
-                  <div className="animate-fade-in bg-red-50/50 p-6 rounded-2xl border border-red-100">
-                      <h4 className="font-black text-red-900 text-lg mb-2 flex items-center"><IoWarning className="mr-2"/> Deploy Penalty</h4>
-                      <p className="text-xs font-medium text-red-700 mb-6 leading-relaxed">Suspending a driver will immediately force-logout their application and prohibit them from accepting dispatch requests until the suspension timer expires.</p>
-                      
-                      <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Penalty Duration</label>
-                      <select 
-                          className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm mb-4 outline-none focus:border-red-500 shadow-sm cursor-pointer"
-                          value={penaltyForm.duration}
-                          onChange={(e) => setPenaltyForm({...penaltyForm, duration: e.target.value})}
-                      >
-                          <option value="24h">24 Hours (Minor Violation)</option>
-                          <option value="3d">3 Days (Moderate Violation)</option>
-                          <option value="7d">7 Days (Severe Violation)</option>
-                          <option value="permanent">Permanent Ban (Critical Violation)</option>
-                      </select>
+                  quickViewModal.driver.status === 'Suspended' ? (
+                      /* === THE UNBAN UI === */
+                      <div className="animate-fade-in bg-emerald-50 p-6 rounded-2xl border border-emerald-200 text-center">
+                          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm">
+                              <IoShieldCheckmark />
+                          </div>
+                          <h4 className="font-black text-emerald-900 text-xl mb-2">Driver is Currently Suspended</h4>
+                          <p className="text-sm font-bold text-emerald-700 mb-6 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm inline-block w-full text-left">
+                             <span className="block text-[10px] text-emerald-500 uppercase mb-1">Recorded Reason:</span>
+                             {quickViewModal.driver.suspensionReason || "Administrative Lockout"}
+                          </p>
+                          
+                          <button 
+                              className="w-full py-4 bg-emerald-600 text-white font-black rounded-xl shadow-[0_5px_15px_rgba(5,150,105,0.3)] hover:bg-emerald-500 active:scale-95 transition-all flex justify-center items-center"
+                              onClick={async () => {
+                                  try {
+                                      await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${quickViewModal.driver.id}/unban`, {
+                                          adminId: adminUser._id || adminUser.id
+                                      }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }});
+                                      
+                                      setQuickViewModal({ isOpen: false, driver: null, activeTab: 'info' });
+                                      setModalState({ isOpen: true, title: "Access Restored", message: "Suspension lifted. The driver can now log into the application.", type: "success" });
+                                      fetchDrivers(); 
+                                  } catch (error) {
+                                      setModalState({ isOpen: true, title: "Action Failed", message: "Could not lift suspension. Check connection.", type: "error" });
+                                  }
+                              }}
+                          >
+                              LIFT PENALTY & RESTORE ACCESS
+                          </button>
+                      </div>
+                  ) : (
+                      /* === THE EXISTING BAN UI === */
+                      <div className="animate-fade-in bg-red-50/50 p-6 rounded-2xl border border-red-100">
+                          <h4 className="font-black text-red-900 text-lg mb-2 flex items-center"><IoWarning className="mr-2"/> Deploy Penalty</h4>
+                          <p className="text-xs font-medium text-red-700 mb-6 leading-relaxed">Suspending a driver will immediately force-logout their application and prohibit them from accepting dispatch requests until the suspension timer expires.</p>
+                          
+                          <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Penalty Duration</label>
+                          <select 
+                              className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm mb-4 outline-none focus:border-red-500 shadow-sm cursor-pointer"
+                              value={penaltyForm.duration}
+                              onChange={(e) => setPenaltyForm({...penaltyForm, duration: e.target.value})}
+                          >
+                              <option value="24h">24 Hours (Minor Violation)</option>
+                              <option value="3d">3 Days (Moderate Violation)</option>
+                              <option value="7d">7 Days (Severe Violation)</option>
+                              <option value="permanent">Permanent Ban (Critical Violation)</option>
+                          </select>
 
-                      <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Reason for Suspension / Ticket Ref.</label>
-                      <input 
-                          type="text" 
-                          placeholder="e.g. Overcharging Fare - Reference Ticket #1024" 
-                          className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm outline-none focus:border-red-500 shadow-sm"
-                          value={penaltyForm.reason}
-                          onChange={(e) => setPenaltyForm({...penaltyForm, reason: e.target.value})}
-                      />
+                          <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Reason for Suspension / Ticket Ref.</label>
+                          <input 
+                              type="text" 
+                              placeholder="e.g. Overcharging Fare - Reference Ticket #1024" 
+                              className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm outline-none focus:border-red-500 shadow-sm"
+                              value={penaltyForm.reason}
+                              onChange={(e) => setPenaltyForm({...penaltyForm, reason: e.target.value})}
+                          />
 
-                      <button 
-                          className="mt-6 w-full py-4 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 flex justify-center items-center"
-                          disabled={!penaltyForm.reason || penaltyForm.isSubmitting}
-                          onClick={async () => {
-                              setPenaltyForm({...penaltyForm, isSubmitting: true});
-                              try {
-                                  await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${quickViewModal.driver.id}/suspend`, {
-                                      duration: penaltyForm.duration,
-                                      reason: penaltyForm.reason,
-                                      adminId: adminUser._id || adminUser.id
-                                  }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }});
-                                  
-                                  setQuickViewModal({ isOpen: false, driver: null, activeTab: 'info' });
-                                  setModalState({ isOpen: true, title: "Justice Served", message: "Penalty deployed successfully. The driver has been securely locked out of the application.", type: "success" });
-                                  fetchDrivers(); // Refresh table to instantly show the RED suspended tag!
-                              } catch (error) {
-                                  setModalState({ isOpen: true, title: "Execution Failed", message: "Could not deploy penalty. Check server connection.", type: "warning" });
-                              } finally {
-                                  setPenaltyForm({...penaltyForm, isSubmitting: false, reason: ''});
-                              }
-                          }}
-                      >
-                          {penaltyForm.isSubmitting ? "EXECUTING BAN..." : "CONFIRM SUSPENSION"}
-                      </button>
-                  </div>
+                          <button 
+                              className="mt-6 w-full py-4 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50 flex justify-center items-center"
+                              disabled={!penaltyForm.reason || penaltyForm.isSubmitting}
+                              onClick={async () => {
+                                  setPenaltyForm({...penaltyForm, isSubmitting: true});
+                                  try {
+                                      await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${quickViewModal.driver.id}/suspend`, {
+                                          duration: penaltyForm.duration,
+                                          reason: penaltyForm.reason,
+                                          adminId: adminUser._id || adminUser.id
+                                      }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }});
+                                      
+                                      setQuickViewModal({ isOpen: false, driver: null, activeTab: 'info' });
+                                      setModalState({ isOpen: true, title: "Justice Served", message: "Penalty deployed successfully. The driver has been securely locked out of the application.", type: "success" });
+                                      fetchDrivers(); 
+                                  } catch (error) {
+                                      setModalState({ isOpen: true, title: "Execution Failed", message: "Could not deploy penalty. Check server connection.", type: "warning" });
+                                  } finally {
+                                      setPenaltyForm({...penaltyForm, isSubmitting: false, reason: ''});
+                                  }
+                              }}
+                          >
+                              {penaltyForm.isSubmitting ? "EXECUTING BAN..." : "CONFIRM SUSPENSION"}
+                          </button>
+                      </div>
+                  )
                )}
             </div>
 

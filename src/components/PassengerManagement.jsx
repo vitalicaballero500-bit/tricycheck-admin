@@ -7,6 +7,7 @@ import { IoPeople, IoSearch, IoHandRight, IoLockOpen, IoCall, IoKey } from 'reac
 function PassengerManagement() {
   const [passengers, setPassengers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All'); // === THE FIX: ADDED FILTER STATE ===
   const [loading, setLoading] = useState(true);
 
   // === MODAL ACTION STATE UPGRADED TO SUPPORT MULTIPLE TYPES ===
@@ -72,10 +73,18 @@ function PassengerManagement() {
     }
   };
 
-  const filteredPassengers = passengers.filter(p => 
-    `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (p.phone && p.phone.includes(searchTerm))
-  );
+  // === THE FIX: DUAL-FILTERING ENGINE ===
+  const filteredPassengers = passengers.filter(p => {
+    // Check 1: Text Search
+    const matchesSearch = `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (p.phone && p.phone.includes(searchTerm));
+    
+    // Check 2: Status Dropdown
+    const currentStatus = p.status || 'Active';
+    const matchesStatus = filterStatus === 'All' || currentStatus === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
@@ -87,9 +96,22 @@ function PassengerManagement() {
           <p className="text-sm font-medium text-slate-500">Manage registered commuters and account security.</p>
         </div>
         
-        <div className="relative w-72">
-          <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input type="text" placeholder="Search by name or phone..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-sm font-bold shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        {/* === THE FIX: FILTER & SEARCH COMBO === */}
+        <div className="flex items-center space-x-3">
+          <select 
+            className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-sm font-bold text-slate-600 shadow-sm cursor-pointer"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="All">All Statuses</option>
+            <option value="Active">Active Only</option>
+            <option value="Banned">Banned Only</option>
+          </select>
+
+          <div className="relative w-72">
+            <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input type="text" placeholder="Search by name or phone..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-sm font-bold shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
         </div>
       </div>
 

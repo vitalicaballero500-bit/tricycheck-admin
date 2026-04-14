@@ -15,6 +15,10 @@ function SupportTickets() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // === THE FIX: SEARCH & STATUS FILTER STATE ===
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+  
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [dispatchPrompt, setDispatchPrompt] = useState({ isOpen: false, ticketId: null, unitName: '' });
 
@@ -76,27 +80,64 @@ function SupportTickets() {
       if (priority === 'Medium') return 'bg-yellow-400 text-yellow-900';
       return 'bg-emerald-400 text-emerald-900';
   };
-
+// === THE FIX: DUAL-FILTERING ENGINE ===
+  const filteredTickets = tickets.filter(ticket => {
+     // Check 1: Deep Text Search (Matches ID, Issue Type, Description, or Passenger Name)
+     const searchString = `${ticket._id} ${ticket.type} ${ticket.description} ${ticket.passengerId?.firstName || ''} ${ticket.passengerId?.lastName || ''}`.toLowerCase();
+     const matchesSearch = searchString.includes(searchTerm.toLowerCase());
+     
+     // Check 2: Status Dropdown
+     const matchesStatus = filterStatus === 'All' || ticket.status === filterStatus;
+     
+     return matchesSearch && matchesStatus;
+  });
   return (
     <div className="h-full flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 animate-fade-in relative">
       
       {/* === LEFT: THE INBOX === */}
       <div className="w-full lg:w-1/3 bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col shrink-0 z-10">
-         <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
-            <div>
-               <h2 className="text-xl font-black text-slate-800 flex items-center"><IoMegaphone className="mr-2 text-emerald-600"/> Switchboard</h2>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Active Dispatches</p>
+         {/* === THE FIX: ADVANCED FILTER HEADER === */}
+         <div className="p-6 bg-slate-50 border-b border-slate-100 flex flex-col shrink-0">
+            <div className="flex justify-between items-center mb-4">
+                <div>
+                   <h2 className="text-xl font-black text-slate-800 flex items-center"><IoMegaphone className="mr-2 text-emerald-600"/> Switchboard</h2>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Active Dispatches</p>
+                </div>
+                <button onClick={fetchTickets} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-100 transition-colors" title="Sync Feed"><IoTime className="text-lg"/></button>
             </div>
-            <button onClick={fetchTickets} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-100 transition-colors"><IoTime className="text-lg"/></button>
+            
+            <div className="flex space-x-2">
+                <select 
+                    className="w-[110px] px-3 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                    <option value="All">All Status</option>
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Dismissed">Dismissed</option>
+                </select>
+                <div className="relative flex-1">
+                    <input 
+                        type="text" 
+                        placeholder="Search ID, Passenger, or Details..." 
+                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold shadow-sm" 
+                        value={searchTerm} 
+                        onChange={(e) => setSearchTerm(e.target.value)} 
+                    />
+                </div>
+            </div>
          </div>
 
          <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
             {loading ? (
                 <div className="p-10 text-center text-slate-400 font-bold animate-pulse">Syncing Encrypted Feed...</div>
-            ) : tickets.length === 0 ? (
-                <div className="p-10 text-center text-slate-400 font-bold">No emergency tickets found.</div>
+            ) : filteredTickets.length === 0 ?
+(
+                <div className="p-10 text-center text-slate-400 font-bold">No tickets found matching your search filters.</div>
             ) : (
-                tickets.map(ticket => (
+                filteredTickets.map(ticket => (
                    <div 
                       key={ticket._id} 
                       onClick={() => setSelectedTicket(ticket)}
