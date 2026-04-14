@@ -45,72 +45,97 @@ function LiveOperationsMap() {
   // === THE STEALTH TOGGLE STATE ===
   const [isSimulatorActive, setIsSimulatorActive] = useState(false);
 
-  // === THE REAL GPS ENGINE (With Stealth Fallback) ===
+  // === THE FIX: F1 SCATTER MATH (THE BEEHIVE ENGINE) ===
+  const TERMINAL_COORDS = {
+    'Calasiao Plaza TODA': { lat: 16.0089, lng: 120.3572 },
+    'Bued TODA': { lat: 16.0050, lng: 120.3600 },
+    'San Miguel TODA': { lat: 16.0120, lng: 120.3520 },
+    'Robinsons TODA': { lat: 16.0020, lng: 120.3580 }
+  };
+
+  const applyScatter = (lat, lng, index) => {
+    const radius = 0.0003; // ~30 meters dispersion
+    const angle = index * (Math.PI / 3); // Spreads drivers in a circle
+    return { lat: lat + (radius * Math.cos(angle)), lng: lng + (radius * Math.sin(angle)) };
+  };
+
+  // === THE REAL GPS ENGINE (Hybrid Radar) ===
   useEffect(() => {
-    // 1. Connect to Real-Time Websocket
     const socket = io('https://tricycheck-api.onrender.com');
 
-    // 2. Listen for REAL GPS updates from active driver phones
-    socket.on('driver_location_update', (data) => {
-        if (isSimulatorActive) return; // Block real data if Stealth Simulator is hijacking the map
-        
-        setActiveDrivers(prev => {
-            const existing = prev.find(d => d.id === data.driverId);
-            if (existing) {
-                return prev.map(d => d.id === data.driverId ? { ...d, lat: data.lat, lng: data.lng, status: data.status } : d);
-            } else {
-                return [...prev, {
-                    id: data.driverId, bodyNo: data.bodyNo, name: data.driverName,
-                    status: data.status, lat: data.lat, lng: data.lng, homeToda: data.homeToda || 'Unassigned'
-                }];
-            }
-        });
-    });
+    // 1. INITIAL IGNITION: Pull all waiting drivers and stats instantly
+    const fetchRadarData = async () => {
+       try {
+          const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+          
+          // Securely fetch both Radar data and Fleet Stats simultaneously
+          const [radarRes, statsRes] = await Promise.all([
+             axios.get('https://tricycheck-api.onrender.com/api/admin/radar', { headers: { Authorization: `Bearer ${token}` } }),
+             axios.get('https://tricycheck-api.onrender.com/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } })
+          ]);
+          
+          // Group drivers by TODA to apply precise scatter
+          let groupedDrivers = {};
+          radarRes.data.activeDrivers.forEach(d => {
+             if (!groupedDrivers[d.homeToda]) groupedDrivers[d.homeToda] = [];
+             groupedDrivers[d.homeToda].push(d);
+          });
 
-    const fetchLiveData = async () => {
-      try {
-        const statsRes = await axios.get('https://tricycheck-api.onrender.com/api/admin/stats');
-        setStats(statsRes.data);
-
-        // If Simulator is active, spawn fake drivers (The Panel Safety Net)
-        if (isSimulatorActive) {
-            const driversRes = await axios.get('https://tricycheck-api.onrender.com/api/admin/drivers');
-            const realActiveDrivers = driversRes.data.filter(d => d.driverStatus === 'Active');
-            
-            setActiveDrivers(prev => {
-                return realActiveDrivers.map(d => {
-                    const existing = prev.find(p => p.id === d._id);
-                    if (existing) return existing;
-                    return {
-                        id: d._id, bodyNo: d.bodyNo || 'N/A', name: `${d.firstName} ${d.lastName}`,
-                        status: Math.random() > 0.5 ? 'Available' : 'On Trip',
-                        lat: 16.0089 + (Math.random() - 0.5) * 0.02, lng: 120.3572 + (Math.random() - 0.5) * 0.02,
-                        homeToda: d.homeToda || 'Unassigned'
-                    };
+          let mappedDrivers = [];
+          Object.keys(groupedDrivers).forEach(toda => {
+             const coords = TERMINAL_COORDS[toda] || { lat: 16.0089, lng: 120.3572 };
+             groupedDrivers[toda].forEach((driver, index) => {
+                const scattered = applyScatter(coords.lat, coords.lng, index);
+                mappedDrivers.push({
+                   id: driver._id || driver.id,
+                   name: `${driver.firstName} ${driver.lastName}`,
+                   homeToda: driver.homeToda || 'Unassigned',
+                   lat: scattered.lat,
+                   lng: scattered.lng,
+                   bodyNo: driver.bodyNo,
+                   status: 'Available' // Currently parked in line
                 });
-            });
-        }
-      } catch (error) { console.error("Map Sync Error:", error); }
+             });
+          });
+
+          setActiveDrivers(mappedDrivers);
+          
+          // Update the dispatch panel numbers dynamically
+          setStats({ 
+             ...statsRes.data, 
+             activeTickets: radarRes.data.activeTickets 
+          });
+
+       } catch (error) { 
+          console.error("Radar Sync Error:", error); 
+       }
     };
 
-    fetchLiveData();
-    const fetchInterval = setInterval(fetchLiveData, 3000);
+    fetchRadarData();
+    
+    // Lightweight poll every 10 seconds to update the queue without draining server
+    const fetchInterval = setInterval(fetchRadarData, 10000);
 
-    // 3. The Stealth Simulator Loop
-    const moveInterval = setInterval(() => {
-      if (isSimulatorActive) {
-          setActiveDrivers(prev => prev.map(driver => ({
-            ...driver, lat: driver.lat + (Math.random() - 0.5) * 0.0006, lng: driver.lng + (Math.random() - 0.5) * 0.0006
-          })));
-      }
-    }, 2000);
+    // 2. LIVE TRACKING: Intercept exact GPS coordinates when a driver accepts a ride
+    socket.on('driver_location_update', (data) => {
+      setActiveDrivers(prev => {
+        const existing = prev.find(d => d.id === data.driverId);
+        if (existing) {
+            return prev.map(d => d.id === data.driverId ? { ...d, lat: data.lat, lng: data.lng, status: data.status || 'On Trip' } : d);
+        }
+        return [...prev, { 
+            id: data.driverId, bodyNo: data.bodyNo, name: data.driverName,
+            status: data.status || 'On Trip', lat: data.lat, lng: data.lng, homeToda: data.homeToda || 'Unassigned'
+        }];
+      });
+    });
 
     return () => { 
         clearInterval(fetchInterval); 
-        clearInterval(moveInterval); 
+        socket.off('driver_location_update');
         socket.disconnect(); 
     };
-  }, [isSimulatorActive]);
+  }, []);
 
   const filteredDrivers = activeDrivers.filter(d => filter === 'All' || d.status === filter);
 
