@@ -119,6 +119,11 @@ function LiveOperationsMap() {
     // 2. LIVE TRACKING: Intercept exact GPS coordinates when a driver accepts a ride
     socket.on('driver_location_update', (data) => {
       setActiveDrivers(prev => {
+        // === THE FIX: THE MAP ERASER (Instantly deletes offline drivers) ===
+        if (data.status === 'Offline') {
+            return prev.filter(d => d.id !== data.driverId);
+        }
+
         const existing = prev.find(d => d.id === data.driverId);
         if (existing) {
             return prev.map(d => d.id === data.driverId ? { ...d, lat: data.lat, lng: data.lng, status: data.status || 'On Trip' } : d);
