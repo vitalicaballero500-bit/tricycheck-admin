@@ -38,12 +38,14 @@ function FleetManagement() {
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
   const isSecretary = adminUser.role === 'secretary'; 
 
+  // === THE FIX: STATE ENGINE (TODA REMOVED, OPERATOR ADDED) ===
   const [newDriver, setNewDriver] = useState({ 
     firstName: '', lastName: '', bodyNo: '', plate: '', phone: '', status: 'Pending',
-    homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '',
+    licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '',
     profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '',
-    // === THE FIX: NEW LGU FIELDS ===
-    email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown'
+    email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown',
+    // === NEW FEATURE: OPERATOR & BOUNDARY ENGINE ===
+    operatorName: 'Owned', operatorPhone: '', isBoundary: false, boundaryFee: ''
   });
 
   const [files, setFiles] = useState({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null });
@@ -195,7 +197,13 @@ function FleetManagement() {
     
     // === THE FIX: INJECTING NEW FIELDS TO FORMDATA ===
     const formData = new FormData();
-    formData.append('firstName', newDriver.firstName.trim()); formData.append('lastName', newDriver.lastName.trim()); formData.append('bodyNo', newDriver.bodyNo.trim()); formData.append('plateNo', newDriver.plate.toUpperCase().trim()); formData.append('phone', newDriver.phone); formData.append('homeToda', newDriver.homeToda); formData.append('licenseExpiry', newDriver.licenseExpiry); formData.append('orCrExpiry', newDriver.orCrExpiry); formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
+    formData.append('firstName', newDriver.firstName.trim()); formData.append('lastName', newDriver.lastName.trim()); formData.append('bodyNo', newDriver.bodyNo.trim()); formData.append('plateNo', newDriver.plate.toUpperCase().trim()); formData.append('phone', newDriver.phone); formData.append('licenseExpiry', newDriver.licenseExpiry); formData.append('orCrExpiry', newDriver.orCrExpiry); formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
+    
+    // === OPERATOR APPENDS ===
+    formData.append('operatorName', newDriver.operatorName.trim());
+    formData.append('operatorPhone', newDriver.operatorPhone.trim());
+    formData.append('isBoundary', newDriver.isBoundary);
+    formData.append('boundaryFee', newDriver.boundaryFee);
     
     formData.append('email', newDriver.email.trim()); 
     formData.append('address', newDriver.address.trim()); 
@@ -536,14 +544,29 @@ function FleetManagement() {
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">First Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.firstName} onChange={e => setNewDriver({...newDriver, firstName: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Last Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.lastName} onChange={e => setNewDriver({...newDriver, lastName: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile</label><input required type="tel" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} /></div>
-                <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">TODA</label>
-                    <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.homeToda} onChange={e => setNewDriver({...newDriver, homeToda: e.target.value})}>
-                      <option value="Unassigned">-- Select TODA --</option>
-                      <option value="Calasiao Plaza TODA">Calasiao Plaza TODA</option>
-                      <option value="Bued TODA">Bued TODA</option>
-                      <option value="San Miguel TODA">San Miguel TODA</option>
-                    </select>
+                {/* === NEW FEATURE: OPERATOR & BOUNDARY UI === */}
+                <div className="col-span-2 grid grid-cols-2 gap-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                    <div>
+                        <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2">Tricycle Operator / Owner</label>
+                        <input type="text" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. Owned, or Juan Dela Cruz" value={newDriver.operatorName} onChange={e => setNewDriver({...newDriver, operatorName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
+                    </div>
+                    <div>
+                        <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2">Operator Contact No.</label>
+                        <input type="tel" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. 09123456789" value={newDriver.operatorPhone} onChange={e => setNewDriver({...newDriver, operatorPhone: e.target.value})} disabled={newDriver.operatorName.toLowerCase() === 'owned'} />
+                    </div>
+                    <div className="flex items-center space-x-3 col-span-2 mt-2">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={newDriver.isBoundary} onChange={e => setNewDriver({...newDriver, isBoundary: e.target.checked, boundaryFee: e.target.checked ? newDriver.boundaryFee : ''})} />
+                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                          <span className="ml-3 text-xs font-black text-slate-700 uppercase tracking-widest">Boundary System</span>
+                        </label>
+                        {newDriver.isBoundary && (
+                            <div className="flex-1 ml-4 flex items-center bg-white border border-emerald-200 rounded-xl overflow-hidden shadow-inner">
+                                <span className="px-3 text-slate-500 font-black">₱</span>
+                                <input type="number" placeholder="Daily Boundary Fee" className="w-full p-2 outline-none font-bold text-sm" value={newDriver.boundaryFee} onChange={e => setNewDriver({...newDriver, boundaryFee: e.target.value})} />
+                            </div>
+                        )}
+                    </div>
                 </div>
                 {isEditing && (
                   <div className="col-span-2">
