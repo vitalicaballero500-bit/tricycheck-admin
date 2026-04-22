@@ -548,11 +548,11 @@ function FleetManagement() {
                 <div className="col-span-2 grid grid-cols-2 gap-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
                     <div>
                         <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2">Tricycle Operator / Owner</label>
-                        <input type="text" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. Owned, or Juan Dela Cruz" value={newDriver.operatorName} onChange={e => setNewDriver({...newDriver, operatorName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
+                        <input type="text" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. Owned, or Juan Dela Cruz" value={newDriver.operatorName || ''} onChange={e => setNewDriver({...newDriver, operatorName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
                     </div>
                     <div>
                         <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2">Operator Contact No.</label>
-                        <input type="tel" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. 09123456789" value={newDriver.operatorPhone} onChange={e => setNewDriver({...newDriver, operatorPhone: e.target.value})} disabled={newDriver.operatorName.toLowerCase() === 'owned'} />
+                        <input type="tel" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. 09123456789" value={newDriver.operatorPhone || ''} onChange={e => setNewDriver({...newDriver, operatorPhone: e.target.value})} disabled={(newDriver.operatorName || 'Owned').toLowerCase() === 'owned'} />
                     </div>
                     <div className="flex items-center space-x-3 col-span-2 mt-2">
                         <label className="relative inline-flex items-center cursor-pointer">
