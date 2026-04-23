@@ -655,11 +655,29 @@ function FleetManagement() {
                 </div>
               </div>
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Government Vault</h3>
-              <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Body No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-slate-900" value={newDriver.bodyNo} onChange={e => handleAlphanumericUpper('bodyNo', e.target.value)} /></div>
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Plate No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono uppercase" value={newDriver.plate} onChange={e => handleAlphanumericUpper('plate', e.target.value)} /></div>
+              <div className="grid grid-cols-3 gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <div>
+                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Body No. *</label>
+                   <input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-slate-900 uppercase" value={newDriver.bodyNo} onChange={e => handleAlphanumericUpper('bodyNo', e.target.value)} />
+                </div>
+                <div>
+                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Plate No. *</label>
+                   <input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono uppercase" value={newDriver.plate} onChange={e => handleAlphanumericUpper('plate', e.target.value)} />
+                </div>
+                <div>
+                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Home TODA *</label>
+                   <select className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold cursor-pointer outline-none text-slate-700 shadow-sm" value={newDriver.homeToda} onChange={e => setNewDriver({...newDriver, homeToda: e.target.value})}>
+                     <option value="Unassigned">-- Select TODA --</option>
+                     <option value="Poblacion TODA">Poblacion TODA</option>
+                     <option value="San Miguel TODA">San Miguel TODA</option>
+                     <option value="Bued TODA">Bued TODA</option>
+                     <option value="Ambonao TODA">Ambonao TODA</option>
+                     <option value="Nalsian TODA">Nalsian TODA</option>
+                     <option value="Dinalaoan TODA">Dinalaoan TODA</option>
+                   </select>
+                </div>
                 
-                <div className="col-span-2 space-y-4 mt-2">
+                <div className="col-span-3 space-y-4 mt-2">
                    <div>
                      <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Driver's License (Expiry & Scan)</label>{newDriver.licensePicUrl && <a href={newDriver.licensePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
                      <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.licenseExpiry} onChange={e => setNewDriver({...newDriver, licenseExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'licensePic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
