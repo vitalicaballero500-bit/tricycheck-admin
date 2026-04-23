@@ -137,6 +137,10 @@ function FleetManagement() {
     }
 
     // === 3. NEW STRICT DEMOGRAPHICS ===
+    // === THE FIX: MANDATORY GMAIL ENFORCEMENT ===
+    if (!newDriver.email || !newDriver.email.trim()) {
+        return "Official Email is strictly required to generate the driver's app credentials.";
+    }
     // Email is 100% Optional. BloodType defaults to 'Unknown'.
     if (!newDriver.address || !newDriver.address.trim()) {
         return "Full Home Address is strictly required for LGU accountability.";
@@ -203,7 +207,7 @@ function FleetManagement() {
     formData.append('operatorName', newDriver.operatorName.trim());
     formData.append('operatorPhone', newDriver.operatorPhone.trim());
     formData.append('isBoundary', newDriver.isBoundary);
-    formData.append('boundaryFee', newDriver.boundaryFee);
+    
     
     formData.append('email', newDriver.email.trim()); 
     formData.append('address', newDriver.address.trim()); 
@@ -539,47 +543,54 @@ function FleetManagement() {
                 </div>
               </div>
 
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Personal Details</h3>
-              <div className="grid grid-cols-2 gap-6 mb-8">
+              {/* === THE FIX: DECUPLED HUMAN IDENTITY ZONE === */}
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Driver Personal Details</h3>
+              <div className="grid grid-cols-2 gap-6 mb-6">
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">First Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.firstName} onChange={e => setNewDriver({...newDriver, firstName: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Last Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.lastName} onChange={e => setNewDriver({...newDriver, lastName: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile</label><input required type="tel" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} /></div>
-                {/* === NEW FEATURE: OPERATOR & BOUNDARY UI === */}
-                <div className="col-span-2 grid grid-cols-2 gap-4 bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-                    <div>
-                        <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2">Tricycle Operator / Owner</label>
-                        <input type="text" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. Owned, or Juan Dela Cruz" value={newDriver.operatorName || ''} onChange={e => setNewDriver({...newDriver, operatorName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
-                    </div>
-                    <div>
-                        <label className="block text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-2">Operator Contact No.</label>
-                        <input type="tel" className="w-full p-3 bg-white border border-emerald-200 rounded-xl font-bold placeholder-slate-400" placeholder="e.g. 09123456789" value={newDriver.operatorPhone || ''} onChange={e => setNewDriver({...newDriver, operatorPhone: e.target.value})} disabled={(newDriver.operatorName || 'Owned').toLowerCase() === 'owned'} />
-                    </div>
-                    <div className="flex items-center space-x-3 col-span-2 mt-2">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input type="checkbox" className="sr-only peer" checked={newDriver.isBoundary} onChange={e => setNewDriver({...newDriver, isBoundary: e.target.checked, boundaryFee: e.target.checked ? newDriver.boundaryFee : ''})} />
-                          <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                          <span className="ml-3 text-xs font-black text-slate-700 uppercase tracking-widest">Boundary System</span>
-                        </label>
-                        {newDriver.isBoundary && (
-                            <div className="flex-1 ml-4 flex items-center bg-white border border-emerald-200 rounded-xl overflow-hidden shadow-inner">
-                                <span className="px-3 text-slate-500 font-black">₱</span>
-                                <input type="number" placeholder="Daily Boundary Fee" className="w-full p-2 outline-none font-bold text-sm" value={newDriver.boundaryFee} onChange={e => setNewDriver({...newDriver, boundaryFee: e.target.value})} />
-                            </div>
-                        )}
-                    </div>
-                </div>
-                {isEditing && (
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">App Status</label>
-                    <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.status} onChange={e => setNewDriver({...newDriver, status: e.target.value})}><option value="Active">Active</option><option value="Pending">Pending</option><option value="Suspended">Suspended</option></select>
-                  </div>
-                )}
+                <div><label className="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Official Email * (Required)</label><input required type="email" className="w-full p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl font-bold placeholder-emerald-300 shadow-inner focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Driver's Gmail for App Login" value={newDriver.email} onChange={e => setNewDriver({...newDriver, email: e.target.value})} /></div>
               </div>
 
-              {/* === THE NEW EMERGENCY & ACCOUNTABILITY SECTION === */}
+              {/* === THE FIX: THE MASTER OWNERSHIP TOGGLE === */}
+              <div className="col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-8 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                      <div>
+                          <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Tricycle Ownership Status</h4>
+                          <p className="text-xs font-bold text-slate-500 mt-1">Is the driver also the Operator/Franchise Owner?</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" className="sr-only peer" checked={newDriver.isBoundary} onChange={e => setNewDriver({...newDriver, isBoundary: e.target.checked, operatorName: e.target.checked ? '' : 'Owned', operatorPhone: e.target.checked ? '' : ''})} />
+                          <div className="w-14 h-7 bg-emerald-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-400 shadow-inner"></div>
+                          <span className="ml-3 text-xs font-black uppercase tracking-widest w-28 text-right select-none">
+                              {newDriver.isBoundary ? <span className="text-orange-600">Rented / Boundary</span> : <span className="text-emerald-600">Driver-Owned</span>}
+                          </span>
+                      </label>
+                  </div>
+
+                  {newDriver.isBoundary && (
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 animate-slide-up">
+                          <div>
+                              <label className="block text-[10px] font-bold text-orange-800 uppercase tracking-wider mb-2">Operator / Owner Name *</label>
+                              <input type="text" required={newDriver.isBoundary} className="w-full p-3 bg-white border border-orange-200 focus:border-orange-500 outline-none rounded-xl font-bold placeholder-slate-400 shadow-inner" placeholder="Name on Franchise" value={newDriver.operatorName || ''} onChange={e => setNewDriver({...newDriver, operatorName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
+                          </div>
+                          <div>
+                              <label className="block text-[10px] font-bold text-orange-800 uppercase tracking-wider mb-2">Operator Contact No. *</label>
+                              <input type="tel" required={newDriver.isBoundary} className="w-full p-3 bg-white border border-orange-200 focus:border-orange-500 outline-none rounded-xl font-bold placeholder-slate-400 shadow-inner" placeholder="e.g. 09123456789" value={newDriver.operatorPhone || ''} onChange={e => setNewDriver({...newDriver, operatorPhone: e.target.value})} />
+                          </div>
+                      </div>
+                  )}
+                  {isEditing && (
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">App Status</label>
+                      <select className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold shadow-sm" value={newDriver.status} onChange={e => setNewDriver({...newDriver, status: e.target.value})}><option value="Active">Active</option><option value="Pending">Pending</option><option value="Suspended">Suspended</option></select>
+                    </div>
+                  )}
+              </div>
+
+              {/* === THE FIX: EMERGENCY & ACCOUNTABILITY ZONE === */}
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Emergency & Accountability</h3>
-              <div className="grid grid-cols-2 gap-6 mb-8 bg-orange-50/40 p-6 rounded-2xl border border-orange-100">
-                <div className="col-span-2"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Official Email (For App Credentials)</label><input type="email" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" placeholder="e.g. driver@gmail.com" value={newDriver.email} onChange={e => setNewDriver({...newDriver, email: e.target.value})} /></div>
+              <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                 <div className="col-span-2"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Full Home Address</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" placeholder="Brgy. San Miguel, Calasiao" value={newDriver.address} onChange={e => setNewDriver({...newDriver, address: e.target.value})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Name</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactName} onChange={e => setNewDriver({...newDriver, emergencyContactName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Phone</label><input type="tel" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactPhone} onChange={e => setNewDriver({...newDriver, emergencyContactPhone: e.target.value})} /></div>
@@ -591,7 +602,6 @@ function FleetManagement() {
                    </select>
                 </div>
               </div>
-
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Government Vault</h3>
               <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Body No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-slate-900" value={newDriver.bodyNo} onChange={e => setNewDriver({...newDriver, bodyNo: e.target.value})} /></div>
