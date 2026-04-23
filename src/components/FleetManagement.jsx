@@ -89,7 +89,8 @@ function FleetManagement() {
         rating: d.rating,
         totalReviews: d.totalReviews,
         // === THE FIX: MAPPING NEW FIELDS TO TABLE/MODAL ===
-        email: d.email || '', address: d.address || '', emergencyContactName: d.emergencyContactName || '', emergencyContactPhone: d.emergencyContactPhone || '', tricycleColor: d.tricycleColor || '', bloodType: d.bloodType || 'Unknown'
+        email: d.email || '', address: d.address || '', emergencyContactName: d.emergencyContactName || '', emergencyContactPhone: d.emergencyContactPhone || '', tricycleColor: d.tricycleColor || '', bloodType: d.bloodType || 'Unknown',
+        isBoundary: d.isBoundary || false, operatorName: d.operatorName || 'Owned', operatorPhone: d.operatorPhone || ''
       }));
       setDrivers(liveDrivers);
     } catch (error) { console.error('❌ Error fetching drivers:', error); }
@@ -101,7 +102,8 @@ function FleetManagement() {
       firstName: driver.firstName, middleName: driver.middleName || '', lastName: driver.lastName, suffix: driver.suffix || '', bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda,
       licenseExpiry: driver.licenseExpiry, orCrExpiry: driver.orCrExpiry, franchisePermitExpiry: driver.franchisePermitExpiry,
       profilePicUrl: driver.profilePicUrl, licensePicUrl: driver.licensePicUrl, orcrPicUrl: driver.orcrPicUrl, franchisePicUrl: driver.franchisePicUrl,
-      email: driver.email, address: driver.address, emergencyContactName: driver.emergencyContactName, emergencyContactPhone: driver.emergencyContactPhone, tricycleColor: driver.tricycleColor, bloodType: driver.bloodType
+      email: driver.email, address: driver.address, emergencyContactName: driver.emergencyContactName, emergencyContactPhone: driver.emergencyContactPhone, tricycleColor: driver.tricycleColor, bloodType: driver.bloodType,
+      isBoundary: driver.isBoundary, operatorName: driver.operatorName, operatorPhone: driver.operatorPhone
     });
     setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
     setIsModalOpen(true);
@@ -436,7 +438,14 @@ function FleetManagement() {
                                {(!isSecretary && driver.isOnline) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-sm"></div>}
                            </div>
                            <div>
-                             <p className="text-slate-800 leading-tight flex items-center">{driver.name}</p>
+                             <div className="flex items-center space-x-2">
+                                <p className="text-slate-800 leading-tight font-black">{driver.name}</p>
+                                {driver.isBoundary ? (
+                                    <span className="bg-orange-100 text-orange-700 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm border border-orange-200">Rented</span>
+                                ) : (
+                                    <span className="bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded shadow-sm border border-emerald-200">Owned</span>
+                                )}
+                             </div>
                              <p className="text-[9px] text-slate-400 uppercase tracking-wider mt-0.5 font-bold">Added by: <span className="text-emerald-600">{driver.registeredBy}</span></p>
                            </div>
                         </td>
