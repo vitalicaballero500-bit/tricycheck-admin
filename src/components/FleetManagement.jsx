@@ -40,7 +40,7 @@ function FleetManagement() {
 
   // === THE FIX: STATE ENGINE (TODA REMOVED, OPERATOR ADDED) ===
   const [newDriver, setNewDriver] = useState({ 
-    firstName: '', lastName: '', bodyNo: '', plate: '', phone: '', status: 'Pending',
+    firstName: '', middleName: '', lastName: '', suffix: '', bodyNo: '', plate: '', phone: '', status: 'Pending',
     licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '',
     profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '',
     email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown',
@@ -98,7 +98,7 @@ function FleetManagement() {
   const handleEditClick = (driver) => {
     setIsEditing(true); setCurrentDriverId(driver.id);
     setNewDriver({
-      firstName: driver.firstName, lastName: driver.lastName, bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda,
+      firstName: driver.firstName, middleName: driver.middleName || '', lastName: driver.lastName, suffix: driver.suffix || '', bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda,
       licenseExpiry: driver.licenseExpiry, orCrExpiry: driver.orCrExpiry, franchisePermitExpiry: driver.franchisePermitExpiry,
       profilePicUrl: driver.profilePicUrl, licensePicUrl: driver.licensePicUrl, orcrPicUrl: driver.orcrPicUrl, franchisePicUrl: driver.franchisePicUrl,
       email: driver.email, address: driver.address, emergencyContactName: driver.emergencyContactName, emergencyContactPhone: driver.emergencyContactPhone, tricycleColor: driver.tricycleColor, bloodType: driver.bloodType
@@ -109,13 +109,34 @@ function FleetManagement() {
 
   const handleAddClick = () => {
     setIsEditing(false); setCurrentDriverId(null);
-    setNewDriver({ firstName: '', lastName: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '', email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown' });
+    setNewDriver({ firstName: '', middleName: '', lastName: '', suffix: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '', email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown' });
     setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
     setIsModalOpen(true);
   };
 
   const handleFileChange = (e, fileType) => { setFiles({ ...files, [fileType]: e.target.files[0] }); };
-
+// === THE FIX: ENTERPRISE MICROPOLISH HANDLERS ===
+  const formatTitleCase = (str) => {
+      return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+  };
+  const handleNameChange = (field, value) => {
+      // Rejects numbers/symbols, forces Title Case (e.g. "juan" -> "Juan")
+      setNewDriver({...newDriver, [field]: formatTitleCase(value.replace(/[^A-Za-z\s\-ñÑ.]/g, ''))});
+  };
+  const handlePhoneChange = (field, value) => {
+      // Rejects letters, limits to exactly 11 digits
+      let cleaned = value.replace(/\D/g, '');
+      if (cleaned.length > 11) cleaned = cleaned.slice(0, 11);
+      setNewDriver({...newDriver, [field]: cleaned});
+  };
+  const handleEmailChange = (value) => {
+      // Strips accidental spaces, forces lowercase
+      setNewDriver({...newDriver, email: value.toLowerCase().replace(/\s/g, '')});
+  };
+  const handleAlphanumericUpper = (field, value) => {
+      // Rejects special chars, forces UPPERCASE
+      setNewDriver({...newDriver, [field]: value.toUpperCase().replace(/[^A-Z0-9\-\s]/g, '')});
+  };
   const validateForm = () => {
     const nameRegex = /^[A-Za-z\s\-ñÑ.]{2,50}$/;
     const phoneRegex = /^(09|\+639)\d{9}$/; // Philippine Mobile
@@ -201,7 +222,16 @@ function FleetManagement() {
     
     // === THE FIX: INJECTING NEW FIELDS TO FORMDATA ===
     const formData = new FormData();
-    formData.append('firstName', newDriver.firstName.trim()); formData.append('lastName', newDriver.lastName.trim()); formData.append('bodyNo', newDriver.bodyNo.trim()); formData.append('plateNo', newDriver.plate.toUpperCase().trim()); formData.append('phone', newDriver.phone); formData.append('licenseExpiry', newDriver.licenseExpiry); formData.append('orCrExpiry', newDriver.orCrExpiry); formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
+    formData.append('firstName', newDriver.firstName.trim()); 
+    formData.append('middleName', (newDriver.middleName || '').trim()); 
+    formData.append('lastName', newDriver.lastName.trim()); 
+    formData.append('suffix', newDriver.suffix || ''); 
+    formData.append('bodyNo', newDriver.bodyNo.trim()); 
+    formData.append('plateNo', newDriver.plate.toUpperCase().trim()); 
+    formData.append('phone', newDriver.phone); 
+    formData.append('licenseExpiry', newDriver.licenseExpiry); 
+    formData.append('orCrExpiry', newDriver.orCrExpiry); 
+    formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
     
     // === OPERATOR APPENDS ===
     formData.append('operatorName', newDriver.operatorName.trim());
@@ -543,15 +573,28 @@ function FleetManagement() {
                 </div>
               </div>
 
-              {/* === THE FIX: DECUPLED HUMAN IDENTITY ZONE === */}
+              {/* === THE FIX: DECUPLED HUMAN IDENTITY ZONE (MICROPOLISHED) === */}
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Driver Personal Details</h3>
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">First Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.firstName} onChange={e => setNewDriver({...newDriver, firstName: e.target.value})} /></div>
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Last Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.lastName} onChange={e => setNewDriver({...newDriver, lastName: e.target.value})} /></div>
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile</label><input required type="tel" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} /></div>
-                <div><label className="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Official Email * (Required)</label><input required type="email" className="w-full p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl font-bold placeholder-emerald-300 shadow-inner focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Driver's Gmail for App Login" value={newDriver.email} onChange={e => setNewDriver({...newDriver, email: e.target.value})} /></div>
-              </div>
+              <div className="grid grid-cols-12 gap-4 mb-6">
+                <div className="col-span-4"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">First Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.firstName} onChange={e => handleNameChange('firstName', e.target.value)} /></div>
+                <div className="col-span-3"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Middle Name</label><input type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" placeholder="Optional" value={newDriver.middleName} onChange={e => handleNameChange('middleName', e.target.value)} /></div>
+                <div className="col-span-3"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Last Name</label><input required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold" value={newDriver.lastName} onChange={e => handleNameChange('lastName', e.target.value)} /></div>
+                <div className="col-span-2">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Suffix</label>
+                    <select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold cursor-pointer outline-none" value={newDriver.suffix} onChange={e => setNewDriver({...newDriver, suffix: e.target.value})}>
+                        <option value="">N/A</option><option value="Jr.">Jr.</option><option value="Sr.">Sr.</option><option value="II">II</option><option value="III">III</option>
+                    </select>
+                </div>
 
+                <div className="col-span-6">
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Mobile (11 Digits)</label>
+                    <input required type="tel" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold placeholder-slate-300" placeholder="09xxxxxxxxx" value={newDriver.phone} onChange={e => handlePhoneChange('phone', e.target.value)} />
+                </div>
+                <div className="col-span-6">
+                    <label className="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Official Email * (Required)</label>
+                    <input required type="email" className="w-full p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl font-bold placeholder-emerald-300 shadow-inner focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="driver@gmail.com" value={newDriver.email} onChange={e => handleEmailChange(e.target.value)} />
+                </div>
+              </div>
               {/* === THE FIX: THE MASTER OWNERSHIP TOGGLE === */}
               <div className="col-span-2 bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-8 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -572,11 +615,11 @@ function FleetManagement() {
                       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 animate-slide-up">
                           <div>
                               <label className="block text-[10px] font-bold text-orange-800 uppercase tracking-wider mb-2">Operator / Owner Name *</label>
-                              <input type="text" required={newDriver.isBoundary} className="w-full p-3 bg-white border border-orange-200 focus:border-orange-500 outline-none rounded-xl font-bold placeholder-slate-400 shadow-inner" placeholder="Name on Franchise" value={newDriver.operatorName || ''} onChange={e => setNewDriver({...newDriver, operatorName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} />
+                              <input type="text" required={newDriver.isBoundary} className="w-full p-3 bg-white border border-orange-200 focus:border-orange-500 outline-none rounded-xl font-bold placeholder-slate-400 shadow-inner" placeholder="Name on Franchise" value={newDriver.operatorName || ''} onChange={e => handleNameChange('operatorName', e.target.value)} />
                           </div>
                           <div>
                               <label className="block text-[10px] font-bold text-orange-800 uppercase tracking-wider mb-2">Operator Contact No. *</label>
-                              <input type="tel" required={newDriver.isBoundary} className="w-full p-3 bg-white border border-orange-200 focus:border-orange-500 outline-none rounded-xl font-bold placeholder-slate-400 shadow-inner" placeholder="e.g. 09123456789" value={newDriver.operatorPhone || ''} onChange={e => setNewDriver({...newDriver, operatorPhone: e.target.value})} />
+                              <input type="tel" required={newDriver.isBoundary} className="w-full p-3 bg-white border border-orange-200 focus:border-orange-500 outline-none rounded-xl font-bold placeholder-slate-400 shadow-inner" placeholder="e.g. 09123456789" value={newDriver.operatorPhone || ''} onChange={e => handlePhoneChange('operatorPhone', e.target.value)} />
                           </div>
                       </div>
                   )}
@@ -592,8 +635,8 @@ function FleetManagement() {
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Emergency & Accountability</h3>
               <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
                 <div className="col-span-2"><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Full Home Address</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" placeholder="Brgy. San Miguel, Calasiao" value={newDriver.address} onChange={e => setNewDriver({...newDriver, address: e.target.value})} /></div>
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Name</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactName} onChange={e => setNewDriver({...newDriver, emergencyContactName: e.target.value.replace(/[^A-Za-z\s\-ñÑ]/g, '')})} /></div>
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Phone</label><input type="tel" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactPhone} onChange={e => setNewDriver({...newDriver, emergencyContactPhone: e.target.value})} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Name</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactName} onChange={e => handleNameChange('emergencyContactName', e.target.value)} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Emergency Contact Phone</label><input type="tel" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm" value={newDriver.emergencyContactPhone} onChange={e => handlePhoneChange('emergencyContactPhone', e.target.value)} /></div>
                 <div><label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tricycle Color/Make</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm placeholder-slate-400" placeholder="e.g. Red Honda Barako" value={newDriver.tricycleColor} onChange={e => setNewDriver({...newDriver, tricycleColor: e.target.value})} /></div>
                 <div>
                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Blood Type</label>
@@ -604,8 +647,8 @@ function FleetManagement() {
               </div>
               <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Government Vault</h3>
               <div className="grid grid-cols-2 gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Body No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-slate-900" value={newDriver.bodyNo} onChange={e => setNewDriver({...newDriver, bodyNo: e.target.value})} /></div>
-                <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Plate No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono uppercase" value={newDriver.plate} onChange={e => setNewDriver({...newDriver, plate: e.target.value})} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Body No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-black text-slate-900" value={newDriver.bodyNo} onChange={e => handleAlphanumericUpper('bodyNo', e.target.value)} /></div>
+                <div><label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Plate No.</label><input type="text" className="w-full p-3 bg-white border border-slate-200 rounded-xl font-mono uppercase" value={newDriver.plate} onChange={e => handleAlphanumericUpper('plate', e.target.value)} /></div>
                 
                 <div className="col-span-2 space-y-4 mt-2">
                    <div>
