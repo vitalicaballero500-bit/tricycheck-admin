@@ -116,6 +116,8 @@ function LiveOperationsMap() {
           // Update the dispatch panel numbers dynamically
           setStats({ 
              ...statsRes.data, 
+             // === THE FIX: ONLY COUNT DRIVERS WHO CLICKED "START HUNTING" ===
+             activeDrivers: radarRes.data.activeDrivers.length, 
              activeTickets: radarRes.data.activeTickets 
           });
 
