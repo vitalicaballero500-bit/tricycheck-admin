@@ -236,12 +236,15 @@ function FleetManagement() {
     formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
     
     // === OPERATOR APPENDS ===
+    // === OPERATOR APPENDS ===
     formData.append('operatorName', newDriver.operatorName.trim());
     formData.append('operatorPhone', newDriver.operatorPhone.trim());
     formData.append('isBoundary', newDriver.isBoundary);
     
+    // === THE FIX: INJECT HOME TODA INTO THE PAYLOAD ===
+    formData.append('homeToda', newDriver.homeToda);
     
-    formData.append('email', newDriver.email.trim()); 
+    formData.append('email', newDriver.email.trim());
     formData.append('address', newDriver.address.trim()); 
     formData.append('emergencyContactName', newDriver.emergencyContactName.trim()); 
     formData.append('emergencyContactPhone', newDriver.emergencyContactPhone.trim()); 
