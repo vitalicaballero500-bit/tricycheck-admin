@@ -98,7 +98,20 @@ function LiveOperationsMap() {
              });
           });
 
-          setActiveDrivers(mappedDrivers);
+          // === THE FIX: SEVERING THE TERMINAL LEASH ===
+          // Merge newly fetched drivers, but PRESERVE the real GPS coordinates of drivers actively moving!
+          setActiveDrivers(prev => {
+              const liveGPSMap = new Map(prev.map(d => [d.id, { lat: d.lat, lng: d.lng, isLive: d.isLive }]));
+              
+              return mappedDrivers.map(driver => {
+                  const existingLive = liveGPSMap.get(driver.id);
+                  if (existingLive && existingLive.isLive) {
+                      // Bouncer logic: "This driver is actively tracking via satellite. Do NOT snap them to the terminal."
+                      return { ...driver, lat: existingLive.lat, lng: existingLive.lng, isLive: true };
+                  }
+                  return driver;
+              });
+          });
           
           // Update the dispatch panel numbers dynamically
           setStats({ 
@@ -126,11 +139,12 @@ function LiveOperationsMap() {
 
         const existing = prev.find(d => d.id === data.driverId);
         if (existing) {
-            return prev.map(d => d.id === data.driverId ? { ...d, lat: data.lat, lng: data.lng, status: data.status || 'On Trip' } : d);
+            // === THE FIX: Tag them as 'isLive' so the 10-second poller leaves their GPS alone ===
+            return prev.map(d => d.id === data.driverId ? { ...d, lat: data.lat, lng: data.lng, status: data.status || 'On Trip', isLive: true } : d);
         }
         return [...prev, { 
             id: data.driverId, bodyNo: data.bodyNo, name: data.driverName,
-            status: data.status || 'On Trip', lat: data.lat, lng: data.lng, homeToda: data.homeToda || 'Unassigned'
+            status: data.status || 'On Trip', lat: data.lat, lng: data.lng, homeToda: data.homeToda || 'Unassigned', isLive: true
         }];
       });
     });
