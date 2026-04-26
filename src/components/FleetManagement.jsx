@@ -99,7 +99,9 @@ function FleetManagement() {
   const handleEditClick = (driver) => {
     setIsEditing(true); setCurrentDriverId(driver.id);
     setNewDriver({
-      firstName: driver.firstName, middleName: driver.middleName || '', lastName: driver.lastName, suffix: driver.suffix || '', bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda, plate: driver.plate, phone: driver.phone, status: driver.status, homeToda: driver.homeToda,
+      firstName: driver.firstName, middleName: driver.middleName || '', lastName: driver.lastName, 
+      suffix: driver.suffix || '', bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, 
+      status: driver.status, homeToda: driver.homeToda || 'Unassigned',
       licenseExpiry: driver.licenseExpiry, orCrExpiry: driver.orCrExpiry, franchisePermitExpiry: driver.franchisePermitExpiry,
       profilePicUrl: driver.profilePicUrl, licensePicUrl: driver.licensePicUrl, orcrPicUrl: driver.orcrPicUrl, franchisePicUrl: driver.franchisePicUrl,
       email: driver.email, address: driver.address, emergencyContactName: driver.emergencyContactName, emergencyContactPhone: driver.emergencyContactPhone, tricycleColor: driver.tricycleColor, bloodType: driver.bloodType,
