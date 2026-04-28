@@ -113,7 +113,13 @@ function FleetManagement() {
 
   const handleAddClick = () => {
     setIsEditing(false); setCurrentDriverId(null);
-    setNewDriver({ firstName: '', middleName: '', lastName: '', suffix: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '', email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown' });
+    setNewDriver({ 
+      firstName: '', middleName: '', lastName: '', suffix: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', 
+      licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '', 
+      email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown',
+      // === THE FIX: INJECT THE OPERATOR ENGINE INTO THE BLANK BLUEPRINT ===
+      isBoundary: false, operatorName: 'Owned', operatorPhone: '' 
+    });
     setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
     setIsModalOpen(true);
   };
@@ -237,10 +243,13 @@ function FleetManagement() {
     formData.append('orCrExpiry', newDriver.orCrExpiry); 
     formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
     
-    // === OPERATOR APPENDS ===
-    // === OPERATOR APPENDS ===
-    formData.append('operatorName', newDriver.operatorName.trim());
-    formData.append('operatorPhone', newDriver.operatorPhone.trim());
+    // === THE FIX: BULLETPROOF OPERATOR APPENDS ===
+    formData.append('operatorName', (newDriver.operatorName || 'Owned').trim());
+    formData.append('operatorPhone', (newDriver.operatorPhone || '').trim());
+    
+    // === THE FIX: BULLETPROOF EMERGENCY APPENDS (To prevent future crashes) ===
+    formData.append('emergencyContactName', (newDriver.emergencyContactName || '').trim()); 
+    formData.append('emergencyContactPhone', (newDriver.emergencyContactPhone || '').trim());
     formData.append('isBoundary', newDriver.isBoundary);
     
     // === THE FIX: INJECT HOME TODA INTO THE PAYLOAD ===
