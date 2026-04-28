@@ -218,9 +218,15 @@ function SupportTickets() {
                   <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8 relative">
                      <IoPerson className="absolute top-6 right-6 text-4xl text-slate-200" />
                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Complainant / Passenger</h3>
-                     <p className="text-lg font-bold text-slate-800 mb-4">{selectedTicket.passengerId?.firstName || 'Unknown User'}</p>
-                     
-                     {/* === THE FIX: TARGET ACQUISITION PANEL === */}
+                             <p className="text-lg font-bold text-slate-800 mb-2">{selectedTicket.passengerId?.firstName} {selectedTicket.passengerId?.lastName}</p>
+                             
+                             {/* === THE FIX: Victim Contact Info Display === */}
+                             <div className="flex flex-col space-y-1 mb-6 bg-white p-3 rounded-xl border border-slate-100 shadow-sm w-max">
+                                <span className="text-xs font-bold text-slate-600 flex items-center"><span className="w-5">📞</span> {selectedTicket.passengerId?.phone || 'No Phone'}</span>
+                                <span className="text-xs font-bold text-slate-600 flex items-center"><span className="w-5">✉️</span> {selectedTicket.passengerId?.email || 'No Email'}</span>
+                             </div>
+                             
+                             {/* === THE FIX: TARGET ACQUISITION PANEL === */}
                      {selectedTicket.driverId && (
                         <div className="mb-6 p-5 bg-red-50/50 border border-red-100 rounded-2xl flex justify-between items-center">
                            <div>
