@@ -253,13 +253,12 @@ function FleetManagement() {
     formData.append('isBoundary', newDriver.isBoundary);
     
     // === THE FIX: INJECT HOME TODA INTO THE PAYLOAD ===
-    formData.append('homeToda', newDriver.homeToda);
-    
-    formData.append('email', newDriver.email.trim());
-    formData.append('address', newDriver.address.trim()); 
-    formData.append('emergencyContactPhone', newDriver.emergencyContactPhone.trim()); 
-    formData.append('tricycleColor', newDriver.tricycleColor.trim()); 
-    formData.append('bloodType', newDriver.bloodType);
+    formData.append('homeToda', newDriver.homeToda);
+    
+    formData.append('email', newDriver.email.trim());
+    formData.append('address', newDriver.address.trim()); 
+    formData.append('tricycleColor', newDriver.tricycleColor.trim()); 
+    formData.append('bloodType', newDriver.bloodType);
     
     const currentAdminId = adminUser._id || adminUser.id;
     if (currentAdminId) { formData.append('adminId', currentAdminId); }
