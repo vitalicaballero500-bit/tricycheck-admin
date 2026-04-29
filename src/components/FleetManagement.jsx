@@ -257,7 +257,6 @@ function FleetManagement() {
     
     formData.append('email', newDriver.email.trim());
     formData.append('address', newDriver.address.trim()); 
-    formData.append('emergencyContactName', newDriver.emergencyContactName.trim()); 
     formData.append('emergencyContactPhone', newDriver.emergencyContactPhone.trim()); 
     formData.append('tricycleColor', newDriver.tricycleColor.trim()); 
     formData.append('bloodType', newDriver.bloodType);
