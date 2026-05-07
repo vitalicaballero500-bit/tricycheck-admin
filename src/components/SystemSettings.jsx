@@ -17,7 +17,9 @@ function SystemSettings() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/settings');
+      const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/settings', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+      });
       if (response.data) {
         setSettings({
           baseFare: response.data.baseFare || 12,
@@ -56,6 +58,8 @@ function SystemSettings() {
         
         // === FIX: Use _id from MongoDB! ===
         adminId: adminUser._id || adminUser.id 
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
       });
       setModalState({ 
         isOpen: true, 
