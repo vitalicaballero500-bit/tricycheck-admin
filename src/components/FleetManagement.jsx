@@ -370,22 +370,18 @@ function FleetManagement() {
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
       
-      {/* === TOP TOGGLE ENGINE === */}
+      {/* === FLEET HEADER === */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex space-x-2 bg-slate-200/60 p-1.5 rounded-2xl w-max shadow-inner">
-           <button onClick={() => setViewMode('directory')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'directory' ? 'bg-white text-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
-              <IoSearch className="text-lg"/> <span>Fleet Directory</span>
-           </button>
-           <button onClick={() => setViewMode('leaderboard')} className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${viewMode === 'leaderboard' ? 'bg-white text-emerald-900 shadow-md' : 'text-slate-500 hover:text-slate-700'}`}>
-              <IoPodium className="text-lg"/> <span>Performance Leaderboard</span>
-           </button>
+        <div>
+          <h2 className="text-2xl font-black text-slate-800 flex items-center">
+            <IoShieldCheckmark className="text-emerald-600 mr-2" /> Fleet Directory
+          </h2>
+          <p className="text-sm font-medium text-slate-500">Manage registered POSO drivers and operators.</p>
         </div>
 
-        {viewMode === 'directory' && (
-          <button onClick={handleAddClick} className="bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-emerald-800 active:scale-95 shadow-md">
-            <IoAdd className="text-lg" /> <span>Register Driver</span>
-          </button>
-        )}
+        <button onClick={handleAddClick} className="bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-emerald-800 active:scale-95 shadow-md">
+          <IoAdd className="text-lg" /> <span>Register Driver</span>
+        </button>
       </div>
 
       {/* === MODE 1: FLEET DIRECTORY === */}

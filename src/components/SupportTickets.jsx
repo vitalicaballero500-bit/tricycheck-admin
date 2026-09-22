@@ -18,6 +18,7 @@ function SupportTickets() {
   // === THE FIX: SEARCH & STATUS FILTER STATE ===
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [sortOrder, setSortOrder] = useState('Newest');
   
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [dispatchPrompt, setDispatchPrompt] = useState({ isOpen: false, ticketId: null, unitName: '' });
@@ -53,12 +54,16 @@ function SupportTickets() {
 
   const executeStatusUpdate = async (id, newStatus, dispatchUnit = '') => {
     try {
-      setTickets(prev => prev.map(t => t._id === id ? { ...t, status: newStatus, dispatchUnit: dispatchUnit || t.dispatchUnit } : t));
+      // Ensure we don't accidentally wipe out an existing dispatchUnit during resolution
+      const currentTicket = tickets.find(t => t._id === id);
+      const finalDispatchUnit = dispatchUnit || (currentTicket ? currentTicket.dispatchUnit : '');
+
+      setTickets(prev => prev.map(t => t._id === id ? { ...t, status: newStatus, dispatchUnit: finalDispatchUnit } : t));
       
       const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
       await axios.put(`https://tricycheck-api.onrender.com/api/tickets/${id}`, { 
           status: newStatus, 
-          dispatchUnit: dispatchUnit,
+          dispatchUnit: finalDispatchUnit,
           adminId: adminUser._id || adminUser.id
       }, {
           headers: { Authorization: `Bearer ${token}` }
@@ -80,7 +85,7 @@ function SupportTickets() {
       if (priority === 'Medium') return 'bg-yellow-400 text-yellow-900';
       return 'bg-emerald-400 text-emerald-900';
   };
-// === THE FIX: DUAL-FILTERING ENGINE ===
+// === THE FIX: DUAL-FILTERING & SORTING ENGINE ===
   const filteredTickets = tickets.filter(ticket => {
      // Check 1: Deep Text Search (Matches ID, Issue Type, Description, or Passenger Name)
      const searchString = `${ticket._id} ${ticket.type} ${ticket.description} ${ticket.passengerId?.firstName || ''} ${ticket.passengerId?.lastName || ''}`.toLowerCase();
@@ -90,6 +95,9 @@ function SupportTickets() {
      const matchesStatus = filterStatus === 'All' || ticket.status === filterStatus;
      
      return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+     if (sortOrder === 'Newest') return new Date(b.createdAt) - new Date(a.createdAt);
+     return new Date(a.createdAt) - new Date(b.createdAt);
   });
   return (
     <div className="h-full flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 animate-fade-in relative">
@@ -103,12 +111,14 @@ function SupportTickets() {
                    <h2 className="text-xl font-black text-slate-800 flex items-center"><IoMegaphone className="mr-2 text-emerald-600"/> Switchboard</h2>
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Active Dispatches</p>
                 </div>
-                <button onClick={fetchTickets} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-100 transition-colors" title="Sync Feed"><IoTime className="text-lg"/></button>
+                <button onClick={fetchTickets} disabled={loading} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-lg shadow-sm hover:bg-slate-100 transition-colors disabled:opacity-50" title="Sync Feed">
+                    <IoTime className={`text-lg ${loading ? 'animate-spin text-emerald-600' : ''}`}/>
+                </button>
             </div>
             
             <div className="flex space-x-2">
                 <select 
-                    className="w-[110px] px-3 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
+                    className="w-[100px] px-2 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                 >
@@ -118,10 +128,18 @@ function SupportTickets() {
                     <option value="Resolved">Resolved</option>
                     <option value="Dismissed">Dismissed</option>
                 </select>
+                <select 
+                    className="w-[100px] px-2 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                >
+                    <option value="Newest">Newest First</option>
+                    <option value="Oldest">Oldest First</option>
+                </select>
                 <div className="relative flex-1">
                     <input 
                         type="text" 
-                        placeholder="Search ID, Passenger, or Details..." 
+                        placeholder="Search IDs or Passengers..." 
                         className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold shadow-sm" 
                         value={searchTerm} 
                         onChange={(e) => setSearchTerm(e.target.value)} 

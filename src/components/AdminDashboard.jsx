@@ -369,7 +369,6 @@ function AdminDashboard() {
                           <h3 className="text-lg font-black text-slate-800 flex items-center">
                             <IoWarning className="text-red-500 mr-2 text-2xl animate-pulse" /> Priority Alerts
                           </h3>
-                          <p className="text-sm font-medium text-slate-500 mt-1">Expiring docs in ≤ 30 days.</p>
                         </div>
                         <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold text-sm">
                           {stats.expiringDrivers?.length || 0} Flagged
@@ -458,7 +457,7 @@ function AdminDashboard() {
                                            <div className="flex justify-between items-start">
                                               <p className="text-sm font-black text-slate-800 leading-tight pr-2">{log.action}</p>
                                               <span className="text-[10px] text-slate-400 font-bold whitespace-nowrap pt-0.5">
-                                                  {new Date(log.timestamp || log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                  {new Date(log.timestamp || log.createdAt).toLocaleDateString()} • {new Date(log.timestamp || log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                               </span>
                                            </div>
                                            <p className="text-xs text-slate-500 font-medium mt-1">{log.details}</p>
