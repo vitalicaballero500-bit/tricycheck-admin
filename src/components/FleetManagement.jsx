@@ -38,17 +38,18 @@ function FleetManagement() {
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
   const isSecretary = adminUser.role === 'secretary'; 
 
-  // === THE FIX: STATE ENGINE (TODA REMOVED, OPERATOR ADDED) ===
+  // === THE FIX: DATA-FIRST COMPLIANCE ENGINE ===
   const [newDriver, setNewDriver] = useState({ 
     firstName: '', middleName: '', lastName: '', suffix: '', bodyNo: '', plate: '', phone: '', status: 'Pending',
-    licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '',
-    profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '',
+    licenseNo: '', licenseExpiry: '', 
+    orcrNo: '', orCrExpiry: '', 
+    franchiseNo: '', franchisePermitExpiry: '',
+    profilePicUrl: '',
     email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown',
-    // === NEW FEATURE: OPERATOR & BOUNDARY ENGINE ===
     operatorName: 'Owned', operatorPhone: '', isBoundary: false, boundaryFee: ''
   });
 
-  const [files, setFiles] = useState({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null });
+  const [files, setFiles] = useState({ profilePic: null });
 
   useEffect(() => { fetchDrivers(); }, []);
 
@@ -82,7 +83,8 @@ function FleetManagement() {
         firstName: d.firstName, lastName: d.lastName, plate: d.plateNo || '', phone: d.phone,
         status: d.driverStatus, homeToda: d.homeToda || 'Unassigned',
         licenseExpiry: d.licenseExpiry ? d.licenseExpiry.split('T')[0] : '', orCrExpiry: d.orCrExpiry ? d.orCrExpiry.split('T')[0] : '', franchisePermitExpiry: d.franchisePermitExpiry ? d.franchisePermitExpiry.split('T')[0] : '',
-        profilePicUrl: d.profilePic || '', licensePicUrl: d.licensePic || '', orcrPicUrl: d.orcrPic || '', franchisePicUrl: d.franchisePic || '',
+        licenseNo: d.licenseNo || '', orcrNo: d.orcrNo || '', franchiseNo: d.franchiseNo || '',
+        profilePicUrl: d.profilePic || '',
         registeredBy: d.registeredBy ? `${d.registeredBy.firstName} ${d.registeredBy.lastName}` : 'System Auto',
         createdAt: d.createdAt || new Date().toISOString(),
         isOnline: d.driverStatus === 'Active' ? Math.random() > 0.4 : false,
@@ -102,12 +104,14 @@ function FleetManagement() {
       firstName: driver.firstName, middleName: driver.middleName || '', lastName: driver.lastName, 
       suffix: driver.suffix || '', bodyNo: driver.bodyNo, plate: driver.plate, phone: driver.phone, 
       status: driver.status, homeToda: driver.homeToda || 'Unassigned',
-      licenseExpiry: driver.licenseExpiry, orCrExpiry: driver.orCrExpiry, franchisePermitExpiry: driver.franchisePermitExpiry,
-      profilePicUrl: driver.profilePicUrl, licensePicUrl: driver.licensePicUrl, orcrPicUrl: driver.orcrPicUrl, franchisePicUrl: driver.franchisePicUrl,
+      licenseNo: driver.licenseNo, licenseExpiry: driver.licenseExpiry, 
+      orcrNo: driver.orcrNo, orCrExpiry: driver.orCrExpiry, 
+      franchiseNo: driver.franchiseNo, franchisePermitExpiry: driver.franchisePermitExpiry,
+      profilePicUrl: driver.profilePicUrl,
       email: driver.email, address: driver.address, emergencyContactName: driver.emergencyContactName, emergencyContactPhone: driver.emergencyContactPhone, tricycleColor: driver.tricycleColor, bloodType: driver.bloodType,
       isBoundary: driver.isBoundary, operatorName: driver.operatorName, operatorPhone: driver.operatorPhone
     });
-    setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
+    setFiles({ profilePic: null }); 
     setIsModalOpen(true);
   };
 
@@ -115,12 +119,14 @@ function FleetManagement() {
     setIsEditing(false); setCurrentDriverId(null);
     setNewDriver({ 
       firstName: '', middleName: '', lastName: '', suffix: '', bodyNo: '', plate: '', phone: '', status: 'Pending', homeToda: 'Unassigned', 
-      licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', profilePicUrl: '', licensePicUrl: '', orcrPicUrl: '', franchisePicUrl: '', 
+      licenseNo: '', licenseExpiry: '', 
+      orcrNo: '', orCrExpiry: '', 
+      franchiseNo: '', franchisePermitExpiry: '', 
+      profilePicUrl: '', 
       email: '', address: '', emergencyContactName: '', emergencyContactPhone: '', tricycleColor: '', bloodType: 'Unknown',
-      // === THE FIX: INJECT THE OPERATOR ENGINE INTO THE BLANK BLUEPRINT ===
       isBoundary: false, operatorName: 'Owned', operatorPhone: '' 
     });
-    setFiles({ profilePic: null, licensePic: null, orcrPic: null, franchisePic: null }); 
+    setFiles({ profilePic: null }); 
     setIsModalOpen(true);
   };
 
@@ -211,16 +217,12 @@ function FleetManagement() {
     if (franchiseDate < today) return "Rejected: The Franchise Permit provided is already expired.";
     if (franchiseDate > maxFutureDate) return "Rejected: Franchise Permit expiration exceeds the 10-year legal maximum.";
 
-    // === 6. PHYSICAL DOCUMENT SCAN VAULT VALIDATION ===
-    if (!isEditing) {
-        if (!files.licensePic) return "Driver's License scan/photo is required.";
-        if (!files.orcrPic) return "Tricycle OR/CR scan/photo is required.";
-        if (!files.franchisePic) return "Franchise Permit scan/photo is required.";
-    } else {
-        if (!files.licensePic && !newDriver.licensePicUrl) return "Driver's License scan is missing.";
-        if (!files.orcrPic && !newDriver.orcrPicUrl) return "Tricycle OR/CR scan is missing.";
-        if (!files.franchisePic && !newDriver.franchisePicUrl) return "Franchise Permit scan is missing.";
-    }
+    // === 6. ALPHANUMERIC VAULT VALIDATION ===
+    if (!newDriver.licenseNo || !newDriver.licenseNo.trim()) return "Driver's License Number is mandatory.";
+    if (!newDriver.orcrNo || !newDriver.orcrNo.trim()) return "Tricycle OR/CR MV File / Plate Number is mandatory.";
+    if (!newDriver.franchiseNo || !newDriver.franchiseNo.trim()) return "Franchise Control Number is mandatory.";
+    
+    if (!isEditing && !files.profilePic) return "Driver's 2x2 profile photo is strictly required for passenger identification.";
 
     return null; // Gateway Passed
   };
@@ -230,7 +232,7 @@ function FleetManagement() {
     const validationError = validateForm();
     if (validationError) return setModalState({ isOpen: true, title: "Validation Failed", message: validationError, type: "warning", isConfirm: false });
     
-    // === THE FIX: INJECTING NEW FIELDS TO FORMDATA ===
+// === THE FIX: INJECTING NEW ALPHANUMERIC FIELDS TO FORMDATA ===
     const formData = new FormData();
     formData.append('firstName', newDriver.firstName.trim()); 
     formData.append('middleName', (newDriver.middleName || '').trim()); 
@@ -239,31 +241,34 @@ function FleetManagement() {
     formData.append('bodyNo', newDriver.bodyNo.trim()); 
     formData.append('plateNo', newDriver.plate.toUpperCase().trim()); 
     formData.append('phone', newDriver.phone); 
+    
+    // === THE STRICT ALPHANUMERICS ===
+    formData.append('licenseNo', newDriver.licenseNo.trim()); 
     formData.append('licenseExpiry', newDriver.licenseExpiry); 
+    formData.append('orcrNo', newDriver.orcrNo.trim()); 
     formData.append('orCrExpiry', newDriver.orCrExpiry); 
+    formData.append('franchiseNo', newDriver.franchiseNo.trim());
     formData.append('franchisePermitExpiry', newDriver.franchisePermitExpiry);
     
-    // === THE FIX: BULLETPROOF OPERATOR APPENDS ===
     formData.append('operatorName', (newDriver.operatorName || 'Owned').trim());
     formData.append('operatorPhone', (newDriver.operatorPhone || '').trim());
     
-    // === THE FIX: BULLETPROOF EMERGENCY APPENDS (To prevent future crashes) ===
     formData.append('emergencyContactName', (newDriver.emergencyContactName || '').trim()); 
     formData.append('emergencyContactPhone', (newDriver.emergencyContactPhone || '').trim());
     formData.append('isBoundary', newDriver.isBoundary);
     
-    // === THE FIX: INJECT HOME TODA INTO THE PAYLOAD ===
-    formData.append('homeToda', newDriver.homeToda);
-    
-    formData.append('email', newDriver.email.trim());
-    formData.append('address', newDriver.address.trim()); 
-    formData.append('tricycleColor', newDriver.tricycleColor.trim()); 
-    formData.append('bloodType', newDriver.bloodType);
+    formData.append('homeToda', newDriver.homeToda);
+    formData.append('email', newDriver.email.trim());
+    formData.append('address', newDriver.address.trim()); 
+    formData.append('tricycleColor', newDriver.tricycleColor.trim()); 
+    formData.append('bloodType', newDriver.bloodType);
     
     const currentAdminId = adminUser._id || adminUser.id;
     if (currentAdminId) { formData.append('adminId', currentAdminId); }
     if (isEditing) formData.append('driverStatus', newDriver.status);
-    if (files.profilePic) formData.append('profilePic', files.profilePic); if (files.licensePic) formData.append('licensePic', files.licensePic); if (files.orcrPic) formData.append('orcrPic', files.orcrPic); if (files.franchisePic) formData.append('franchisePic', files.franchisePic);
+    
+    // Only append the 2x2 profile photo to save cloud storage!
+    if (files.profilePic) formData.append('profilePic', files.profilePic);
 
     try {
       if (isEditing) {
@@ -687,16 +692,25 @@ function FleetManagement() {
                 
                 <div className="col-span-3 space-y-4 mt-2">
                    <div>
-                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Driver's License (Expiry & Scan)</label>{newDriver.licensePicUrl && <a href={newDriver.licensePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
-                     <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.licenseExpiry} onChange={e => setNewDriver({...newDriver, licenseExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'licensePic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
+                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Driver's License (Expiry Date & ID No.) *</label>
+                     <div className="flex space-x-2">
+                         <input type="date" className="w-1/3 p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 shadow-sm" value={newDriver.licenseExpiry} onChange={e => setNewDriver({...newDriver, licenseExpiry: e.target.value})} />
+                         <input type="text" placeholder="e.g. A01-23-456789" className="w-2/3 p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase outline-none focus:border-emerald-500 shadow-sm" value={newDriver.licenseNo} onChange={e => handleAlphanumericUpper('licenseNo', e.target.value)} />
+                     </div>
                    </div>
                    <div>
-                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Tricycle OR/CR (Expiry & Scan)</label>{newDriver.orcrPicUrl && <a href={newDriver.orcrPicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
-                     <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.orCrExpiry} onChange={e => setNewDriver({...newDriver, orCrExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'orcrPic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
+                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Tricycle OR/CR (Expiry Date & MV/Plate No.) *</label>
+                     <div className="flex space-x-2">
+                         <input type="date" className="w-1/3 p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 shadow-sm" value={newDriver.orCrExpiry} onChange={e => setNewDriver({...newDriver, orCrExpiry: e.target.value})} />
+                         <input type="text" placeholder="e.g. 123-45678" className="w-2/3 p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase outline-none focus:border-emerald-500 shadow-sm" value={newDriver.orcrNo} onChange={e => handleAlphanumericUpper('orcrNo', e.target.value)} />
+                     </div>
                    </div>
                    <div>
-                     <div className="flex justify-between items-end mb-2"><label className="block text-[10px] font-bold text-slate-500 uppercase">Franchise Permit (Expiry & Scan)</label>{newDriver.franchisePicUrl && <a href={newDriver.franchisePicUrl} target="_blank" rel="noreferrer" className="text-[10px] text-emerald-600 font-bold hover:underline flex items-center"><IoEye className="mr-1"/>View Saved Doc</a>}</div>
-                     <div className="flex space-x-2"><input type="date" className="w-1/3 p-3 bg-white border rounded-xl font-bold text-sm" value={newDriver.franchisePermitExpiry} onChange={e => setNewDriver({...newDriver, franchisePermitExpiry: e.target.value})} /><input type="file" accept="image/*,.pdf" onChange={(e) => handleFileChange(e, 'franchisePic')} className="w-2/3 p-2 bg-white border rounded-xl text-sm" /></div>
+                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Franchise Permit (Expiry Date & Control No.) *</label>
+                     <div className="flex space-x-2">
+                         <input type="date" className="w-1/3 p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm outline-none focus:border-emerald-500 shadow-sm" value={newDriver.franchisePermitExpiry} onChange={e => setNewDriver({...newDriver, franchisePermitExpiry: e.target.value})} />
+                         <input type="text" placeholder="e.g. FCN-2026-999" className="w-2/3 p-3 bg-white border border-slate-200 rounded-xl font-bold text-sm uppercase outline-none focus:border-emerald-500 shadow-sm" value={newDriver.franchiseNo} onChange={e => handleAlphanumericUpper('franchiseNo', e.target.value)} />
+                     </div>
                    </div>
                 </div>
               </div>

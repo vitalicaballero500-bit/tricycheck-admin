@@ -45,25 +45,11 @@ function LiveOperationsMap() {
   // === THE STEALTH TOGGLE STATE ===
   const [isSimulatorActive, setIsSimulatorActive] = useState(false);
 
-  // === THE FIX: F1 SCATTER MATH (THE BEEHIVE ENGINE) ===
-  const TERMINAL_COORDS = {
-    'Calasiao Plaza TODA': { lat: 16.0089, lng: 120.3572 },
-    'Bued TODA': { lat: 16.0050, lng: 120.3600 },
-    'San Miguel TODA': { lat: 16.0120, lng: 120.3520 },
-    'Robinsons TODA': { lat: 16.0020, lng: 120.3580 }
-  };
-
-  const applyScatter = (lat, lng, index) => {
-    const radius = 0.0003; // ~30 meters dispersion
-    const angle = index * (Math.PI / 3); // Spreads drivers in a circle
-    return { lat: lat + (radius * Math.cos(angle)), lng: lng + (radius * Math.sin(angle)) };
-  };
-
-  // === THE REAL GPS ENGINE (Hybrid Radar) ===
+  // === THE STRICT SATELLITE GPS ENGINE ===
   useEffect(() => {
     const socket = io('https://tricycheck-api.onrender.com');
 
-    // 1. INITIAL IGNITION: Pull all waiting drivers and stats instantly
+    // 1. INITIAL IGNITION: Pull stats instantly
     const fetchRadarData = async () => {
        try {
           const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
@@ -74,49 +60,17 @@ function LiveOperationsMap() {
              axios.get('https://tricycheck-api.onrender.com/api/admin/stats', { headers: { Authorization: `Bearer ${token}` } })
           ]);
           
-          // Group drivers by TODA to apply precise scatter
-          let groupedDrivers = {};
-          radarRes.data.activeDrivers.forEach(d => {
-             if (!groupedDrivers[d.homeToda]) groupedDrivers[d.homeToda] = [];
-             groupedDrivers[d.homeToda].push(d);
-          });
-
-          let mappedDrivers = [];
-          Object.keys(groupedDrivers).forEach(toda => {
-             const coords = TERMINAL_COORDS[toda] || { lat: 16.0089, lng: 120.3572 };
-             groupedDrivers[toda].forEach((driver, index) => {
-                const scattered = applyScatter(coords.lat, coords.lng, index);
-                mappedDrivers.push({
-                   id: driver._id || driver.id,
-                   name: `${driver.firstName} ${driver.lastName}`,
-                   homeToda: driver.homeToda || 'Unassigned',
-                   lat: scattered.lat,
-                   lng: scattered.lng,
-                   bodyNo: driver.bodyNo,
-                   status: 'Available' // Currently parked in line
-                });
-             });
-          });
-
-          // === THE FIX: SEVERING THE TERMINAL LEASH ===
-          // Merge newly fetched drivers, but PRESERVE the real GPS coordinates of drivers actively moving!
-          setActiveDrivers(prev => {
-              const liveGPSMap = new Map(prev.map(d => [d.id, { lat: d.lat, lng: d.lng, isLive: d.isLive }]));
-              
-              return mappedDrivers.map(driver => {
-                  const existingLive = liveGPSMap.get(driver.id);
-                  if (existingLive && existingLive.isLive) {
-                      // Bouncer logic: "This driver is actively tracking via satellite. Do NOT snap them to the terminal."
-                      return { ...driver, lat: existingLive.lat, lng: existingLive.lng, isLive: true };
-                  }
-                  return driver;
-              });
-          });
+          // === THE FIX: PURGED THE BEEHIVE TERMINAL SCATTER ===
+          // We no longer inject fake coordinates. The map will ONLY draw drivers 
+          // who actively ping the WebSocket with military-grade GPS.
           
+          // Clean up stale map markers for drivers who went offline
+          const activeDbIds = new Set(radarRes.data.activeDrivers.map(d => d._id || d.id));
+          setActiveDrivers(prev => prev.filter(d => activeDbIds.has(d.id)));
+
           // Update the dispatch panel numbers dynamically
           setStats({ 
              ...statsRes.data, 
-             // === THE FIX: ONLY COUNT DRIVERS WHO CLICKED "START HUNTING" ===
              activeDrivers: radarRes.data.activeDrivers.length, 
              activeTickets: radarRes.data.activeTickets 
           });

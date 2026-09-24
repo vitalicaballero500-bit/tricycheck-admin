@@ -244,9 +244,9 @@ function SupportTickets() {
                                 <span className="text-xs font-bold text-slate-600 flex items-center"><span className="w-5">✉️</span> {selectedTicket.passengerId?.email || 'No Email'}</span>
                              </div>
                              
-                             {/* === THE FIX: TARGET ACQUISITION PANEL === */}
-                     {selectedTicket.driverId && (
-                        <div className="mb-6 p-5 bg-red-50/50 border border-red-100 rounded-2xl flex justify-between items-center">
+                             {/* === THE FIX: DUAL TARGET ACQUISITION PANEL === */}
+                     {selectedTicket.driverId ? (
+                        <div className="mb-6 p-5 bg-red-50/50 border border-red-100 rounded-2xl flex justify-between items-center shadow-sm">
                            <div>
                               <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Reported Driver</h3>
                               <p className="text-base font-black text-red-900 leading-tight">{selectedTicket.driverId.firstName} {selectedTicket.driverId.lastName}</p>
@@ -258,18 +258,37 @@ function SupportTickets() {
                                   localStorage.setItem('teleportDriverId', targetId);
                                   window.dispatchEvent(new CustomEvent('fleetTeleport'));
                                   
-                                  setModalState({ isOpen: true, title: "Target Locked 🎯", message: "Driver profile acquired. Re-routing Command Center to Fleet Disciplinary Matrix...", type: "success" });
+                                  setModalState({ isOpen: true, title: "Target Locked 🎯", message: "Driver profile acquired. Re-routing Command Center to Fleet Matrix...", type: "success" });
                                   
-                                  // Auto-trigger tab change after 1.5 seconds!
                                   setTimeout(() => {
                                       closeModal();
-                                      // === THE FIX: STRICT LOWERCASE 'fleet' TO MATCH DASHBOARD STATE ===
                                       window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
                                   }, 1500);
                               }}
-                              className="px-5 py-3 bg-red-600 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all flex items-center"
+                              className="px-5 py-3 bg-red-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all flex items-center shrink-0"
                            >
-                              <IoWarning className="mr-2 text-lg"/> Investigate Driver Profile
+                              <IoWarning className="mr-1.5 sm:mr-2 text-lg"/> Investigate Driver
+                           </button>
+                        </div>
+                     ) : (
+                        <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl flex justify-between items-center shadow-sm">
+                           <div>
+                              <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Missing Driver Data</h3>
+                              <p className="text-sm font-bold text-slate-700 leading-tight">Review passenger history to identify the driver.</p>
+                           </div>
+                           <button 
+                              onClick={() => {
+                                  // Teleport to Passenger Oversight Tab
+                                  setModalState({ isOpen: true, title: "Target Locked 🎯", message: "Passenger profile acquired. Re-routing Command Center to Passenger Oversight...", type: "success" });
+                                  
+                                  setTimeout(() => {
+                                      closeModal();
+                                      window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'passengers' }));
+                                  }, 1500);
+                              }}
+                              className="px-5 py-3 bg-blue-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center shrink-0"
+                           >
+                              <IoPerson className="mr-1.5 sm:mr-2 text-lg"/> Investigate Passenger
                            </button>
                         </div>
                      )}
