@@ -92,9 +92,18 @@ function ReportsHub() {
             new Date(d.createdAt).toLocaleDateString(), d.bodyNo || 'N/A', `"${d.firstName} ${d.lastName}"`, d.phone, d.driverStatus, d.homeToda || 'Unassigned'
         ]);
     } else if (activeReport === 'tickets') {
-        headers = ["Date Filed", "Ticket ID", "Type", "Priority", "Status", "Description"];
+        headers = ["Date Filed", "Ticket ID", "Complainant (Passenger)", "Passenger Contact", "Reported Driver", "Driver Contact", "Type", "Priority", "Status", "Description"];
         rows = data.map(t => [
-            new Date(t.createdAt).toLocaleDateString(), t._id, t.type, t.priority, t.status, `"${t.description}"`
+            new Date(t.createdAt).toLocaleDateString(), 
+            t._id, 
+            `"${t.passengerId ? t.passengerId.firstName + ' ' + t.passengerId.lastName : 'Unknown'}"`, 
+            `"${t.passengerId ? (t.passengerId.phone || '') + ' ' + (t.passengerId.email || '') : 'N/A'}"`,
+            `"${t.driverId ? t.driverId.firstName + ' ' + t.driverId.lastName : 'None'}"`, 
+            `"${t.driverId ? (t.driverId.bodyNo || 'N/A') + ' ' + (t.driverId.phone || '') : 'N/A'}"`,
+            t.type, 
+            t.priority, 
+            t.status, 
+            `"${t.description}"`
         ]);
     } else if (activeReport === 'audit') {
         headers = ["Date", "Time", "Admin", "Module", "Action", "Details"];
@@ -164,9 +173,33 @@ function ReportsHub() {
         html += `</tbody></table>`;
     }
     else if (activeReport === 'tickets') {
-        html += `<th>Date Filed</th><th>Ticket ID</th><th>Type</th><th>Priority</th><th>Status</th></tr></thead><tbody>`;
+        html += `<th>Date Filed</th><th>Complainant / Contact</th><th>Reported Driver</th><th>Issue Type</th><th>Status</th></tr></thead><tbody>`;
         data.forEach(t => {
-            html += `<tr><td>${new Date(t.createdAt).toLocaleDateString()}</td><td>${t._id}</td><td>${t.type}</td><td>${t.priority}</td><td>${t.status}</td></tr>`;
+            html += `
+              <tr>
+                <td>
+                    <b>${new Date(t.createdAt).toLocaleDateString()}</b><br/>
+                    <span style="color: #64748b; font-size: 8px;">${t._id}</span>
+                </td>
+                <td>
+                    <b>${t.passengerId ? t.passengerId.firstName + ' ' + t.passengerId.lastName : 'Unknown Passenger'}</b><br/>
+                    <span style="color: #64748b;">${t.passengerId ? t.passengerId.phone || 'No Phone' : ''}</span><br/>
+                    <span style="color: #64748b;">${t.passengerId ? t.passengerId.email || 'No Email' : ''}</span>
+                </td>
+                <td>
+                    <b>${t.driverId ? t.driverId.firstName + ' ' + t.driverId.lastName : 'No Driver Assigned'}</b><br/>
+                    <span style="color: #64748b;">${t.driverId ? 'Body No: ' + (t.driverId.bodyNo || 'N/A') : ''}</span><br/>
+                    <span style="color: #64748b;">${t.driverId ? t.driverId.phone || '' : ''}</span>
+                </td>
+                <td>
+                    <b>${t.type}</b><br/>
+                    <span style="color: #ef4444; font-weight: bold;">${t.priority}</span>
+                </td>
+                <td>
+                    <b>${t.status}</b>
+                </td>
+              </tr>
+            `;
         });
         html += `</tbody></table>`;
     }
