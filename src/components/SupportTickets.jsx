@@ -19,6 +19,7 @@ function SupportTickets() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [sortOrder, setSortOrder] = useState('Newest');
+  const [dateFilter, setDateFilter] = useState({ start: '', end: '' }); // <-- INJECTED DATE STATE
   
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [dispatchPrompt, setDispatchPrompt] = useState({ isOpen: false, ticketId: null, unitName: '' });
@@ -85,16 +86,27 @@ function SupportTickets() {
       if (priority === 'Medium') return 'bg-yellow-400 text-yellow-900';
       return 'bg-emerald-400 text-emerald-900';
   };
-// === THE FIX: DUAL-FILTERING & SORTING ENGINE ===
+// === THE FIX: TRI-FILTERING & SORTING ENGINE (NOW WITH DATES) ===
   const filteredTickets = tickets.filter(ticket => {
-     // Check 1: Deep Text Search (Matches ID, Issue Type, Description, or Passenger Name)
+     // Check 1: Deep Text Search
      const searchString = `${ticket._id} ${ticket.type} ${ticket.description} ${ticket.passengerId?.firstName || ''} ${ticket.passengerId?.lastName || ''}`.toLowerCase();
      const matchesSearch = searchString.includes(searchTerm.toLowerCase());
      
      // Check 2: Status Dropdown
      const matchesStatus = filterStatus === 'All' || ticket.status === filterStatus;
      
-     return matchesSearch && matchesStatus;
+     // Check 3: Date Filter
+     let matchesDate = true;
+     if (dateFilter.start && dateFilter.end) {
+         const tDate = new Date(ticket.createdAt);
+         const sDate = new Date(dateFilter.start);
+         sDate.setHours(0, 0, 0, 0);
+         const eDate = new Date(dateFilter.end);
+         eDate.setHours(23, 59, 59, 999);
+         matchesDate = tDate >= sDate && tDate <= eDate;
+     }
+     
+     return matchesSearch && matchesStatus && matchesDate;
   }).sort((a, b) => {
      if (sortOrder === 'Newest') return new Date(b.createdAt) - new Date(a.createdAt);
      return new Date(a.createdAt) - new Date(b.createdAt);
@@ -116,34 +128,61 @@ function SupportTickets() {
                 </button>
             </div>
             
-            <div className="flex space-x-2">
-                <select 
-                    className="w-[100px] px-2 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                    <option value="All">All Status</option>
-                    <option value="Open">Open</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Dismissed">Dismissed</option>
-                </select>
-                <select 
-                    className="w-[100px] px-2 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                >
-                    <option value="Newest">Newest First</option>
-                    <option value="Oldest">Oldest First</option>
-                </select>
-                <div className="relative flex-1">
+            <div className="flex flex-col space-y-3">
+                <div className="flex space-x-2">
+                    <select 
+                        className="w-[100px] px-2 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                        <option value="All">All Status</option>
+                        <option value="Open">Open</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Dismissed">Dismissed</option>
+                    </select>
+                    <select 
+                        className="w-[100px] px-2 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold text-slate-600 shadow-sm cursor-pointer"
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                    >
+                        <option value="Newest">Newest First</option>
+                        <option value="Oldest">Oldest First</option>
+                    </select>
+                    <div className="relative flex-1">
+                        <input 
+                            type="text" 
+                            placeholder="Search IDs or Passengers..." 
+                            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold shadow-sm" 
+                            value={searchTerm} 
+                            onChange={(e) => setSearchTerm(e.target.value)} 
+                        />
+                    </div>
+                </div>
+                {/* === THE FIX: INJECTED DATE FILTER UI === */}
+                <div className="flex items-center space-x-2 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
                     <input 
-                        type="text" 
-                        placeholder="Search IDs or Passengers..." 
-                        className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-[11px] font-bold shadow-sm" 
-                        value={searchTerm} 
-                        onChange={(e) => setSearchTerm(e.target.value)} 
+                        type="date" 
+                        className="flex-1 px-2 py-1.5 bg-transparent outline-none text-[11px] font-bold text-slate-600 cursor-pointer"
+                        value={dateFilter.start}
+                        onChange={(e) => setDateFilter({...dateFilter, start: e.target.value})}
                     />
+                    <span className="text-slate-300 text-xs font-black">-</span>
+                    <input 
+                        type="date" 
+                        className="flex-1 px-2 py-1.5 bg-transparent outline-none text-[11px] font-bold text-slate-600 cursor-pointer"
+                        value={dateFilter.end}
+                        onChange={(e) => setDateFilter({...dateFilter, end: e.target.value})}
+                    />
+                    {(dateFilter.start || dateFilter.end) && (
+                        <button 
+                            onClick={() => setDateFilter({ start: '', end: '' })} 
+                            className="px-2 text-slate-400 hover:text-red-500 transition-colors"
+                            title="Clear Dates"
+                        >
+                            <IoClose className="text-sm" />
+                        </button>
+                    )}
                 </div>
             </div>
          </div>
@@ -297,25 +336,15 @@ function SupportTickets() {
                      <p className="text-sm font-medium text-slate-600 leading-relaxed bg-white p-4 rounded-xl border border-slate-100">{selectedTicket.description}</p>
                   </div>
 
-                  {selectedTicket.dispatchUnit && (
-                     <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 mb-8 flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xl shadow-md shrink-0"><IoShieldHalf /></div>
-                        <div>
-                           <h3 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Responding Patrol Unit</h3>
-                           <p className="text-lg font-black text-emerald-900 leading-tight">{selectedTicket.dispatchUnit}</p>
-                        </div>
-                     </div>
-                  )}
-
                   {/* ACTION CONTROLS */}
                   {selectedTicket.status !== 'Resolved' && (
                      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-slate-100">
                         {selectedTicket.status === 'Open' ? (
                            <button 
-                              onClick={() => setDispatchPrompt({ isOpen: true, ticketId: selectedTicket._id, unitName: '' })} 
-                              className="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center"
+                              onClick={() => executeStatusUpdate(selectedTicket._id, 'In Progress')} 
+                              className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center"
                            >
-                              <IoFlash className="mr-2 text-xl" /> Dispatch Patrol Unit
+                              <IoFlash className="mr-2 text-xl" /> Investigate Ticket
                            </button>
                         ) : (
                            <button 

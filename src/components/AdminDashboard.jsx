@@ -16,6 +16,7 @@ import SupportTickets from './SupportTickets';
 import StaffManagement from './StaffManagement';
 import SystemSettings from './SystemSettings';
 import ComplianceHub from './ComplianceHub';
+import ReportsHub from './ReportsHub'; // <-- INJECTED
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -241,10 +242,11 @@ function AdminDashboard() {
     { id: 'fleet', label: 'Fleet Management', icon: <IoIdCard />, roles: ['superadmin', 'secretary'] },
     { id: 'map', label: 'Live Operations', icon: <IoMap />, roles: ['superadmin', 'dispatcher'] },
     { id: 'reports', label: 'Support Tickets', icon: <IoWarning />, roles: ['superadmin', 'dispatcher'] },
-    { id: 'staff', label: 'Staff Management', icon: <IoPeople />, roles: ['superadmin'] },
-    { id: 'settings', label: 'System Settings', icon: <IoSettings />, roles: ['superadmin'] },
     { id: 'passengers', label: 'Passenger Oversight', icon: <IoPeople />, roles: ['superadmin', 'secretary'] },
-    { id: 'compliance', label: 'Compliance Hub', icon: <IoDocumentText />, roles: ['superadmin', 'secretary'] }, 
+    { id: 'compliance', label: 'Compliance Hub', icon: <IoDocumentText />, roles: ['superadmin', 'secretary'] },
+    { id: 'analytics', label: 'Reports & Analytics', icon: <IoPrint />, roles: ['superadmin', 'secretary'] }, // <-- THE NEW HUB
+    { id: 'staff', label: 'Staff Management', icon: <IoPeople />, roles: ['superadmin'] },
+    { id: 'settings', label: 'System Settings', icon: <IoSettings />, roles: ['superadmin'] }
   ];
 
   const menuItems = allMenuItems.filter(item => item.roles.includes(adminUser?.role));
@@ -313,9 +315,7 @@ function AdminDashboard() {
                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                <span>System Online</span>
             </div>
-            <button onClick={() => setShowReportModal(true)} className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95">
-              <IoDocumentText className="text-lg" /> <span>Generate Report</span>
-            </button>
+            {/* Global Generate Report button removed - Migrated to Reports & Analytics Hub */}
           </div>
         </header>
 
@@ -487,6 +487,8 @@ function AdminDashboard() {
           {activeTab === 'compliance' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><ComplianceHub /></div>}
           {activeTab === 'staff' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><StaffManagement /></div>}
           {activeTab === 'settings' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><SystemSettings /></div>}
+          {/* === THE NEW REPORTS HUB === */}
+          {activeTab === 'analytics' && <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto"><ReportsHub /></div>}
         </div>
       </main>
 
