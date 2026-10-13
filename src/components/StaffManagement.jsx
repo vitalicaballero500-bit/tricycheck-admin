@@ -208,7 +208,7 @@ function StaffManagement() {
             ))}
             {staff.length === 0 && (
               <tr>
-                <td colSpan="5" className="p-10 text-center text-slate-400 font-bold">
+                <td colSpan="6" className="p-10 text-center text-slate-400 font-bold">
                   No staff accounts issued yet.
                 </td>
               </tr>

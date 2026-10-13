@@ -333,26 +333,57 @@ function AdminDashboard() {
                 </div>
               )}
 
-              {/* STAT CARDS - Original Data & Terminology */}
+              {/* STAT CARDS - 1-Click Command Teleporters */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 hover:shadow-md transition-shadow relative overflow-hidden">
+                <div 
+                  onClick={() => setActiveTab('reports')}
+                  className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 hover:shadow-lg hover:-translate-y-0.5 transition-all relative overflow-hidden cursor-pointer group"
+                >
                   <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl shadow-sm border border-red-100"><IoWarning /></div></div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl shadow-sm border border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors"><IoWarning /></div>
+                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Open Switchboard &rarr;</span>
+                  </div>
                   <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeTickets?.length || 0}</h3>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unresolved Tickets</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoIdCard /></div></div>
+
+                <div 
+                  onClick={() => setActiveTab('fleet')}
+                  className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors"><IoIdCard /></div>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">View Directory &rarr;</span>
+                  </div>
                   <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeDrivers}</h3>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Drivers</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl shadow-sm border border-orange-100"><IoDocumentText /></div></div>
+
+                <div 
+                  onClick={() => setActiveTab('fleet')}
+                  className={`bg-white p-6 rounded-2xl shadow-sm border transition-all cursor-pointer group hover:shadow-lg hover:-translate-y-0.5 ${stats.pendingDrivers > 0 ? 'border-amber-300 ring-2 ring-amber-400/20' : 'border-slate-200/60'}`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl shadow-sm border border-orange-100 group-hover:bg-orange-500 group-hover:text-white transition-colors"><IoDocumentText /></div>
+                    {stats.pendingDrivers > 0 ? (
+                      <span className="bg-amber-400 text-emerald-950 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full animate-pulse">Audit Now &rarr;</span>
+                    ) : (
+                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Audit Queue &rarr;</span>
+                    )}
+                  </div>
                   <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.pendingDrivers}</h3>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Approvals</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-4"><div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl shadow-sm border border-emerald-100"><IoBicycle /></div></div>
+
+                <div 
+                  onClick={() => setActiveTab('map')}
+                  className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl shadow-sm border border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><IoBicycle /></div>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Live Radar &rarr;</span>
+                  </div>
                   <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeRides}</h3>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Rides Now</p>
                 </div>

@@ -274,35 +274,40 @@ function SupportTickets() {
 
                   <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mb-8 relative">
                      <IoPerson className="absolute top-6 right-6 text-4xl text-slate-200" />
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Complainant / Passenger</h3>
-                             <p className="text-lg font-bold text-slate-800 mb-2">{selectedTicket.passengerId?.firstName} {selectedTicket.passengerId?.lastName}</p>
-                             
-                             {/* === THE FIX: Victim Contact Info Display === */}
-                             <div className="flex flex-col space-y-1 mb-6 bg-white p-3 rounded-xl border border-slate-100 shadow-sm w-max">
-                                <span className="text-xs font-bold text-slate-600 flex items-center"><span className="w-5">📞</span> {selectedTicket.passengerId?.phone || 'No Phone'}</span>
-                                <span className="text-xs font-bold text-slate-600 flex items-center"><span className="w-5">✉️</span> {selectedTicket.passengerId?.email || 'No Email'}</span>
-                             </div>
-                             
-                             {/* === THE FIX: DUAL TARGET ACQUISITION PANEL === */}
+                     
+                     {/* COMPLAINANT BADGE (SUPPORTS PASSENGER OR DRIVER REPORT) */}
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                        {selectedTicket.passengerId ? "Complainant (Passenger)" : "Complainant (Driver / Official Report)"}
+                     </h3>
+                     <p className="text-lg font-bold text-slate-900 mb-2">
+                        {selectedTicket.passengerId 
+                          ? `${selectedTicket.passengerId.firstName} ${selectedTicket.passengerId.lastName}`
+                          : (selectedTicket.driverId ? `${selectedTicket.driverId.firstName} ${selectedTicket.driverId.lastName} (Driver)` : 'Anonymous / System')}
+                     </p>
+                     
+                     <div className="flex flex-col space-y-1 mb-6 bg-white p-3 rounded-xl border border-slate-100 shadow-sm w-max">
+                        <span className="text-xs font-bold text-slate-600 flex items-center">
+                           <span className="w-5">📞</span> {selectedTicket.passengerId?.phone || selectedTicket.driverId?.phone || 'No Phone Registered'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-600 flex items-center">
+                           <span className="w-5">✉️</span> {selectedTicket.passengerId?.email || selectedTicket.driverId?.email || 'No Email Registered'}
+                        </span>
+                     </div>
+                     
+                     {/* DUAL TARGET ACQUISITION PANEL */}
                      {selectedTicket.driverId ? (
                         <div className="mb-6 p-5 bg-red-50/50 border border-red-100 rounded-2xl flex justify-between items-center shadow-sm">
                            <div>
                               <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Reported Driver</h3>
                               <p className="text-base font-black text-red-900 leading-tight">{selectedTicket.driverId.firstName} {selectedTicket.driverId.lastName}</p>
-                              <p className="text-xs font-bold text-red-700 mt-0.5">Body No: {selectedTicket.driverId.bodyNo}</p>
+                              <p className="text-xs font-bold text-red-700 mt-0.5">Body No: {selectedTicket.driverId.bodyNo || 'N/A'}</p>
                            </div>
                            <button 
                               onClick={() => {
                                   const targetId = selectedTicket.driverId._id || selectedTicket.driverId.id;
                                   localStorage.setItem('teleportDriverId', targetId);
                                   window.dispatchEvent(new CustomEvent('fleetTeleport'));
-                                  
-                                  setModalState({ isOpen: true, title: "Target Locked 🎯", message: "Driver profile acquired. Re-routing Command Center to Fleet Matrix...", type: "success" });
-                                  
-                                  setTimeout(() => {
-                                      closeModal();
-                                      window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
-                                  }, 1500);
+                                  window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
                               }}
                               className="px-5 py-3 bg-red-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all flex items-center shrink-0"
                            >
@@ -312,18 +317,15 @@ function SupportTickets() {
                      ) : (
                         <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl flex justify-between items-center shadow-sm">
                            <div>
-                              <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Missing Driver Data</h3>
-                              <p className="text-sm font-bold text-slate-700 leading-tight">Review passenger history to identify the driver.</p>
+                              <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Passenger Profile</h3>
+                              <p className="text-sm font-bold text-slate-700 leading-tight">Jump directly to passenger oversight records.</p>
                            </div>
                            <button 
                               onClick={() => {
-                                  // Teleport to Passenger Oversight Tab
-                                  setModalState({ isOpen: true, title: "Target Locked 🎯", message: "Passenger profile acquired. Re-routing Command Center to Passenger Oversight...", type: "success" });
-                                  
-                                  setTimeout(() => {
-                                      closeModal();
-                                      window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'passengers' }));
-                                  }, 1500);
+                                  const query = selectedTicket.passengerId?.phone || selectedTicket.passengerId?.firstName || '';
+                                  localStorage.setItem('teleportPassengerQuery', query);
+                                  window.dispatchEvent(new CustomEvent('passengerTeleport'));
+                                  window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'passengers' }));
                               }}
                               className="px-5 py-3 bg-blue-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center shrink-0"
                            >
@@ -336,15 +338,15 @@ function SupportTickets() {
                      <p className="text-sm font-medium text-slate-600 leading-relaxed bg-white p-4 rounded-xl border border-slate-100">{selectedTicket.description}</p>
                   </div>
 
-                  {/* ACTION CONTROLS */}
+                  {/* ACTION CONTROLS: WIRED TO PATROL UNIT DISPATCH MODAL */}
                   {selectedTicket.status !== 'Resolved' && (
                      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-slate-100">
                         {selectedTicket.status === 'Open' ? (
                            <button 
-                              onClick={() => executeStatusUpdate(selectedTicket._id, 'In Progress')} 
+                              onClick={() => setDispatchPrompt({ isOpen: true, ticketId: selectedTicket._id, unitName: '' })} 
                               className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center"
                            >
-                              <IoFlash className="mr-2 text-xl" /> Investigate Ticket
+                              <IoFlash className="mr-2 text-xl" /> Assign Patrol & Investigate
                            </button>
                         ) : (
                            <button 
@@ -395,6 +397,24 @@ function SupportTickets() {
             </div>
             <h3 className="text-xl font-black text-slate-800 text-center mb-2">Assign Patrol Unit</h3>
             <p className="text-xs font-medium text-slate-500 text-center mb-6">Enter the official POSO unit responding to this emergency.</p>
+            {/* 1-CLICK QUICK PATROL UNIT PILLS (ZERO MANUAL TYPING) */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {['POSO Patrol 1', 'POSO Sector Alpha', 'PNP Desk Officer', 'MDRRMO Rescue'].map(pill => (
+                <button
+                  key={pill}
+                  type="button"
+                  onClick={() => setDispatchPrompt(prev => ({ ...prev, unitName: pill }))}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                    dispatchPrompt.unitName === pill 
+                      ? 'bg-emerald-600 text-white border-emerald-600' 
+                      : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-emerald-50'
+                  }`}
+                >
+                  {pill}
+                </button>
+              ))}
+            </div>
+
             <input
                type="text"
                placeholder="e.g. Mobile Patrol 3 - Sgt. Cruz"
@@ -413,7 +433,7 @@ function SupportTickets() {
                   disabled={!dispatchPrompt.unitName.trim()}
                   className="flex-[2] py-3.5 rounded-xl font-black bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg active:scale-95 transition-all disabled:opacity-50"
                >
-                  Dispatch Unit
+                  Confirm & Dispatch
                </button>
             </div>
           </div>

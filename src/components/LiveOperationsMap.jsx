@@ -6,26 +6,23 @@ import L from 'leaflet';
 import { IoWarning, IoSpeedometer, IoCarSport, IoFlash, IoClose } from 'react-icons/io5';
 import { io } from 'socket.io-client'; // <-- ADD THIS IMPORT
 
-// === DYNAMIC COLOR CODING ENGINE ===
-const getTodaColor = (toda) => {
-  switch (toda) {
-    case 'Calasiao Plaza TODA': return { bg: 'bg-red-500', shadow: 'shadow-red-500/50', border: 'border-red-600' };
-    case 'Bued TODA': return { bg: 'bg-green-500', shadow: 'shadow-green-500/50', border: 'border-green-600' };
-    case 'San Miguel TODA': return { bg: 'bg-emerald-500', shadow: 'shadow-blue-500/50', border: 'border-emerald-600' };
-    case 'Robinsons TODA': return { bg: 'bg-yellow-400', shadow: 'shadow-yellow-500/50', border: 'border-yellow-500' };
-    default: return { bg: 'bg-slate-500', shadow: 'shadow-slate-500/50', border: 'border-slate-600' };
+// === THE FIX: LIVE OPERATIONAL STATUS ENGINE (REPLACES OBSOLETE TODA LEGEND) ===
+const getStatusTheme = (status) => {
+  if (status === 'On Trip') {
+    return { bg: 'bg-amber-500', border: 'border-amber-600', text: 'text-amber-600', badge: 'bg-amber-100 text-amber-800' };
   }
+  return { bg: 'bg-emerald-500', border: 'border-emerald-600', text: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-800' };
 };
 
-const getDynamicIcon = (toda, status) => {
-  const colors = getTodaColor(toda);
+const getDynamicIcon = (status) => {
+  const theme = getStatusTheme(status);
   const isBusy = status === 'On Trip';
   
   const html = `
     <div class="relative flex items-center justify-center w-10 h-10">
-      ${isBusy ? `<span class="absolute inline-flex w-full h-full rounded-full opacity-50 animate-ping ${colors.bg}"></span>` : ''}
-      <div class="relative flex items-center justify-center w-8 h-8 rounded-full border-[3px] border-white shadow-lg ${colors.bg} z-10">
-        <span style="font-size: 14px; transform: scaleX(-1); display: inline-block;">🛺</span>
+      ${isBusy ? `<span class="absolute inline-flex w-full h-full rounded-full opacity-60 animate-ping ${theme.bg}"></span>` : ''}
+      <div class="relative flex items-center justify-center w-8 h-8 rounded-full border-[3px] border-white shadow-lg ${theme.bg} z-10 text-white font-bold text-sm">
+        <span style="display: inline-block; transform: scaleX(-1);">🛺</span>
       </div>
     </div>
   `;
@@ -144,20 +141,22 @@ function LiveOperationsMap() {
           <MapContainer center={defaultPos} zoom={14} zoomControl={false} style={{ height: "100%", width: "100%", zIndex: 0 }}>
             <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             
-            {/* 📍 REAL DATABASE DRIVER PINS */}
+            {/* REAL DATABASE DRIVER PINS */}
             {filteredDrivers.map(driver => (
-              <Marker key={driver.id} position={[driver.lat, driver.lng]} icon={getDynamicIcon(driver.homeToda, driver.status)} eventHandlers={{ click: () => setSelectedDriver(driver) }}>
+              <Marker key={driver.id} position={[driver.lat, driver.lng]} icon={getDynamicIcon(driver.status)} eventHandlers={{ click: () => setSelectedDriver(driver) }}>
                 <Popup>
-                  <div className="text-center">
-                    <p className="font-black text-sm text-slate-800">Body No. {driver.bodyNo}</p>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{driver.name}</p>
-                    <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${driver.status === 'Available' ? 'text-green-600' : 'text-emerald-600'}`}>{driver.status}</span>
+                  <div className="text-center p-1">
+                    <p className="font-black text-sm text-slate-900">Body No. {driver.bodyNo}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{driver.name}</p>
+                    <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${driver.status === 'On Trip' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                      ● {driver.status}
+                    </span>
                   </div>
                 </Popup>
               </Marker>
             ))}
 
-            {/* 🚨 SOS RADAR: Draws a perfectly centered red pulse over active emergencies */}
+            {/* SOS RADAR: Centers pulsating red beacon over active distress tickets */}
             {stats.activeTickets?.filter(t => t.priority === 'CRITICAL' && t.location?.lat).map(ticket => (
                <Marker 
                   key={ticket._id} 
@@ -165,27 +164,35 @@ function LiveOperationsMap() {
                   icon={L.divIcon({
                       className: 'bg-transparent border-none',
                       html: `<div class="relative flex items-center justify-center w-24 h-24">
-                               <span class="absolute inline-flex w-full h-full rounded-full bg-red-500 opacity-40 animate-ping"></span>
-                               <div class="relative w-4 h-4 bg-red-600 rounded-full border-[3px] border-white shadow-[0_0_15px_rgba(220,38,38,0.8)]"></div>
+                               <span class="absolute inline-flex w-full h-full rounded-full bg-red-500 opacity-50 animate-ping"></span>
+                               <div class="relative w-5 h-5 bg-red-600 rounded-full border-[3px] border-white shadow-[0_0_18px_rgba(220,38,38,0.9)] flex items-center justify-center text-[10px] text-white">🚨</div>
                              </div>`,
                       iconSize: [96, 96],
                       iconAnchor: [48, 48]
                   })}
                >
-                  <Popup><span className="font-bold text-xs">🚨 CRITICAL SOS ACTIVE</span></Popup>
+                  <Popup><span className="font-black text-xs text-red-600">🚨 CRITICAL SOS DISPATCH ACTIVE</span></Popup>
                </Marker>
             ))}
           </MapContainer>
         </div>
         
-        {/* MAP LEGEND */}
-        <div className="absolute bottom-4 left-4 z-[400] bg-white/90 backdrop-blur-md p-3 rounded-xl shadow-lg border border-slate-100">
-           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">TODA Color Legend</p>
-           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] font-bold text-slate-600">
-              <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-red-500"></div><span>Calasiao Plaza</span></div>
-              <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-green-500"></div><span>Bued</span></div>
-              <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span>San Miguel</span></div>
-              <div className="flex items-center space-x-2"><div className="w-3 h-3 rounded-full bg-yellow-400"></div><span>Robinsons</span></div>
+        {/* THE FIX: OPERATIONAL STATUS LEGEND */}
+        <div className="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-slate-200">
+           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2.5">Live Radar Legend</p>
+           <div className="flex flex-col space-y-2 text-[11px] font-bold text-slate-700">
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-600 shadow-sm"></span>
+                <span>Available for Dispatch</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 rounded-full bg-amber-500 border border-amber-600 shadow-sm"></span>
+                <span>On Active Passenger Trip</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 rounded-full bg-red-600 animate-pulse border border-white"></span>
+                <span className="text-red-600 font-black">SOS Emergency Pulse</span>
+              </div>
            </div>
         </div>
       </div>
@@ -210,27 +217,44 @@ function LiveOperationsMap() {
         </div>
 
         {selectedDriver ? (
-          <div className={`bg-white rounded-2xl shadow-sm border p-5 flex-1 relative animate-slide-in ${getTodaColor(selectedDriver.homeToda).border}`}>
+          <div className={`bg-white rounded-2xl shadow-sm border p-5 flex-1 relative animate-slide-in ${getStatusTheme(selectedDriver.status).border}`}>
              <button onClick={() => setSelectedDriver(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><IoClose className="text-xl" /></button>
-             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Target Acquired</h3>
+             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Target Acquired</h3>
              <div className="flex items-center space-x-4 mb-6">
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 border-white shadow-md ${getTodaColor(selectedDriver.homeToda).bg} text-white`}>🛺</div>
-                <div>
-                   <h2 className="text-lg font-black text-slate-800 leading-tight">{selectedDriver.name}</h2>
-                   <p className="text-sm font-bold text-slate-500">Body No. {selectedDriver.bodyNo}</p>
-                   <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${getTodaColor(selectedDriver.homeToda).bg.replace('bg-', 'text-')}`}>{selectedDriver.homeToda}</p>
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 border-white shadow-md ${getStatusTheme(selectedDriver.status).bg} text-white`}>
+                   🛺
                 </div>
-             </div>
-             <div className="space-y-4">
-                {/* === THE FIX: CLEANED UP GHOST METRICS FOR PANEL === */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
-                   <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Active Status</span>
-                   <span className={`text-xs font-black uppercase tracking-wider px-3 py-1.5 rounded-lg shadow-sm ${selectedDriver.status === 'Available' ? 'bg-green-100 text-green-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {selectedDriver.status}
+                <div>
+                   <h2 className="text-lg font-black text-slate-900 leading-tight">{selectedDriver.name}</h2>
+                   <p className="text-sm font-bold text-slate-500">Body No. {selectedDriver.bodyNo || 'N/A'}</p>
+                   <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-md mt-1 ${getStatusTheme(selectedDriver.status).badge}`}>
+                      ● {selectedDriver.status}
                    </span>
                 </div>
              </div>
-             {/* THE FIX: REMOVED STATIC ALERT & SPEED TO PREVENT PANEL SCRUTINY */}
+
+             <div className="space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center">
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Live Coordinates</span>
+                   <span className="font-mono text-xs font-bold text-slate-700">
+                     {Number(selectedDriver.lat).toFixed(4)}, {Number(selectedDriver.lng).toFixed(4)}
+                   </span>
+                </div>
+
+                {/* THE FIX: 1-CLICK FLEET DIRECTORY TELEPORTER */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('teleportDriverId', selectedDriver.id);
+                    window.dispatchEvent(new CustomEvent('fleetTeleport'));
+                    window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
+                  }}
+                  className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-slate-800 active:scale-95 transition-all shadow-md flex items-center justify-center space-x-2"
+                >
+                  <IoCarSport className="text-base" />
+                  <span>Inspect Full Personnel File</span>
+                </button>
+             </div>
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-5 flex-1 flex flex-col">

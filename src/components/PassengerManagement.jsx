@@ -19,13 +19,30 @@ function PassengerManagement() {
 
   const fetchPassengers = async () => {
     try {
-      const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/passengers');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/passengers', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPassengers(response.data);
     } catch (error) { console.error("Failed to fetch passengers", error); } 
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchPassengers(); }, []);
+  useEffect(() => { 
+    fetchPassengers(); 
+    
+    // Auto-Lock on Passenger Teleport from Support Tickets
+    const checkTeleport = () => {
+      const query = localStorage.getItem('teleportPassengerQuery');
+      if (query) {
+        setSearchTerm(query);
+        localStorage.removeItem('teleportPassengerQuery');
+      }
+    };
+    checkTeleport();
+    window.addEventListener('passengerTeleport', checkTeleport);
+    return () => window.removeEventListener('passengerTeleport', checkTeleport);
+  }, []);
 
   // Action 1: Ban/Unban Modal
   const handleStatusChangeClick = (userId, newStatus) => {
@@ -121,6 +138,7 @@ function PassengerManagement() {
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
               <th className="p-5 pl-8">Passenger Name</th>
               <th className="p-5">Contact Number</th>
+              <th className="p-5">Registered Email</th>
               <th className="p-5">Account Status</th>
               <th className="p-5 pr-8 text-right">Actions</th>
             </tr>
@@ -132,6 +150,7 @@ function PassengerManagement() {
                 <td className="p-5 font-mono text-sm text-slate-500">
                    <span className="bg-slate-100 px-3 py-1.5 rounded-lg font-bold text-slate-600">{p.phone}</span>
                 </td>
+                <td className="p-5 text-sm font-medium text-slate-600">{p.email || 'No email attached'}</td>
                 <td className="p-5">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.status === 'Banned' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                     {p.status || 'Active'}
@@ -150,6 +169,13 @@ function PassengerManagement() {
                 </td>
               </tr>
             ))}
+          {filteredPassengers.length === 0 && (
+              <tr>
+                <td colSpan="5" className="p-10 text-center text-slate-400 font-bold">
+                  No passengers found matching your search criteria.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
