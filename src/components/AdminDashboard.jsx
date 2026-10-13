@@ -153,33 +153,32 @@ function AdminDashboard() {
   return (
     <div className="flex h-[100dvh] bg-emerald-950 overflow-hidden font-sans selection:bg-amber-400/30 selection:text-amber-200">
       
-      {/* 1. THE ANCHOR: Dark Government Sidebar */}
-      <aside className="w-72 bg-emerald-950 text-white flex flex-col z-20 shrink-0 border-r border-emerald-900 shadow-2xl relative">
-        <div className="h-24 flex items-center px-6 border-b border-emerald-900 bg-emerald-950">
-          <img src="/poso-logo.jpg" alt="POSO" className="w-12 h-12 mr-4 drop-shadow-md object-contain rounded-full border border-emerald-800" />
+      {/* 1. THE ANCHOR: Dark Government Sidebar (Optimized for 100% Zoom) */}
+      <aside className="w-64 bg-emerald-950 text-white flex flex-col z-20 shrink-0 border-r border-emerald-900 shadow-2xl relative">
+        <div className="h-16 flex items-center px-5 border-b border-emerald-900 bg-emerald-950 shrink-0">
+          <img src="/poso-logo.jpg" alt="POSO" className="w-10 h-10 mr-3 drop-shadow-md object-contain rounded-full border border-emerald-800" />
           <div>
-            <h1 className="text-xl font-black tracking-tight leading-tight text-emerald-50">TricyCheck</h1>
-            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Admin Portal</p>
+            <h1 className="text-lg font-black tracking-tight leading-tight text-emerald-50">TricyCheck</h1>
+            <p className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Admin Portal</p>
           </div>
         </div>
 
-        <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
-          <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-4 ml-2">Main Menu</p>
+        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+          <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest mb-2 ml-2">Main Menu</p>
           {menuItems.map((item) => (
             <button 
               key={item.id} 
               onClick={() => setActiveTab(item.id)} 
-              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                 activeTab === item.id 
-                  ? 'bg-amber-400 text-emerald-950 shadow-lg shadow-amber-500/20' 
+                  ? 'bg-amber-400 text-emerald-950 shadow-md shadow-amber-500/20' 
                   : 'text-emerald-100/70 hover:bg-emerald-900/50 hover:text-amber-400'
               }`}
             >
-              <div className="flex items-center space-x-4">
-                <span className="text-xl">{item.icon}</span>
+              <div className="flex items-center space-x-3">
+                <span className="text-lg">{item.icon}</span>
                 <span>{item.label}</span>
               </div>
-              {/* Live Sidebar Badges for Instant Awareness */}
               {item.id === 'fleet' && stats.pendingDrivers > 0 && (
                 <span className="bg-amber-500 text-emerald-950 text-[10px] font-black px-2 py-0.5 rounded-full">
                   {stats.pendingDrivers}
@@ -194,55 +193,53 @@ function AdminDashboard() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-emerald-900 bg-emerald-950">
-          <div className="flex items-center justify-between bg-emerald-900/50 p-4 rounded-xl border border-emerald-800">
+        <div className="p-3 border-t border-emerald-900 bg-emerald-950 shrink-0">
+          <div className="flex items-center justify-between bg-emerald-900/50 p-3 rounded-xl border border-emerald-800">
             <div 
-              className="flex items-center space-x-3 truncate cursor-pointer hover:bg-emerald-800 p-1.5 -ml-1.5 rounded-lg transition-colors" 
+              className="flex items-center space-x-2.5 truncate cursor-pointer hover:bg-emerald-800 p-1 -ml-1 rounded-lg transition-colors" 
               onClick={() => setShowProfileModal(true)}
               title="Edit My Profile"
             >
-              <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center text-emerald-950 font-black shadow-inner shrink-0 border-2 border-emerald-800">
+              <div className="w-9 h-9 rounded-full bg-amber-400 flex items-center justify-center text-emerald-950 text-xs font-black shadow-inner shrink-0 border-2 border-emerald-800">
                 {adminUser.firstName?.charAt(0)}{adminUser.lastName ? adminUser.lastName.charAt(0) : ''}
               </div>
               <div className="text-left truncate">
-                <p className="text-sm font-bold text-emerald-50 leading-tight truncate">{adminUser.firstName} {adminUser.lastName}</p>
-                <p className="text-[10px] text-amber-400 font-bold tracking-wider uppercase">● {adminUser.role}</p>
+                <p className="text-xs font-bold text-emerald-50 leading-tight truncate">{adminUser.firstName} {adminUser.lastName}</p>
+                <p className="text-[9px] text-amber-400 font-bold tracking-wider uppercase">● {adminUser.role}</p>
               </div>
             </div>
-            {/* === THE FIX: TRIGGERS CONFIRMATION MODAL INSTEAD OF INSTANT LOGOUT === */}
             <button 
               type="button"
               onClick={() => setShowLogoutModal(true)} 
               title="Log Out of Command Center"
-              className="p-2.5 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-colors shrink-0 ml-2"
+              className="p-2 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-colors shrink-0 ml-1"
             >
-              <IoLogOut className="text-xl" />
+              <IoLogOut className="text-lg" />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* 2. THE CANVAS: The Floating Island */}
-      <main className="flex-1 flex flex-col relative z-10 w-full overflow-hidden bg-slate-50 md:rounded-tl-[2.5rem] md:my-2 md:mr-2 shadow-[-15px_0_40px_rgba(0,0,0,0.5)] border border-emerald-900/20">
+      {/* 2. THE CANVAS: Zero-Scroll 100% Zoom Viewport */}
+      <main className="flex-1 flex flex-col relative z-10 w-full overflow-hidden bg-slate-50 md:rounded-tl-[2rem] md:my-1.5 md:mr-1.5 shadow-[-15px_0_40px_rgba(0,0,0,0.5)] border border-emerald-900/20">
         
-        {/* HEADER */}
-        <header className="h-24 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-8 shrink-0 z-20 md:rounded-tl-[2.5rem]">
+        {/* STREAMLINED HEADER (h-16) */}
+        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-20 md:rounded-tl-[2rem]">
           <div>
-            <h2 className="text-2xl font-black text-emerald-950 tracking-tight">{menuItems.find(m => m.id === activeTab)?.label}</h2>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
+            <h2 className="text-xl font-black text-emerald-950 tracking-tight leading-none">{menuItems.find(m => m.id === activeTab)?.label}</h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
               Calasiao Public Order & Safety Office • Command Telemetry
             </p>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* Live Date & Clock Pill */}
-            <div className="hidden lg:flex items-center space-x-3 bg-slate-100 text-slate-700 px-4 py-2.5 rounded-xl border border-slate-200 font-bold text-xs">
-              <IoTime className="text-emerald-600 text-base" />
+          <div className="flex items-center space-x-3">
+            <div className="hidden lg:flex items-center space-x-2 bg-slate-100 text-slate-700 px-3.5 py-2 rounded-xl border border-slate-200 font-bold text-xs">
+              <IoTime className="text-emerald-600 text-sm" />
               <span>
                 {currentTime.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} • {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             </div>
 
-            <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 px-4 py-2.5 rounded-xl border border-emerald-100 font-bold text-sm shadow-sm">
+            <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 px-3.5 py-2 rounded-xl border border-emerald-100 font-bold text-xs shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>System Online</span>
             </div>
@@ -250,156 +247,109 @@ function AdminDashboard() {
         </header>
 
         {/* DYNAMIC MODULE INJECTION */}
-        <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative z-10">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative z-10 flex flex-col min-h-0">
           
-          {/* === EXECUTIVE DASHBOARD OVERVIEW === */}
+          {/* === EXECUTIVE DASHBOARD OVERVIEW (FITS 100% ZOOM WITH ZERO PAGE SCROLL) === */}
           {activeTab === 'dashboard' && (
-            <div className="p-8 animate-fade-in w-full max-w-[1600px] mx-auto space-y-8">
+            <div className="p-6 animate-fade-in w-full max-w-[1600px] mx-auto flex-1 flex flex-col gap-5 min-h-0 overflow-hidden">
               
               {/* RED EMERGENCY BANNER */}
               {stats.activeTickets?.some(t => t.priority === 'CRITICAL' || t.priority === 'High') && (
                 <div 
                   onClick={() => setActiveTab('reports')}
-                  className="bg-red-600 text-white p-4 rounded-2xl shadow-lg shadow-red-500/30 flex justify-between items-center font-black tracking-widest uppercase text-xs sm:text-sm animate-pulse border-2 border-red-400 cursor-pointer hover:bg-red-700 transition-colors"
+                  className="bg-red-600 text-white px-5 py-3 rounded-2xl shadow-lg shadow-red-500/30 flex justify-between items-center font-black tracking-widest uppercase text-xs animate-pulse border-2 border-red-400 cursor-pointer hover:bg-red-700 transition-colors shrink-0"
                 >
                   <div className="flex items-center">
-                    <IoWarning className="mr-3 text-2xl shrink-0" /> 
+                    <IoWarning className="mr-2.5 text-xl shrink-0" /> 
                     <span>ACTIVE EMERGENCY: UNRESOLVED HIGH-PRIORITY DISTRESS TICKET DETECTED!</span>
                   </div>
-                  <span className="bg-white text-red-700 px-3 py-1.5 rounded-lg text-[10px] font-black shrink-0 ml-4">
+                  <span className="bg-white text-red-700 px-3 py-1 rounded-lg text-[10px] font-black shrink-0 ml-4">
                     OPEN SWITCHBOARD &rarr;
                   </span>
                 </div>
               )}
 
-              {/* EXECUTIVE LGU COMMAND BRIEFING BANNER */}
-              <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-emerald-800/60 flex flex-col lg:flex-row justify-between lg:items-center gap-6 relative overflow-hidden">
-                <div className="relative z-10">
-                  <div className="inline-flex items-center space-x-2 bg-amber-400/15 border border-amber-400/30 text-amber-300 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">
-                    <IoShieldCheckmark className="text-sm" />
-                    <span>Municipality of Calasiao • LGU Dispatch Matrix</span>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                    Welcome back, {adminUser.firstName} {adminUser.lastName}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-emerald-200/80 font-medium mt-1">
-                    Real-time oversight of verified POSO tricycle operators, KYC clearances, and commuter safety dispatches.
-                  </p>
-                </div>
-
-                {/* Live Daily Municipal Telemetry Pills */}
-                <div className="flex flex-wrap sm:flex-nowrap gap-4 relative z-10 shrink-0">
-                  <div 
-                    onClick={() => setActiveTab('analytics')}
-                    className="bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/15 rounded-2xl px-5 py-4 min-w-[165px] cursor-pointer transition-colors"
-                    title="Click to export daily ride reports"
-                  >
-                    <div className="flex items-center justify-between text-emerald-300 text-xs font-bold mb-1">
-                      <span className="uppercase tracking-wider text-[10px]">Trips Today</span>
-                      <IoCheckmarkCircle className="text-base" />
-                    </div>
-                    <p className="text-2xl font-black text-white">{stats.todaysBookings?.length || 0}</p>
-                    <p className="text-[10px] font-bold text-emerald-300/80 mt-0.5">Completed Rides</p>
-                  </div>
-
-                  <div 
-                    onClick={() => setActiveTab('analytics')}
-                    className="bg-amber-400/15 hover:bg-amber-400/20 backdrop-blur-md border border-amber-400/30 rounded-2xl px-5 py-4 min-w-[180px] cursor-pointer transition-colors"
-                    title="Click to export revenue analytics"
-                  >
-                    <div className="flex items-center justify-between text-amber-300 text-xs font-bold mb-1">
-                      <span className="uppercase tracking-wider text-[10px]">Today's Fare Volume</span>
-                      <IoCash className="text-base" />
-                    </div>
-                    <p className="text-2xl font-black text-amber-400">
-                      ₱{Number(stats.todayRevenue || 0).toLocaleString()}
-                    </p>
-                    <p className="text-[10px] font-bold text-amber-200/80 mt-0.5">Regulated LGU Tariff</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 4 INTERACTIVE KPI STAT CARDS (1-CLICK TELEPORTERS) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* 4 COMPACT KPI STAT CARDS (1-CLICK TELEPORTERS) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
                 <div 
                   onClick={() => setActiveTab('reports')}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-red-200 hover:shadow-lg hover:-translate-y-0.5 transition-all relative overflow-hidden cursor-pointer group"
+                  className="bg-white p-4 rounded-2xl shadow-sm border border-red-200 hover:shadow-md hover:-translate-y-0.5 transition-all relative overflow-hidden cursor-pointer group flex items-center justify-between"
                 >
                   <div className="absolute top-0 left-0 w-1.5 h-full bg-red-500"></div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-2xl shadow-sm border border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors">
-                      <IoWarning />
-                    </div>
-                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                      Switchboard &rarr;
+                  <div className="pl-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Unresolved Tickets</p>
+                    <h3 className="text-3xl font-black text-slate-800 leading-none">{stats.activeTickets?.length || 0}</h3>
+                    <span className="text-[9px] font-black text-red-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity block mt-1">
+                      Open Switchboard &rarr;
                     </span>
                   </div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeTickets?.length || 0}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Unresolved Tickets</p>
+                  <div className="w-11 h-11 rounded-xl bg-red-50 text-red-500 flex items-center justify-center text-xl shadow-sm border border-red-100 group-hover:bg-red-500 group-hover:text-white transition-colors shrink-0">
+                    <IoWarning />
+                  </div>
                 </div>
 
                 <div 
                   onClick={() => setActiveTab('fleet')}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
+                  className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group flex items-center justify-between"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-sm border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                      <IoIdCard />
-                    </div>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Verified Drivers</p>
+                    <h3 className="text-3xl font-black text-slate-800 leading-none">{stats.activeDrivers}</h3>
+                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity block mt-1">
                       Fleet Directory &rarr;
                     </span>
                   </div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeDrivers}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Verified Drivers</p>
+                  <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-sm border border-emerald-100 group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+                    <IoIdCard />
+                  </div>
                 </div>
 
                 <div 
                   onClick={() => setActiveTab('fleet')}
-                  className={`bg-white p-6 rounded-2xl shadow-sm border transition-all cursor-pointer group hover:shadow-lg hover:-translate-y-0.5 ${
+                  className={`bg-white p-4 rounded-2xl shadow-sm border transition-all cursor-pointer group hover:shadow-md hover:-translate-y-0.5 flex items-center justify-between ${
                     stats.pendingDrivers > 0 ? 'border-amber-300 ring-2 ring-amber-400/20' : 'border-slate-200/80'
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl shadow-sm border border-orange-100 group-hover:bg-orange-500 group-hover:text-white transition-colors">
-                      <IoDocumentText />
-                    </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Pending Approvals</p>
+                    <h3 className="text-3xl font-black text-slate-800 leading-none">{stats.pendingDrivers}</h3>
                     {stats.pendingDrivers > 0 ? (
-                      <span className="bg-amber-400 text-emerald-950 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full animate-pulse">
-                        Audit Now &rarr;
+                      <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest animate-pulse block mt-1">
+                        Audit Queue Now &rarr;
                       </span>
                     ) : (
-                      <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-[9px] font-black text-orange-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity block mt-1">
                         KYC Queue &rarr;
                       </span>
                     )}
                   </div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.pendingDrivers}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Approvals</p>
+                  <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-xl shadow-sm border border-orange-100 group-hover:bg-orange-500 group-hover:text-white transition-colors shrink-0">
+                    <IoDocumentText />
+                  </div>
                 </div>
 
                 <div 
                   onClick={() => setActiveTab('map')}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group"
+                  className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group flex items-center justify-between"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl shadow-sm border border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                      <IoBicycle />
-                    </div>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Active Rides Now</p>
+                    <h3 className="text-3xl font-black text-slate-800 leading-none">{stats.activeRides}</h3>
+                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity block mt-1">
                       Live Radar &rarr;
                     </span>
                   </div>
-                  <h3 className="text-4xl font-black text-slate-800 mb-1">{stats.activeRides}</h3>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Rides Now</p>
+                  <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shadow-sm border border-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-colors shrink-0">
+                    <IoBicycle />
+                  </div>
                 </div>
               </div>
 
-              {/* 2-COLUMN GRID: PRIORITY ALERTS & SYSTEM AUDIT TRAIL */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* 2-COLUMN GRID: DYNAMIC FLEX-FILL (NO HARDCODED 500PX OVERFLOW) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
                   
                 {/* PRIORITY ALERTS */}
-                <div className="bg-white rounded-2xl shadow-sm border border-red-200/80 overflow-hidden relative flex flex-col h-[500px]">
+                <div className="bg-white rounded-2xl shadow-sm border border-red-200/80 overflow-hidden relative flex flex-col h-full min-h-0">
                   <div className="absolute top-0 left-0 w-2 h-full bg-red-500"></div>
                   <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-red-50/30 shrink-0">
                     <div>
@@ -499,7 +449,7 @@ function AdminDashboard() {
                 </div>
 
                 {/* SYSTEM AUDIT TRAIL */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden relative flex flex-col h-[500px]">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden relative flex flex-col h-full min-h-0">
                   <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
                     <div>
                       <h3 className="text-lg font-black text-slate-800 flex items-center">
