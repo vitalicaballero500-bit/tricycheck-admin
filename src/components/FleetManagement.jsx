@@ -32,6 +32,9 @@ function FleetManagement() {
   // === THE FIX: Upgraded Quick View State to support Tabs ===
   const [quickViewModal, setQuickViewModal] = useState({ isOpen: false, driver: null, activeTab: 'info' });
   
+  // === THE FIX: SPLIT-SCREEN AUDITOR STATE ===
+  const [auditModal, setAuditModal] = useState({ isOpen: false, driver: null, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
+
   // === NEW: PENALTY FORM STATE ===
   const [penaltyForm, setPenaltyForm] = useState({ duration: '24h', reason: '', isSubmitting: false });
   
@@ -84,8 +87,9 @@ function FleetManagement() {
         status: d.driverStatus, homeToda: d.homeToda || 'Unassigned',
         licenseExpiry: d.licenseExpiry ? d.licenseExpiry.split('T')[0] : '', orCrExpiry: d.orCrExpiry ? d.orCrExpiry.split('T')[0] : '', franchisePermitExpiry: d.franchisePermitExpiry ? d.franchisePermitExpiry.split('T')[0] : '',
         licenseNo: d.licenseNo || '', orcrNo: d.orcrNo || '', franchiseNo: d.franchiseNo || '',
-        profilePicUrl: d.profilePic || '',
-        registeredBy: d.registeredBy ? `${d.registeredBy.firstName} ${d.registeredBy.lastName}` : 'System Auto',
+        profilePicUrl: d.profilePic || '', 
+        licensePicUrl: d.licensePic || '', orcrPicUrl: d.orcrPic || '', franchisePicUrl: d.franchisePic || '', // THE FIX: MISSING DOCUMENT URLS
+        registeredBy: d.registeredBy ? `${d.registeredBy.firstName} ${d.registeredBy.lastName}` : 'Self-Onboarded',
         createdAt: d.createdAt || new Date().toISOString(),
         isOnline: d.driverStatus === 'Active' ? Math.random() > 0.4 : false,
         rating: d.rating,
@@ -274,12 +278,10 @@ function FleetManagement() {
       if (isEditing) {
         await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${currentDriverId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
         setModalState({ isOpen: true, title: "Profile Updated", message: "Driver Profile Updated Successfully!", type: "success", isConfirm: false });
+        setIsModalOpen(false); fetchDrivers(); 
       } else {
-        const response = await axios.post('https://tricycheck-api.onrender.com/api/admin/drivers', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        // NOTE: Temp Password is removed from the message because it emails it directly now!
-        setModalState({ isOpen: true, title: "Driver Registered", message: `Added Successfully!\n\nTheir login credentials have been dispatched to their email address.`, type: "success", isConfirm: false });
-      }
-      setIsModalOpen(false); fetchDrivers(); 
+        setModalState({ isOpen: true, title: "Security Alert", message: "Manual creation blocked. Drivers must use the mobile app to self-onboard.", type: "warning", isConfirm: false });
+      } 
     } catch (error) { setModalState({ isOpen: true, title: "Database Error", message: error.response?.data?.error || "Transaction Failed.", type: "warning", isConfirm: false }); }
   };
 
@@ -381,12 +383,9 @@ function FleetManagement() {
           <h2 className="text-2xl font-black text-slate-800 flex items-center">
             <IoShieldCheckmark className="text-emerald-600 mr-2" /> Fleet Directory
           </h2>
-          <p className="text-sm font-medium text-slate-500">Manage registered POSO drivers and operators.</p>
+          <p className="text-sm font-medium text-slate-500">Audit pending applications and manage active LGU drivers.</p>
         </div>
-
-        <button onClick={handleAddClick} className="bg-emerald-900 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center space-x-2 hover:bg-emerald-800 active:scale-95 shadow-md">
-          <IoAdd className="text-lg" /> <span>Register Driver</span>
-        </button>
+        {/* THE FIX: "Register Driver" Button permanently purged. Admin is now an Auditor, not a creator. */}
       </div>
 
       {/* === MODE 1: FLEET DIRECTORY === */}
@@ -475,20 +474,31 @@ function FleetManagement() {
                              {compliance.label}
                           </span>
                         </td>
-                        <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end">
-                          {/* === THE FIX: CONTEXTUAL RED HAMMER / GREEN SHIELD === */}
-                          <button 
-                             onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'disciplinary' })} 
-                             className={`p-2 rounded-lg shadow-sm transition-colors ${driver.status === 'Suspended' ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`} 
-                             title={driver.status === 'Suspended' ? "Lift Suspension" : "Disciplinary Actions"}
-                          >
-                             {driver.status === 'Suspended' ? <IoShieldCheckmark /> : <IoWarning />}
-                          </button>
-                          
-                          {/* === STANDARD ACTIONS === */}
-                          <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'info' })} className="p-2 bg-emerald-50 text-blue-600 rounded-lg hover:bg-blue-100 shadow-sm" title="View Full Info"><IoEye /></button>
-                          <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 shadow-sm" title="Reset Password"><IoKey /></button>
-                          <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 shadow-sm" title="Edit Profile"><IoPencil /></button>
+                        <td className="p-4 pr-6 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end items-center">
+                          {driver.status === 'Pending' ? (
+                             <button 
+                               onClick={() => setAuditModal({ isOpen: true, driver: driver, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' })}
+                               className="px-4 py-2 bg-amber-100 text-amber-800 font-black text-xs uppercase tracking-widest rounded-lg hover:bg-amber-200 transition-all shadow-sm border border-amber-300"
+                             >
+                               Audit Application
+                             </button>
+                          ) : (
+                             <>
+                                {/* === THE FIX: CONTEXTUAL RED HAMMER / GREEN SHIELD === */}
+                                <button 
+                                   onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'disciplinary' })} 
+                                   className={`p-2 rounded-lg shadow-sm transition-colors ${driver.status === 'Suspended' ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`} 
+                                   title={driver.status === 'Suspended' ? "Lift Suspension" : "Disciplinary Actions"}
+                                >
+                                   {driver.status === 'Suspended' ? <IoShieldCheckmark /> : <IoWarning />}
+                                </button>
+                                
+                                {/* === STANDARD ACTIONS === */}
+                                <button onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'info' })} className="p-2 bg-emerald-50 text-blue-600 rounded-lg hover:bg-blue-100 shadow-sm" title="View Full Info"><IoEye /></button>
+                                <button onClick={() => handleResetPasswordClick(driver)} className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 shadow-sm" title="Reset Password"><IoKey /></button>
+                                <button onClick={() => handleEditClick(driver)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 shadow-sm" title="Edit Profile"><IoPencil /></button>
+                             </>
+                          )}
                         </td>
                       </tr>
                     );
@@ -959,6 +969,134 @@ function FleetManagement() {
         </div>,
         document.body
       )}
+      {/* === THE FIX: THE SPLIT-SCREEN AUDITOR MODAL === */}
+      {auditModal.isOpen && auditModal.driver && createPortal(
+        <div className="fixed inset-0 z-[2050] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => !auditModal.isSubmitting && setAuditModal({ isOpen: false, driver: null, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' })}></div>
+          <div className="bg-slate-100 rounded-3xl shadow-2xl w-full max-w-6xl z-10 overflow-hidden animate-slide-up flex flex-col h-[90vh]">
+            
+            {/* Header */}
+            <div className="bg-amber-400 p-6 flex justify-between items-center text-emerald-950 shrink-0">
+               <div>
+                  <h2 className="text-xl font-black flex items-center uppercase tracking-tight"><IoDocumentText className="mr-2"/> POSO KYC Application Audit</h2>
+                  <p className="text-xs font-bold mt-1 tracking-widest uppercase">Cross-Reference Documents with Typed Data</p>
+               </div>
+               <button disabled={auditModal.isSubmitting} onClick={() => setAuditModal({ isOpen: false, driver: null, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' })} className="p-2 bg-emerald-950/10 hover:bg-emerald-950/20 rounded-full transition-colors"><IoClose className="text-2xl" /></button>
+            </div>
+
+            <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+               {/* LEFT COLUMN: Typed Data */}
+               <div className="w-full md:w-1/3 bg-white border-r border-slate-200 overflow-y-auto p-6 space-y-6">
+                  <div className="flex items-center space-x-4 mb-4">
+                     <div className="w-20 h-20 rounded-full border-4 border-slate-100 overflow-hidden shadow-sm shrink-0">
+                        {auditModal.driver.profilePicUrl ? <img src={auditModal.driver.profilePicUrl} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-slate-100 flex items-center justify-center text-2xl">👤</div>}
+                     </div>
+                     <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Applicant Name</p>
+                        <h3 className="text-xl font-black text-slate-800 leading-none mb-1">{auditModal.driver.name}</h3>
+                        <p className="text-sm font-bold text-emerald-600">{auditModal.driver.phone}</p>
+                     </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                     <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email Address</p><p className="font-bold text-slate-700">{auditModal.driver.email || 'N/A'}</p></div>
+                     <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Home Address</p><p className="font-bold text-slate-700">{auditModal.driver.address || 'N/A'}</p></div>
+                     <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Emergency Contact</p><p className="font-bold text-slate-700">{auditModal.driver.emergencyContactName || 'N/A'} ({auditModal.driver.emergencyContactPhone || 'N/A'})</p></div>
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                     <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">License Expiry / No.</p><p className="font-bold text-slate-700">{auditModal.driver.licenseExpiry} | {auditModal.driver.licenseNo}</p></div>
+                     <div className="pt-3 border-t border-slate-200"><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ORCR Expiry / Plate</p><p className="font-bold text-slate-700">{auditModal.driver.orCrExpiry} | {auditModal.driver.plate}</p></div>
+                     <div className="pt-3 border-t border-slate-200"><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Permit Expiry / Body No.</p><p className="font-bold text-slate-700">{auditModal.driver.franchisePermitExpiry} | {auditModal.driver.bodyNo}</p></div>
+                  </div>
+               </div>
+
+               {/* RIGHT COLUMN: Document Viewer */}
+               <div className="w-full md:w-2/3 bg-slate-900 flex flex-col">
+                  {/* Image Tabs */}
+                  <div className="flex bg-slate-800 p-2 shrink-0 space-x-2">
+                     <button onClick={() => setAuditModal({...auditModal, activeImageTab: 'license'})} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-colors ${auditModal.activeImageTab === 'license' ? 'bg-slate-600 text-white shadow-inner' : 'text-slate-400 hover:bg-slate-700'}`}>LTO License</button>
+                     <button onClick={() => setAuditModal({...auditModal, activeImageTab: 'orcr'})} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-colors ${auditModal.activeImageTab === 'orcr' ? 'bg-slate-600 text-white shadow-inner' : 'text-slate-400 hover:bg-slate-700'}`}>LTO OR/CR</button>
+                     <button onClick={() => setAuditModal({...auditModal, activeImageTab: 'franchise'})} className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-colors ${auditModal.activeImageTab === 'franchise' ? 'bg-slate-600 text-white shadow-inner' : 'text-slate-400 hover:bg-slate-700'}`}>Franchise Permit</button>
+                  </div>
+                  
+                  {/* Image Canvas */}
+                  <div className="flex-1 relative overflow-auto p-4 flex items-center justify-center">
+                     {auditModal.activeImageTab === 'license' && (auditModal.driver.licensePicUrl ? <img src={auditModal.driver.licensePicUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" /> : <div className="text-slate-500 font-bold">No Image Provided</div>)}
+                     {auditModal.activeImageTab === 'orcr' && (auditModal.driver.orcrPicUrl ? (auditModal.driver.orcrPicUrl.endsWith('.pdf') ? <iframe src={auditModal.driver.orcrPicUrl} className="w-full h-full rounded-xl bg-white" /> : <img src={auditModal.driver.orcrPicUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" />) : <div className="text-slate-500 font-bold">No Image Provided</div>)}
+                     {auditModal.activeImageTab === 'franchise' && (auditModal.driver.franchisePicUrl ? <img src={auditModal.driver.franchisePicUrl} className="max-w-full max-h-full object-contain shadow-2xl rounded-xl" /> : <div className="text-slate-500 font-bold">No Image Provided</div>)}
+                  </div>
+               </div>
+            </div>
+
+            {/* ACTION FOOTER */}
+            <div className="bg-white p-6 flex flex-col md:flex-row justify-between items-center shrink-0 border-t border-slate-200">
+               {auditModal.isRejecting ? (
+                  <div className="w-full flex space-x-3 items-center animate-slide-in">
+                     <input 
+                        type="text" 
+                        placeholder="State exactly why this was rejected (e.g. Blurry License Photo)..." 
+                        className="flex-1 p-4 bg-red-50 border border-red-200 rounded-xl outline-none focus:border-red-500 text-red-900 font-bold text-sm shadow-inner"
+                        value={auditModal.rejectReason}
+                        onChange={(e) => setAuditModal({...auditModal, rejectReason: e.target.value})}
+                        disabled={auditModal.isSubmitting}
+                        autoFocus
+                     />
+                     <button onClick={() => setAuditModal({...auditModal, isRejecting: false, rejectReason: ''})} disabled={auditModal.isSubmitting} className="px-6 py-4 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors">Cancel</button>
+                     <button 
+                        onClick={async () => {
+                           if (!auditModal.rejectReason.trim()) return alert("Rejection reason is required.");
+                           setAuditModal(prev => ({...prev, isSubmitting: true}));
+                           try {
+                               await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/reject`, {
+                                   adminId: adminUser._id || adminUser.id, reason: auditModal.rejectReason
+                               }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+                               setAuditModal({ isOpen: false, driver: null, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
+                               setModalState({ isOpen: true, title: "Application Rejected", message: "Driver has been notified to fix their documents.", type: "success" });
+                               fetchDrivers();
+                           } catch (err) { setModalState({ isOpen: true, title: "Action Failed", message: "Could not reject application.", type: "warning" }); setAuditModal(prev => ({...prev, isSubmitting: false})); }
+                        }}
+                        disabled={auditModal.isSubmitting || !auditModal.rejectReason.trim()}
+                        className="px-8 py-4 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all flex items-center"
+                     >
+                        {auditModal.isSubmitting ? "Returning..." : "Confirm Rejection"}
+                     </button>
+                  </div>
+               ) : (
+                  <div className="w-full flex justify-end space-x-4">
+                     <button 
+                        onClick={() => setAuditModal({...auditModal, isRejecting: true})}
+                        disabled={auditModal.isSubmitting}
+                        className="px-8 py-4 bg-red-50 text-red-600 border border-red-200 font-black rounded-xl hover:bg-red-100 transition-colors shadow-sm"
+                     >
+                        Reject Application
+                     </button>
+                     <button 
+                        onClick={async () => {
+                           setAuditModal(prev => ({...prev, isSubmitting: true}));
+                           try {
+                               await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/approve`, {
+                                   adminId: adminUser._id || adminUser.id
+                               }, { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } });
+                               setAuditModal({ isOpen: false, driver: null, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
+                               setModalState({ isOpen: true, title: "Driver Approved", message: "Application approved. Secure credentials have been dispatched to the driver's email.", type: "success" });
+                               fetchDrivers();
+                           } catch (err) { setModalState({ isOpen: true, title: "Action Failed", message: "Could not approve application.", type: "warning" }); setAuditModal(prev => ({...prev, isSubmitting: false})); }
+                        }}
+                        disabled={auditModal.isSubmitting}
+                        className="px-8 py-4 bg-emerald-600 text-white font-black rounded-xl shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center"
+                     >
+                        {auditModal.isSubmitting ? "Approving..." : "Approve & Dispatch Credentials"}
+                     </button>
+                  </div>
+               )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* === THE FIX: Inject the Status Modal === */}
       <CustomModal 
         isOpen={modalState.isOpen}
         title={modalState.title}
