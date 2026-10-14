@@ -334,8 +334,118 @@ function SupportTickets() {
                         </div>
                      )}
 
-                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Incident Report</h3>
-                     <p className="text-sm font-medium text-slate-600 leading-relaxed bg-white p-4 rounded-xl border border-slate-100">{selectedTicket.description}</p>
+                     {/* TRIP TELEMETRY RECEIPT CARD (IF FILED FROM TRIP HISTORY) */}
+                     {selectedTicket.bookingId && (
+                       <div className="mb-6 p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                             Official Trip Telemetry
+                          </span>
+                          <div className="grid grid-cols-2 gap-3 mt-2 text-xs">
+                             <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">Pickup Point</p>
+                                <p className="font-bold text-slate-800 truncate">{selectedTicket.bookingId.pickupLocation}</p>
+                             </div>
+                             <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">Dropoff Point</p>
+                                <p className="font-bold text-emerald-700 truncate">{selectedTicket.bookingId.dropoffLocation}</p>
+                             </div>
+                          </div>
+                          <div className="flex justify-between items-center mt-3 pt-2 border-t border-emerald-200/60">
+                             <span className="text-[11px] font-bold text-slate-500">Trip Fare Paid:</span>
+                             <span className="text-sm font-black text-slate-900">₱{selectedTicket.bookingId.fare}.00</span>
+                          </div>
+                       </div>
+                     )}
+
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Incident Description</h3>
+                     <p className="text-sm font-medium text-slate-700 leading-relaxed bg-white p-4 rounded-xl border border-slate-200 mb-6">{selectedTicket.description}</p>
+
+                     {/* DRIVER'S DUE-PROCESS COUNTER-STATEMENT */}
+                     {selectedTicket.driverExplanation ? (
+                       <div className="mb-6 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl shadow-sm">
+                          <div className="flex justify-between items-center mb-1">
+                             <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-200/60 px-2 py-0.5 rounded">
+                                Driver's Official Counter-Statement
+                             </span>
+                             <span className="text-[10px] font-bold text-slate-400">
+                                {new Date(selectedTicket.driverExplanationSubmittedAt || selectedTicket.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                             </span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-800 italic mt-2">
+                             "{selectedTicket.driverExplanation}"
+                          </p>
+                       </div>
+                     ) : selectedTicket.driverId ? (
+                       <div className="mb-6 p-3 bg-slate-100 border border-dashed border-slate-300 rounded-xl text-center">
+                          <p className="text-xs font-bold text-slate-500">Awaiting driver counter-statement in driver app inbox...</p>
+                       </div>
+                     ) : null}
+
+                     {/* MEDIATED INVESTIGATION MESSENGER THREAD */}
+                     <div className="bg-slate-900 text-white p-5 rounded-2xl mb-6 shadow-md">
+                        <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+                           <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400">
+                              POSO Mediated Investigation Channel
+                           </h4>
+                           <span className="text-[9px] font-bold text-slate-400">Strictly Moderated by LGU</span>
+                        </div>
+
+                        <div className="max-h-52 overflow-y-auto space-y-2 mb-3 pr-1 text-xs">
+                           {(!selectedTicket.messages || selectedTicket.messages.length === 0) ? (
+                              <p className="text-slate-500 italic text-center py-4">No dialogue logged yet. Use the field below to issue an inquiry or directive.</p>
+                           ) : (
+                              selectedTicket.messages.map((m, idx) => (
+                                 <div key={idx} className={`p-2.5 rounded-xl ${m.senderRole === 'passenger' ? 'bg-blue-950 border border-blue-800 text-blue-100' : m.senderRole === 'driver' ? 'bg-amber-950 border border-amber-800 text-amber-100' : 'bg-emerald-950 border border-emerald-800 text-emerald-100'}`}>
+                                    <div className="flex justify-between text-[10px] font-black opacity-80 mb-0.5">
+                                       <span>{m.senderName} ({m.senderRole.toUpperCase()}) ➔ {m.targetChannel.toUpperCase()}</span>
+                                       <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                    <p className="font-medium text-xs leading-relaxed">{m.message}</p>
+                                 </div>
+                              ))
+                           )}
+                        </div>
+
+                        {/* DISPATCHER REPLY INPUT */}
+                        <form 
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            const input = e.target.elements.adminReply;
+                            const channel = e.target.elements.channelSelect.value;
+                            if (!input.value.trim()) return;
+
+                            try {
+                              const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+                              await axios.post(`https://tricycheck-api.onrender.com/api/tickets/${selectedTicket._id}/reply`, {
+                                senderId: adminUser._id || adminUser.id,
+                                senderRole: adminUser.role || 'dispatcher',
+                                senderName: `${adminUser.firstName} ${adminUser.lastName}`,
+                                targetChannel: channel,
+                                message: input.value.trim()
+                              }, { headers: { Authorization: `Bearer ${token}` } });
+                              input.value = '';
+                              fetchTickets();
+                            } catch (err) {
+                              alert("Failed to send message to ticket thread.");
+                            }
+                          }}
+                          className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800"
+                        >
+                           <select name="channelSelect" className="bg-slate-800 border border-slate-700 text-xs font-black text-amber-300 rounded-xl px-2.5 py-2 outline-none">
+                              <option value="driver">➔ To Driver</option>
+                              <option value="passenger">➔ To Passenger</option>
+                           </select>
+                           <input 
+                              name="adminReply"
+                              type="text" 
+                              placeholder="Type official directive or inquiry..." 
+                              className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                           />
+                           <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-4 py-2 rounded-xl active:scale-95 transition-all">
+                              Send
+                           </button>
+                        </form>
+                     </div>
                   </div>
 
                   {/* ACTION CONTROLS: WIRED TO PATROL UNIT DISPATCH MODAL */}
