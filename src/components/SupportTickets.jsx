@@ -23,6 +23,8 @@ function SupportTickets() {
   
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [dispatchPrompt, setDispatchPrompt] = useState({ isOpen: false, ticketId: null, unitName: '' });
+  const [manualBodyNo, setManualBodyNo] = useState('');
+  const [linkingDriver, setLinkingDriver] = useState(false);
 
   const [modalState, setModalState] = useState({ isOpen: false, title: "", message: "", type: "success", isConfirm: false });
   const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false }));
@@ -35,15 +37,13 @@ function SupportTickets() {
       const response = await axios.get('https://tricycheck-api.onrender.com/api/tickets', {
           headers: { Authorization: `Bearer ${token}` } 
       });
-      // Sort newest first
       const sorted = response.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setTickets(sorted);
       
-      // Auto-update selected ticket if it's currently open
-      if (selectedTicket) {
-          const updatedSelected = sorted.find(t => t._id === selectedTicket._id);
-          if (updatedSelected) setSelectedTicket(updatedSelected);
-      }
+      setSelectedTicket(prev => {
+        if (!prev) return null;
+        return sorted.find(t => t._id === prev._id) || prev;
+      });
     } catch (error) {
       console.error("Failed to fetch tickets", error);
     } finally {
@@ -51,7 +51,11 @@ function SupportTickets() {
     }
   };
 
-  useEffect(() => { fetchTickets(); }, []);
+  useEffect(() => { 
+    fetchTickets(); 
+    const interval = setInterval(fetchTickets, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const executeStatusUpdate = async (id, newStatus, dispatchUnit = '') => {
     try {
@@ -315,26 +319,65 @@ function SupportTickets() {
                            </button>
                         </div>
                      ) : (
-                        <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl flex justify-between items-center shadow-sm">
-                           <div>
-                              <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">Passenger Profile</h3>
-                              <p className="text-sm font-bold text-slate-700 leading-tight">Jump directly to passenger oversight records.</p>
+                        <div className="mb-6 p-5 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-4 shadow-sm">
+                           <div className="flex justify-between items-center">
+                              <div>
+                                 <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">No Driver Linked Yet</h3>
+                                 <p className="text-xs font-bold text-slate-600 leading-tight">Link a Tricycle Body No. below to notify the driver, or inspect the passenger.</p>
+                              </div>
+                              {selectedTicket.passengerId && (
+                                <button 
+                                   onClick={() => {
+                                       const query = selectedTicket.passengerId?.phone || selectedTicket.passengerId?.firstName || '';
+                                       localStorage.setItem('teleportPassengerQuery', query);
+                                       window.dispatchEvent(new CustomEvent('passengerTeleport'));
+                                       window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'passengers' }));
+                                   }}
+                                   className="px-4 py-2.5 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider rounded-xl shadow hover:bg-blue-700 active:scale-95 transition-all flex items-center shrink-0"
+                                >
+                                   <IoPerson className="mr-1.5 text-sm"/> Inspect Passenger
+                                </button>
+                              )}
                            </div>
-                           <button 
-                              onClick={() => {
-                                  const query = selectedTicket.passengerId?.phone || selectedTicket.passengerId?.firstName || '';
-                                  localStorage.setItem('teleportPassengerQuery', query);
-                                  window.dispatchEvent(new CustomEvent('passengerTeleport'));
-                                  window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'passengers' }));
-                              }}
-                              className="px-5 py-3 bg-blue-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center shrink-0"
-                           >
-                              <IoPerson className="mr-1.5 sm:mr-2 text-lg"/> Investigate Passenger
-                           </button>
+
+                           {/* 1-CLICK BODY NO. DRIVER LINKER */}
+                           <div className="flex space-x-2 pt-2 border-t border-blue-100">
+                              <input 
+                                type="text"
+                                placeholder="Enter Body No. (e.g. 0143) to link & notify driver..."
+                                value={manualBodyNo}
+                                onChange={(e) => setManualBodyNo(e.target.value.toUpperCase())}
+                                className="flex-1 px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-blue-500"
+                              />
+                              <button
+                                type="button"
+                                disabled={linkingDriver || !manualBodyNo.trim()}
+                                onClick={async () => {
+                                  setLinkingDriver(true);
+                                  try {
+                                    const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+                                    const res = await axios.put(`https://tricycheck-api.onrender.com/api/tickets/${selectedTicket._id}/link-driver`, {
+                                      bodyNo: manualBodyNo.trim()
+                                    }, { headers: { Authorization: `Bearer ${token}` } });
+                                    setManualBodyNo('');
+                                    setSelectedTicket(res.data.ticket);
+                                    fetchTickets();
+                                    setModalState({ isOpen: true, title: "Driver Linked & Notified", message: res.data.message, type: "success" });
+                                  } catch (err) {
+                                    setModalState({ isOpen: true, title: "Link Failed", message: err.response?.data?.error || "Could not link driver.", type: "warning" });
+                                  } finally {
+                                    setLinkingDriver(false);
+                                  }
+                                }}
+                                className="px-4 py-2 bg-slate-900 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-slate-800 disabled:opacity-50"
+                              >
+                                {linkingDriver ? "Linking..." : "Link Driver"}
+                              </button>
+                           </div>
                         </div>
                      )}
 
-                     {/* TRIP TELEMETRY RECEIPT CARD (IF FILED FROM TRIP HISTORY) */}
+                     {/* TRIP TELEMETRY RECEIPT CARD (IF FILED FROM TRIP HISTORY OR AUTO-LINKED) */}
                      {selectedTicket.bookingId && (
                        <div className="mb-6 p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl">
                           <span className="text-[9px] font-black uppercase tracking-widest text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">
@@ -390,7 +433,7 @@ function SupportTickets() {
                            <span className="text-[9px] font-bold text-slate-400">Strictly Moderated by LGU</span>
                         </div>
 
-                        <div className="max-h-52 overflow-y-auto space-y-2 mb-3 pr-1 text-xs">
+                        <div className="max-h-56 overflow-y-auto space-y-2 mb-3 pr-1 text-xs">
                            {(!selectedTicket.messages || selectedTicket.messages.length === 0) ? (
                               <p className="text-slate-500 italic text-center py-4">No dialogue logged yet. Use the field below to issue an inquiry or directive.</p>
                            ) : (
@@ -407,44 +450,75 @@ function SupportTickets() {
                         </div>
 
                         {/* DISPATCHER REPLY INPUT */}
-                        <form 
-                          onSubmit={async (e) => {
-                            e.preventDefault();
-                            const input = e.target.elements.adminReply;
-                            const channel = e.target.elements.channelSelect.value;
-                            if (!input.value.trim()) return;
+                        {selectedTicket.status === 'Resolved' || selectedTicket.status === 'Dismissed' ? (
+                          <div className="p-2.5 bg-slate-800 rounded-xl text-center text-xs font-bold text-slate-400">
+                            🔒 This ticket is {selectedTicket.status}. Messaging is locked.
+                          </div>
+                        ) : (
+                          <form 
+                            key={selectedTicket._id}
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              const input = e.target.elements.adminReply;
+                              const channel = e.target.elements.channelSelect.value;
+                              if (!input.value.trim()) return;
 
-                            try {
-                              const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-                              await axios.post(`https://tricycheck-api.onrender.com/api/tickets/${selectedTicket._id}/reply`, {
-                                senderId: adminUser._id || adminUser.id,
-                                senderRole: adminUser.role || 'dispatcher',
-                                senderName: `${adminUser.firstName} ${adminUser.lastName}`,
-                                targetChannel: channel,
-                                message: input.value.trim()
-                              }, { headers: { Authorization: `Bearer ${token}` } });
-                              input.value = '';
-                              fetchTickets();
-                            } catch (err) {
-                              alert("Failed to send message to ticket thread.");
-                            }
-                          }}
-                          className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800"
-                        >
-                           <select name="channelSelect" className="bg-slate-800 border border-slate-700 text-xs font-black text-amber-300 rounded-xl px-2.5 py-2 outline-none">
-                              <option value="driver">➔ To Driver</option>
-                              <option value="passenger">➔ To Passenger</option>
-                           </select>
-                           <input 
-                              name="adminReply"
-                              type="text" 
-                              placeholder="Type official directive or inquiry..." 
-                              className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
-                           />
-                           <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-4 py-2 rounded-xl active:scale-95 transition-all">
-                              Send
-                           </button>
-                        </form>
+                              if (channel === 'driver' && !selectedTicket.driverId) {
+                                return setModalState({ 
+                                  isOpen: true, 
+                                  title: "No Driver Linked", 
+                                  message: "There is no driver attached to this ticket yet. Please enter a Body No. in the blue box above to link a driver first.", 
+                                  type: "warning" 
+                                });
+                              }
+
+                              try {
+                                const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+                                await axios.post(`https://tricycheck-api.onrender.com/api/tickets/${selectedTicket._id}/reply`, {
+                                  senderId: adminUser._id || adminUser.id,
+                                  senderRole: adminUser.role || 'dispatcher',
+                                  senderName: `${adminUser.firstName || 'POSO'} ${adminUser.lastName || 'Officer'}`,
+                                  targetChannel: channel,
+                                  message: input.value.trim()
+                                }, { headers: { Authorization: `Bearer ${token}` } });
+                                input.value = '';
+                                fetchTickets();
+                              } catch (err) {
+                                setModalState({ 
+                                  isOpen: true, 
+                                  title: "Dispatch Failed", 
+                                  message: err.response?.data?.error || "Failed to send message to ticket thread.", 
+                                  type: "warning" 
+                                });
+                              }
+                            }}
+                            className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800"
+                          >
+                             <select 
+                                name="channelSelect" 
+                                defaultValue={selectedTicket.driverId ? "driver" : "passenger"}
+                                className="bg-slate-800 border border-slate-700 text-xs font-black text-amber-300 rounded-xl px-2.5 py-2 outline-none cursor-pointer"
+                             >
+                                {selectedTicket.driverId ? (
+                                  <option value="driver">➔ To Driver (Body #{selectedTicket.driverId.bodyNo || 'N/A'})</option>
+                                ) : (
+                                  <option value="driver" disabled>➔ To Driver (None Linked)</option>
+                                )}
+                                {selectedTicket.passengerId && (
+                                  <option value="passenger">➔ To Passenger ({selectedTicket.passengerId.firstName})</option>
+                                )}
+                             </select>
+                             <input 
+                                name="adminReply"
+                                type="text" 
+                                placeholder="Type official directive or inquiry..." 
+                                className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                             />
+                             <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-4 py-2 rounded-xl active:scale-95 transition-all">
+                                Send
+                             </button>
+                          </form>
+                        )}
                      </div>
                   </div>
 
