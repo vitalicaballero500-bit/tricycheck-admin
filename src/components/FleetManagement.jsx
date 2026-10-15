@@ -104,6 +104,8 @@ function FleetManagement() {
         franchisePermitExpiry: d.franchisePermitExpiry ? d.franchisePermitExpiry.split('T')[0] : '',
         profilePicUrl: d.profilePic || '', 
         licensePicUrl: d.licensePic || '', 
+        orPicUrl: d.orPic || d.orcrPic || '', 
+        crPicUrl: d.crPic || d.orcrPic || '', 
         orcrPicUrl: d.orcrPic || '', 
         franchisePicUrl: d.franchisePic || '',
         registeredBy: d.registeredBy ? `${d.registeredBy.firstName} ${d.registeredBy.lastName}` : 'Self-Onboarded',
@@ -318,11 +320,12 @@ function FleetManagement() {
       return new Date(b.createdAt) - new Date(a.createdAt); 
     });
 
-  // === CURRENT DOCUMENT URL HELPER FOR ZOOM INSPECTOR ===
+  // === CURRENT DOCUMENT URL HELPER FOR ZOOM INSPECTOR (WITH SEPARATE OR & CR) ===
   const getCurrentDocUrl = () => {
     if (!auditModal.driver) return '';
     if (auditModal.activeImageTab === 'license') return auditModal.driver.licensePicUrl;
-    if (auditModal.activeImageTab === 'orcr') return auditModal.driver.orcrPicUrl;
+    if (auditModal.activeImageTab === 'or') return auditModal.driver.orPicUrl;
+    if (auditModal.activeImageTab === 'cr') return auditModal.driver.crPicUrl;
     if (auditModal.activeImageTab === 'franchise') return auditModal.driver.franchisePicUrl;
     if (auditModal.activeImageTab === 'selfie') return auditModal.driver.profilePicUrl;
     return '';
@@ -641,14 +644,30 @@ function FleetManagement() {
                       </div>
 
                       <div 
-                        onClick={() => handleTabSwitch('orcr')}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${auditModal.activeImageTab === 'orcr' ? 'bg-emerald-50/70 border-emerald-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                        onClick={() => handleTabSwitch('or')}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${auditModal.activeImageTab === 'or' || auditModal.activeImageTab === 'cr' ? 'bg-emerald-50/70 border-emerald-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
                       >
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">2. LTO Tricycle OR/CR</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">2. LTO Official Receipt (OR) & CR</span>
                           <span className="text-[10px] font-bold text-slate-400">Exp: {auditModal.driver.orCrExpiry || 'N/A'}</span>
                         </div>
-                        <p className="font-mono font-black text-base text-slate-900">{auditModal.driver.plate || 'N/A'}</p>
+                        <p className="font-mono font-black text-base text-slate-900 mb-2">{auditModal.driver.plate || 'N/A'}</p>
+                        <div className="flex space-x-2">
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleTabSwitch('or'); }}
+                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${auditModal.activeImageTab === 'or' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+                          >
+                            View OR
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleTabSwitch('cr'); }}
+                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${auditModal.activeImageTab === 'cr' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+                          >
+                            View CR
+                          </button>
+                        </div>
                       </div>
 
                       <div 
@@ -760,12 +779,13 @@ function FleetManagement() {
               <div className="w-full md:w-[62%] bg-slate-900 flex flex-col min-h-0">
                 
                 {/* Document Selector Tabs */}
-                <div className="flex bg-slate-800 p-2 shrink-0 space-x-2 border-b border-slate-700">
+                <div className="flex bg-slate-800 p-2 shrink-0 space-x-1.5 border-b border-slate-700">
                   {[
-                    { id: 'license', label: "1. Driver's License" },
-                    { id: 'orcr', label: "2. LTO OR/CR" },
-                    { id: 'franchise', label: "3. Franchise Permit" },
-                    { id: 'selfie', label: "4. Live Selfie" }
+                    { id: 'license', label: "1. License" },
+                    { id: 'or', label: "2A. LTO OR" },
+                    { id: 'cr', label: "2B. LTO CR" },
+                    { id: 'franchise', label: "3. Permit" },
+                    { id: 'selfie', label: "4. Selfie" }
                   ].map(tab => (
                     <button 
                       key={tab.id}

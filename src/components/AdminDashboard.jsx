@@ -19,7 +19,18 @@ import ReportsHub from './ReportsHub';
 function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [adminUser, setAdminUser] = useState(() => JSON.parse(localStorage.getItem('adminUser')) || {});
+  const [adminUser, setAdminUser] = useState(() => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const parsed = JSON.parse(localStorage.getItem('adminUser'));
+      if (!token || !parsed || !['superadmin', 'secretary', 'dispatcher'].includes(parsed.role)) {
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  });
   
   const [stats, setStats] = useState({ 
     activeDrivers: 0, 
@@ -88,15 +99,34 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-    const userString = localStorage.getItem('adminUser'); 
-    if (userString) setAdminUser(JSON.parse(userString));
-    else setAdminUser({ firstName: 'Super', lastName: 'Admin', role: 'superadmin' });
+    const token = localStorage.getItem('adminToken');
+    const userString = localStorage.getItem('adminUser');
+
+    if (!token || !userString) {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      navigate('/', { replace: true });
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(userString);
+      if (!parsed || !['superadmin', 'secretary', 'dispatcher'].includes(parsed.role)) {
+        throw new Error('Invalid clearance role');
+      }
+      setAdminUser(parsed);
+    } catch {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      navigate('/', { replace: true });
+      return;
+    }
 
     // === AUTO-TELEPORTER LISTENER ===
     const handleForcedTab = (e) => setActiveTab(e.detail); 
     window.addEventListener('forceDashboardTabChange', handleForcedTab);
     return () => window.removeEventListener('forceDashboardTabChange', handleForcedTab);
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (activeTab === 'dashboard' && adminUser) {
