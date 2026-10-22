@@ -182,6 +182,35 @@ function FleetManagement() {
       return setModalState({ isOpen: true, title: "Validation Error", message: "A valid official email address is required.", type: "warning", isConfirm: false });
     }
 
+    // === INSTANT CLIENT-SIDE DUPLICATE CREDENTIAL GUARD ===
+    const currentId = auditModal.driver?.id;
+    const otherDrivers = drivers.filter(d => d.id !== currentId);
+
+    const dupPhone = otherDrivers.find(d => d.phone === editForm.phone.trim());
+    if (dupPhone) {
+      return setModalState({ isOpen: true, title: "Duplicate Mobile Number", message: `Mobile number ${editForm.phone.trim()} is already registered to ${dupPhone.name} (Body #${dupPhone.bodyNo || 'N/A'}).`, type: "warning", isConfirm: false });
+    }
+
+    const dupEmail = otherDrivers.find(d => d.email && d.email.toLowerCase() === editForm.email.trim().toLowerCase());
+    if (dupEmail) {
+      return setModalState({ isOpen: true, title: "Duplicate Email Address", message: `Email ${editForm.email.trim()} is already registered to ${dupEmail.name}.`, type: "warning", isConfirm: false });
+    }
+
+    const dupBody = otherDrivers.find(d => d.bodyNo && d.bodyNo.toUpperCase() === editForm.bodyNo.trim().toUpperCase());
+    if (dupBody) {
+      return setModalState({ isOpen: true, title: "Duplicate Body Number", message: `Franchise Body No. "${editForm.bodyNo.trim()}" is already assigned to ${dupBody.name}.`, type: "warning", isConfirm: false });
+    }
+
+    const dupPlate = otherDrivers.find(d => d.plate && d.plate.toUpperCase() === editForm.plateNo.trim().toUpperCase());
+    if (dupPlate) {
+      return setModalState({ isOpen: true, title: "Duplicate Plate Number", message: `Plate / MV No. "${editForm.plateNo.trim()}" is already registered to ${dupPlate.name} (Body #${dupPlate.bodyNo || 'N/A'}).`, type: "warning", isConfirm: false });
+    }
+
+    const dupLic = otherDrivers.find(d => d.licenseNo && d.licenseNo.toUpperCase() === editForm.licenseNo.trim().toUpperCase());
+    if (dupLic) {
+      return setModalState({ isOpen: true, title: "Duplicate License Number", message: `LTO License No. "${editForm.licenseNo.trim()}" is already registered to ${dupLic.name}.`, type: "warning", isConfirm: false });
+    }
+
     setAuditModal(prev => ({ ...prev, isSubmitting: true }));
     try {
       const formData = new FormData();
@@ -743,11 +772,11 @@ function FleetManagement() {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Plate / MV No. *</label>
-                          <input required type="text" value={editForm.plateNo} onChange={e => handleEditFieldChange('plateNo', e.target.value)} onFocus={() => handleTabSwitch('orcr')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
+                          <input required type="text" value={editForm.plateNo} onChange={e => handleEditFieldChange('plateNo', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">OR/CR Expiry *</label>
-                          <input required type="date" value={editForm.orCrExpiry} onChange={e => handleEditFieldChange('orCrExpiry', e.target.value)} onFocus={() => handleTabSwitch('orcr')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
+                          <input required type="date" value={editForm.orCrExpiry} onChange={e => handleEditFieldChange('orCrExpiry', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
                         </div>
                       </div>
 
@@ -959,7 +988,7 @@ function FleetManagement() {
                               setModalState({ isOpen: true, title: "Driver Approved", message: "Application approved! Temporary login credentials have been emailed to the driver.", type: "success" });
                               fetchDrivers();
                             } catch (err) { 
-                              setModalState({ isOpen: true, title: "Action Failed", message: "Could not approve application.", type: "warning" }); 
+                              setModalState({ isOpen: true, title: "Approval Blocked", message: err.response?.data?.error || "Could not approve application.", type: "warning" }); 
                               setAuditModal(prev => ({...prev, isSubmitting: false})); 
                             }
                           }}
