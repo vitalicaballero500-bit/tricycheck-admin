@@ -258,27 +258,53 @@ function LiveOperationsMap() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-5 flex-1 flex flex-col">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center"><IoFlash className="mr-1 text-yellow-500" /> Database Event Log</h3>
-            <div className="flex-1 space-y-4 overflow-y-auto pr-2">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 mb-4 flex items-center">
+              <IoFlash className="mr-1.5 text-amber-500 text-sm" /> Live Incident & Dispatch Feed
+            </h3>
+            <div className="flex-1 space-y-3 overflow-y-auto pr-1">
                
-               {/* Maps Active Tickets as Events */}
-               {stats.activeTickets?.map(ticket => (
-                  <div key={ticket._id} className="flex space-x-3 items-start">
-                     <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${ticket.priority === 'CRITICAL' ? 'bg-red-500 animate-pulse' : 'bg-orange-400'}`}></div>
-                     <div>
-                        <p className={`text-sm font-black leading-tight ${ticket.priority === 'CRITICAL' ? 'text-red-600' : 'text-slate-800'}`}>
-                           {ticket.priority === 'CRITICAL' ? 'SOS ACTIVATED' : 'Complaint Filed'}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">Affected User: {ticket.passengerId?.firstName || 'Unknown'}</p>
-                     </div>
-                  </div>
-               ))}
+               {/* Maps Active SOS & Support Tickets as Clickable Operational Alerts */}
+               {stats.activeTickets?.map(ticket => {
+                  const reporterName = ticket.passengerId?.firstName 
+                    ? `${ticket.passengerId.firstName} ${ticket.passengerId.lastName || ''}` 
+                    : ticket.driverId?.firstName 
+                    ? `Driver ${ticket.driverId.firstName} (Body #${ticket.driverId.bodyNo || 'N/A'})` 
+                    : 'Commuter / Driver';
+
+                  return (
+                    <div 
+                      key={ticket._id} 
+                      onClick={() => window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'tickets' }))}
+                      className={`p-3 rounded-xl border cursor-pointer transition-all flex space-x-3 items-start ${
+                        ticket.priority === 'CRITICAL' 
+                          ? 'bg-red-50 border-red-200 hover:bg-red-100/70' 
+                          : 'bg-slate-50 border-slate-200/80 hover:bg-emerald-50/60 hover:border-emerald-200'
+                      }`}
+                      title="Click to open in Support & Mediation Desk"
+                    >
+                       <div className={`w-2.5 h-2.5 mt-1 rounded-full shrink-0 ${ticket.priority === 'CRITICAL' ? 'bg-red-600 animate-ping' : 'bg-amber-500'}`}></div>
+                       <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center">
+                            <p className={`text-xs font-black uppercase tracking-wider truncate ${ticket.priority === 'CRITICAL' ? 'text-red-700' : 'text-slate-800'}`}>
+                               {ticket.priority === 'CRITICAL' ? '🚨 SOS Emergency Pulse' : ticket.type}
+                            </p>
+                            <span className="text-[9px] font-black text-emerald-700 uppercase ml-2 shrink-0">Open &rarr;</span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 font-bold mt-0.5 truncate">
+                            Reported by: {reporterName}
+                          </p>
+                       </div>
+                    </div>
+                  );
+               })}
                
-               <div className="flex space-x-3 items-start">
-                  <div className="w-2 h-2 mt-1.5 rounded-full bg-emerald-500 shrink-0"></div>
+               <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100 flex space-x-3 items-start">
+                  <div className="w-2.5 h-2.5 mt-1 rounded-full bg-emerald-500 shrink-0"></div>
                   <div>
-                     <p className="text-sm font-bold text-slate-800 leading-tight">Map engine synchronized.</p>
-                     <p className="text-[10px] text-slate-400 font-bold mt-0.5">Tracking {activeDrivers.length} active drivers.</p>
+                     <p className="text-xs font-black text-emerald-950 leading-tight">POSO Radar Synchronized</p>
+                     <p className="text-[11px] text-emerald-700 font-bold mt-0.5">
+                       {stats.activeDrivers} driver(s) online in fleet • {activeDrivers.length} streaming live GPS.
+                     </p>
                   </div>
                </div>
             </div>

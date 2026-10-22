@@ -84,7 +84,7 @@ function SystemSettings() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-black text-slate-800 flex items-center">
-            <IoSettings className="text-emerald-600 mr-2" /> System Configuration
+            <IoSettings className="text-emerald-600 mr-2" /> System Ordinance
           </h2>
           <p className="text-sm font-medium text-slate-500">Manage dynamic global variables like the LGU Fare Matrix.</p>
         </div>

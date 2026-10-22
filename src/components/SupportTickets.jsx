@@ -3,7 +3,7 @@ import axios from 'axios';
 import { 
   IoWarning, IoCheckmarkCircle, IoTime, IoClose, 
   IoPerson, IoMegaphone, IoArrowForward, IoChatbubbles, 
-  IoCall, IoMail, IoCarSport, IoSend
+  IoCall, IoMail, IoCarSport, IoSend, IoCamera
 } from 'react-icons/io5';
 import CustomModal from './CustomModal'; 
 
@@ -19,6 +19,9 @@ function SupportTickets() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [manualBodyNo, setManualBodyNo] = useState('');
   const [linkingDriver, setLinkingDriver] = useState(false);
+  const [replyImage, setReplyImage] = useState(null);
+  const [replyImagePreview, setReplyImagePreview] = useState(null);
+  const [sendingReply, setSendingReply] = useState(false);
 
   const [modalState, setModalState] = useState({ isOpen: false, title: "", message: "", type: "success", isConfirm: false });
   const closeModal = () => setModalState(prev => ({ ...prev, isOpen: false }));
@@ -479,83 +482,138 @@ function SupportTickets() {
                           <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <p className="font-medium text-xs leading-relaxed">{m.message}</p>
+                        {m.attachmentUrl && (
+                          <a href={m.attachmentUrl} target="_blank" rel="noreferrer" className="block mt-2">
+                            <img 
+                              src={m.attachmentUrl} 
+                              alt="Attachment" 
+                              className="max-h-44 rounded-lg border border-white/20 object-cover hover:opacity-90 transition-opacity" 
+                            />
+                          </a>
+                        )}
                       </div>
                     ))
                   )}
                 </div>
 
-                {/* MESSAGE COMPOSER */}
+                {/* MESSAGE COMPOSER WITH PHOTO ATTACHMENT */}
                 {selectedTicket.status === 'Resolved' || selectedTicket.status === 'Dismissed' ? (
                   <div className="p-3 bg-slate-800 rounded-xl text-center text-xs font-bold text-slate-400">
                     🔒 This ticket is marked as {selectedTicket.status}. Messaging is closed.
                   </div>
                 ) : (
-                  <form 
-                    key={selectedTicket._id}
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const input = e.target.elements.adminReply;
-                      const channel = e.target.elements.channelSelect.value;
-                      if (!input.value.trim()) return;
+                  <div className="pt-2 border-t border-slate-800 space-y-2">
+                    {replyImagePreview && (
+                      <div className="flex items-center space-x-3 bg-slate-800 p-2 rounded-xl border border-slate-700 w-max">
+                        <img src={replyImagePreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                        <span className="text-[11px] font-bold text-emerald-400">Photo Ready to Send</span>
+                        <button 
+                          type="button" 
+                          onClick={() => { setReplyImage(null); setReplyImagePreview(null); }} 
+                          className="p-1 bg-slate-700 hover:bg-red-500 rounded-full text-white transition-colors"
+                        >
+                          <IoClose />
+                        </button>
+                      </div>
+                    )}
 
-                      if (channel === 'driver' && !selectedTicket.driverId) {
-                        return setModalState({ 
-                          isOpen: true, 
-                          title: "No Driver Linked", 
-                          message: "Please link a Tricycle Body No. in the top-right box first before sending a message to the driver.", 
-                          type: "warning" 
-                        });
-                      }
+                    <form 
+                      key={selectedTicket._id}
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        const input = e.target.elements.adminReply;
+                        const channel = e.target.elements.channelSelect.value;
+                        if (!input.value.trim() && !replyImage) return;
 
-                      try {
-                        const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-                        await axios.post(`https://tricycheck-api.onrender.com/api/tickets/${selectedTicket._id}/reply`, {
-                          senderId: adminUser._id || adminUser.id,
-                          senderRole: adminUser.role || 'dispatcher',
-                          senderName: `${adminUser.firstName || 'POSO'} ${adminUser.lastName || 'Officer'}`,
-                          targetChannel: channel,
-                          message: input.value.trim()
-                        }, { headers: { Authorization: `Bearer ${token}` } });
-                        input.value = '';
-                        fetchTickets();
-                      } catch (err) {
-                        setModalState({ 
-                          isOpen: true, 
-                          title: "Message Failed", 
-                          message: err.response?.data?.error || "Failed to send message.", 
-                          type: "warning" 
-                        });
-                      }
-                    }}
-                    className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800"
-                  >
-                    <select 
-                      name="channelSelect" 
-                      defaultValue={selectedTicket.passengerId ? "passenger" : "driver"}
-                      className="bg-slate-800 border border-slate-700 text-xs font-black text-amber-300 rounded-xl px-3 py-2.5 outline-none cursor-pointer"
+                        if (channel === 'driver' && !selectedTicket.driverId) {
+                          return setModalState({ 
+                            isOpen: true, 
+                            title: "No Driver Linked", 
+                            message: "Please link a Tricycle Body No. in the top-right box first before sending a message to the driver.", 
+                            type: "warning" 
+                          });
+                        }
+
+                        setSendingReply(true);
+                        try {
+                          const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+                          const formData = new FormData();
+                          formData.append('senderId', adminUser._id || adminUser.id);
+                          formData.append('senderRole', adminUser.role || 'dispatcher');
+                          formData.append('senderName', `${adminUser.firstName || 'POSO'} ${adminUser.lastName || 'Officer'}`);
+                          formData.append('targetChannel', channel);
+                          formData.append('message', input.value.trim());
+                          if (replyImage) formData.append('image', replyImage);
+
+                          await axios.post(`https://tricycheck-api.onrender.com/api/tickets/${selectedTicket._id}/reply`, formData, { 
+                            headers: { 
+                              Authorization: `Bearer ${token}`,
+                              'Content-Type': 'multipart/form-data'
+                            } 
+                          });
+                          input.value = '';
+                          setReplyImage(null);
+                          setReplyImagePreview(null);
+                          fetchTickets();
+                        } catch (err) {
+                          setModalState({ 
+                            isOpen: true, 
+                            title: "Message Failed", 
+                            message: err.response?.data?.error || "Failed to send message.", 
+                            type: "warning" 
+                          });
+                        } finally {
+                          setSendingReply(false);
+                        }
+                      }}
+                      className="flex flex-col sm:flex-row gap-2"
                     >
-                      {selectedTicket.passengerId && (
-                        <option value="passenger">➔ To Passenger ({selectedTicket.passengerId.firstName})</option>
-                      )}
-                      {selectedTicket.driverId ? (
-                        <option value="driver">➔ To Driver (Body #{selectedTicket.driverId.bodyNo || 'N/A'})</option>
-                      ) : (
-                        <option value="driver" disabled>➔ To Driver (Link Body # Above)</option>
-                      )}
-                    </select>
-                    <input 
-                      name="adminReply"
-                      type="text" 
-                      placeholder="Type message to send to their In-App Inbox..." 
-                      className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-                    />
-                    <button 
-                      type="submit" 
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-5 py-2.5 rounded-xl active:scale-95 transition-all flex items-center justify-center space-x-1.5"
-                    >
-                      <IoSend /> <span>Send</span>
-                    </button>
-                  </form>
+                      <select 
+                        name="channelSelect" 
+                        defaultValue={selectedTicket.passengerId ? "passenger" : "driver"}
+                        className="bg-slate-800 border border-slate-700 text-xs font-black text-amber-300 rounded-xl px-3 py-2.5 outline-none cursor-pointer"
+                      >
+                        {selectedTicket.passengerId && (
+                          <option value="passenger">➔ To Passenger ({selectedTicket.passengerId.firstName})</option>
+                        )}
+                        {selectedTicket.driverId ? (
+                          <option value="driver">➔ To Driver (Body #{selectedTicket.driverId.bodyNo || 'N/A'})</option>
+                        ) : (
+                          <option value="driver" disabled>➔ To Driver (Link Body # Above)</option>
+                        )}
+                      </select>
+
+                      <label className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 px-3.5 py-2.5 rounded-xl flex items-center justify-center cursor-pointer transition-colors shrink-0" title="Attach Photo">
+                        <IoCamera className="text-lg" />
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setReplyImage(file);
+                              setReplyImagePreview(URL.createObjectURL(file));
+                            }
+                          }} 
+                        />
+                      </label>
+
+                      <input 
+                        name="adminReply"
+                        type="text" 
+                        placeholder="Type message or attach photo for their In-App Inbox..." 
+                        className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+                      />
+                      <button 
+                        type="submit" 
+                        disabled={sendingReply}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-5 py-2.5 rounded-xl active:scale-95 transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
+                      >
+                        <IoSend /> <span>{sendingReply ? '...' : 'Send'}</span>
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
             </div>

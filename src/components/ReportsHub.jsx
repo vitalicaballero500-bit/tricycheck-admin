@@ -101,12 +101,12 @@ function ReportsHub() {
     let rows = [];
 
     if (activeReport === 'rides') {
-      headers = ["Date", "Time", "Booking ID", "Passenger", "Driver", "Body No.", "Pickup Location", "Dropoff Location", "Fare (PHP)"];
+      headers = ["Date", "Time", "Booking ID", "Passenger", "Driver", "Body No.", "Pickup Location", "Dropoff Location"];
       rows = data.map(r => [
         new Date(r.createdAt).toLocaleDateString(),
         new Date(r.createdAt).toLocaleTimeString(),
         r._id, `"${r.passengerName || 'Unknown'}"`, `"${r.driverName || 'Unknown'}"`, r.driverBodyNo || 'N/A',
-        `"${r.pickupLocation}"`, `"${r.dropoffLocation}"`, r.fare
+        `"${r.pickupLocation}"`, `"${r.dropoffLocation}"`
       ]);
     } else if (activeReport === 'fleet') {
       headers = ["Date Added", "Body No.", "Plate No.", "License No.", "Driver Name", "Phone", "Email", "Barangay", "App Status"];
@@ -159,7 +159,7 @@ function ReportsHub() {
     if (!data) return;
 
     const printWindow = window.open('', '_blank');
-    let title = activeReport === 'rides' ? 'Completed Rides & Revenue' : 
+    let title = activeReport === 'rides' ? 'Completed Rides' : 
                 activeReport === 'fleet' ? 'Fleet Directory & KYC Registration' : 
                 activeReport === 'tickets' ? 'Support & Emergency Tickets' : 'System Audit Trail';
 
@@ -186,14 +186,12 @@ function ReportsHub() {
     `;
 
     if (activeReport === 'rides') {
-      html += `<th>Date & Time</th><th>Passenger</th><th>Driver (Body No)</th><th>Route</th><th>Fare</th></tr></thead><tbody>`;
-      let totalFare = 0;
+      html += `<th>Date & Time</th><th>Passenger</th><th>Driver (Body No)</th><th>Route</th></tr></thead><tbody>`;
       data.forEach(r => {
-        totalFare += Number(r.fare) || 0;
         const dateObj = new Date(r.createdAt);
-        html += `<tr><td>${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}</td><td>${r.passengerName || 'Unknown'}</td><td>${r.driverName || 'Unknown'} (${r.driverBodyNo || 'N/A'})</td><td>${r.pickupLocation} <b>&rarr;</b> ${r.dropoffLocation}</td><td>PHP ${r.fare}</td></tr>`;
+        html += `<tr><td>${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}</td><td>${r.passengerName || 'Unknown'}</td><td>${r.driverName || 'Unknown'} (${r.driverBodyNo || 'N/A'})</td><td>${r.pickupLocation} <b>&rarr;</b> ${r.dropoffLocation}</td></tr>`;
       });
-      html += `</tbody></table><div style="margin-top: 20px; font-size: 14px; font-weight: bold; text-align: right;">Total Estimated Fare Volume: PHP ${totalFare.toLocaleString()}</div>`;
+      html += `</tbody></table><div style="margin-top: 20px; font-size: 13px; font-weight: bold; text-align: right;">Total Completed Trips: ${data.length}</div>`;
     } 
     else if (activeReport === 'fleet') {
       html += `<th>Date Added</th><th>Body No</th><th>Plate / License No</th><th>Driver Name & Contact</th><th>Barangay</th><th>Status</th></tr></thead><tbody>`;
@@ -260,7 +258,7 @@ function ReportsHub() {
   };
 
   const reportTypes = [
-    { id: 'rides', name: 'Rides & Revenue', icon: <IoCarSport />, desc: 'Extract all completed passenger trips and fare totals.' },
+    { id: 'rides', name: 'Rides', icon: <IoCarSport />, desc: 'Extract all completed passenger trips.' },
     { id: 'fleet', name: 'Fleet Directory', icon: <IoPeople />, desc: 'Extract registered drivers, plates, licenses, and barangays.' },
     { id: 'tickets', name: 'Support Tickets', icon: <IoWarning />, desc: 'Extract SOS alerts, complaints, and resolution statuses.' },
     { id: 'audit', name: 'System Audit', icon: <IoTime />, desc: 'Extract administrative actions and system modifications.' }

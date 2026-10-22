@@ -61,7 +61,11 @@ function FleetManagement() {
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
   const isSecretary = adminUser.role === 'secretary'; 
 
-  useEffect(() => { fetchDrivers(); }, []);
+  useEffect(() => { 
+    fetchDrivers(); 
+    const interval = setInterval(fetchDrivers, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   // === TELEMETRY RECEIVER ENGINE (FROM SUPPORT TICKETS) ===
   useEffect(() => {
@@ -304,7 +308,56 @@ function FleetManagement() {
     }
   };
 
-  const handleConfirmAction = () => { if (targetAction.type === 'RESET_PASSWORD') executeResetPassword(); };
+  const executeApproveDriver = async () => {
+    closeModal();
+    if (!auditModal.driver) return;
+    setAuditModal(prev => ({ ...prev, isSubmitting: true }));
+    try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/approve`, {
+        adminId: adminUser._id || adminUser.id
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setAuditModal({ isOpen: false, driver: null, isEditing: false, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
+      setTimeout(() => {
+        setModalState({ isOpen: true, title: "Driver Approved", message: "Application approved! Temporary login credentials have been emailed to the driver.", type: "success", isConfirm: false });
+      }, 250);
+      fetchDrivers();
+    } catch (err) {
+      setAuditModal(prev => ({ ...prev, isSubmitting: false }));
+      setTimeout(() => {
+        setModalState({ isOpen: true, title: "Approval Blocked", message: err.response?.data?.error || "Could not approve application.", type: "warning", isConfirm: false });
+      }, 250);
+    }
+  };
+
+  const executeRejectDriver = async () => {
+    closeModal();
+    if (!auditModal.driver || !auditModal.rejectReason.trim()) return;
+    setAuditModal(prev => ({ ...prev, isSubmitting: true }));
+    try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/reject`, {
+        adminId: adminUser._id || adminUser.id,
+        reason: auditModal.rejectReason.trim()
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      setAuditModal({ isOpen: false, driver: null, isEditing: false, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
+      setTimeout(() => {
+        setModalState({ isOpen: true, title: "Application Returned", message: "The applicant has been notified via email and in-app vault to fix their submission.", type: "success", isConfirm: false });
+      }, 250);
+      fetchDrivers();
+    } catch (err) {
+      setAuditModal(prev => ({ ...prev, isSubmitting: false }));
+      setTimeout(() => {
+        setModalState({ isOpen: true, title: "Action Failed", message: "Could not reject application.", type: "warning", isConfirm: false });
+      }, 250);
+    }
+  };
+
+  const handleConfirmAction = () => { 
+    if (targetAction.type === 'RESET_PASSWORD') executeResetPassword(); 
+    if (targetAction.type === 'APPROVE_DRIVER') executeApproveDriver();
+    if (targetAction.type === 'REJECT_DRIVER') executeRejectDriver();
+  };
 
   // === STATUS-AWARE COMPLIANCE ENGINE ===
   const checkCompliance = (driver) => {
@@ -935,22 +988,16 @@ function FleetManagement() {
                     Cancel
                   </button>
                   <button 
-                    onClick={async () => {
+                    onClick={() => {
                       if (!auditModal.rejectReason.trim()) return;
-                      setAuditModal(prev => ({...prev, isSubmitting: true}));
-                      try {
-                        const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-                        await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/reject`, {
-                          adminId: adminUser._id || adminUser.id, 
-                          reason: auditModal.rejectReason
-                        }, { headers: { Authorization: `Bearer ${token}` } });
-                        setAuditModal({ isOpen: false, driver: null, isEditing: false, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
-                        setModalState({ isOpen: true, title: "Application Returned", message: "The applicant has been notified via email and in-app vault to fix their submission.", type: "success" });
-                        fetchDrivers();
-                      } catch (err) { 
-                        setModalState({ isOpen: true, title: "Action Failed", message: "Could not reject application.", type: "warning" }); 
-                        setAuditModal(prev => ({...prev, isSubmitting: false})); 
-                      }
+                      setTargetAction({ type: 'REJECT_DRIVER', payload: auditModal.driver });
+                      setModalState({
+                        isOpen: true,
+                        title: "Confirm Application Return?",
+                        message: `Are you sure you want to return ${auditModal.driver.name}'s application (Body #${auditModal.driver.bodyNo || 'N/A'}) with reason:\n\n"${auditModal.rejectReason.trim()}"?`,
+                        type: "warning",
+                        isConfirm: true
+                      });
                     }}
                     disabled={auditModal.isSubmitting || !auditModal.rejectReason.trim()}
                     className="px-7 py-3.5 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all"
@@ -961,7 +1008,7 @@ function FleetManagement() {
               ) : (
                 <div className="w-full flex justify-between items-center">
                   <div className="text-xs font-bold text-slate-500">
-                    {auditModal.driver.status === 'Pending' && 'Verify all 3 documents before dispatching official POSO credentials.'}
+                    {auditModal.driver.status === 'Pending' && 'Verify all documents before dispatching official POSO credentials.'}
                     {auditModal.driver.status === 'Rejected' && 'Waiting for applicant to resubmit corrected documents.'}
                     {(auditModal.driver.status === 'Active' || auditModal.driver.status === 'Offline') && 'Verified POSO Fleet Member.'}
                   </div>
@@ -977,20 +1024,15 @@ function FleetManagement() {
                           {auditModal.driver.status === 'Rejected' ? 'Update Rejection Reason' : 'Reject Application'}
                         </button>
                         <button 
-                          onClick={async () => {
-                            setAuditModal(prev => ({...prev, isSubmitting: true}));
-                            try {
-                              const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-                              await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/approve`, {
-                                adminId: adminUser._id || adminUser.id
-                              }, { headers: { Authorization: `Bearer ${token}` } });
-                              setAuditModal({ isOpen: false, driver: null, isEditing: false, isRejecting: false, rejectReason: '', isSubmitting: false, activeImageTab: 'license' });
-                              setModalState({ isOpen: true, title: "Driver Approved", message: "Application approved! Temporary login credentials have been emailed to the driver.", type: "success" });
-                              fetchDrivers();
-                            } catch (err) { 
-                              setModalState({ isOpen: true, title: "Approval Blocked", message: err.response?.data?.error || "Could not approve application.", type: "warning" }); 
-                              setAuditModal(prev => ({...prev, isSubmitting: false})); 
-                            }
+                          onClick={() => {
+                            setTargetAction({ type: 'APPROVE_DRIVER', payload: auditModal.driver });
+                            setModalState({
+                              isOpen: true,
+                              title: "Confirm POSO Accreditation?",
+                              message: `Are you sure you want to approve ${auditModal.driver.name} (Body #${auditModal.driver.bodyNo || 'N/A'}, Plate: ${auditModal.driver.plate || 'N/A'}) and email their official login credentials to ${auditModal.driver.email || 'their email'}?`,
+                              type: "success",
+                              isConfirm: true
+                            });
                           }}
                           disabled={auditModal.isSubmitting}
                           className="px-7 py-3.5 bg-emerald-600 text-white font-black rounded-xl shadow-lg hover:bg-emerald-700 active:scale-95 transition-all flex items-center space-x-2 text-sm"

@@ -24,12 +24,15 @@ function StaffManagement() {
 
   useEffect(() => {
     fetchStaff();
+    const interval = setInterval(fetchStaff, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchStaff = async () => {
     try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       const response = await axios.get('https://tricycheck-api.onrender.com/api/admin/staff', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` }
+          headers: { Authorization: `Bearer ${token}` }
       });
       setStaff(response.data);
     } catch (error) { console.error("Error fetching staff:", error); }
@@ -139,7 +142,7 @@ function StaffManagement() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-black text-slate-800 flex items-center">
-            <IoShieldCheckmark className="text-emerald-600 mr-2" /> Access Control Matrix
+            <IoShieldCheckmark className="text-emerald-600 mr-2" /> Access Control
           </h2>
           <p className="text-sm font-medium text-slate-500">Manage POSO personnel system access and security roles.</p>
         </div>
