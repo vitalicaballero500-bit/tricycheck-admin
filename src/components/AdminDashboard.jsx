@@ -123,7 +123,10 @@ function AdminDashboard() {
     }
 
     // === AUTO-TELEPORTER LISTENER ===
-    const handleForcedTab = (e) => setActiveTab(e.detail); 
+    const handleForcedTab = (e) => {
+      const target = e.detail === 'tickets' ? 'reports' : e.detail;
+      setActiveTab(target);
+    }; 
     window.addEventListener('forceDashboardTabChange', handleForcedTab);
     return () => window.removeEventListener('forceDashboardTabChange', handleForcedTab);
   }, [navigate]);
