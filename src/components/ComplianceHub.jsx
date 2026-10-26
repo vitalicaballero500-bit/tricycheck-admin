@@ -87,14 +87,20 @@ function ComplianceHub() {
     });
   };
 
-  // === TELEPORT TO FLEET DIRECTORY ===
-  const inspectInFleet = () => {
+  // === TELEPORT DIRECTLY TO DRIVER'S SPLIT-SCREEN KYC AUDITOR IN FLEET DIRECTORY ===
+  const inspectInFleet = (driverId) => {
+    if (driverId) {
+      localStorage.setItem('teleportDriverId', driverId);
+      localStorage.setItem('teleportDriverMode', 'audit');
+      window.dispatchEvent(new CustomEvent('fleetTeleport'));
+    }
     window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
   };
 
-  // === THE COMPLIANCE MATH ENGINE ===
+  // === THE COMPLIANCE MATH ENGINE (NEXT-DAY EXPIRATION CUTOFF + PENDING RENEWALS) ===
   const evaluateDocuments = (driver) => {
-    const today = new Date();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const docs = [
       { name: "Driver's License", date: driver.licenseExpiry },
       { name: "OR/CR", date: driver.orCrExpiry },
@@ -104,17 +110,27 @@ function ComplianceHub() {
     let status = 'safe'; // safe, warning, critical
     let issues = [];
 
+    if (driver.renewalStatus === 'Pending') {
+      status = 'warning';
+      issues.push('🟡 Pending Renewal Uploaded (Click Fleet File to Approve)');
+    }
+
     docs.forEach(doc => {
       if (!doc.date) {
         status = 'critical';
         issues.push(`${doc.name} (Missing)`);
       } else {
-        const expiry = new Date(doc.date);
-        const daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+        const d = new Date(doc.date);
+        const endOfExpDay = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999);
+        const expDayStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
+        const daysLeft = Math.round((expDayStart - startOfToday) / (1000 * 60 * 60 * 24));
         
-        if (daysLeft < 0) {
+        if (now > endOfExpDay) {
           status = 'critical';
-          issues.push(`${doc.name} (Expired)`);
+          issues.push(`${doc.name} (Expired — Radar Locked)`);
+        } else if (daysLeft === 0) {
+          if (status !== 'critical') status = 'warning';
+          issues.push(`${doc.name} (Expires Today — Locks Tomorrow)`);
         } else if (daysLeft <= 30) {
           if (status !== 'critical') status = 'warning';
           issues.push(`${doc.name} (${daysLeft} days left)`);

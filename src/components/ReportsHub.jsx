@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { 
   IoPrint, IoDownload, IoCalendar, IoCarSport, 
-  IoPeople, IoWarning, IoTime, IoCheckmarkCircle 
+  IoPeople, IoWarning, IoTime, IoCheckmarkCircle, IoDocumentText 
 } from 'react-icons/io5';
 import CustomModal from './CustomModal';
 
@@ -15,7 +15,6 @@ function ReportsHub() {
   
   const closeModal = () => setModalState({ ...modalState, isOpen: false });
 
-  // === 1-CLICK QUICK DATE PRESETS (REDUCES POSO CLICKS) ===
   const applyPreset = (preset) => {
     setActivePreset(preset);
     const today = new Date();
@@ -37,7 +36,6 @@ function ReportsHub() {
     }
   };
 
-  // The Data Fetching Engine
   const generateData = async () => {
     if (!dateRange.start || !dateRange.end) {
       setModalState({ isOpen: true, title: "Missing Dates", message: "Please select a Quick Preset or pick both Start and End dates.", type: "warning" });
@@ -55,7 +53,7 @@ function ReportsHub() {
       if (activeReport === 'rides') {
         endpoint = 'https://tricycheck-api.onrender.com/api/admin/reports';
         params = { filter: 'custom', startDate: dateRange.start, endDate: dateRange.end };
-      } else if (activeReport === 'fleet') {
+      } else if (activeReport === 'fleet' || activeReport === 'renewals') {
         endpoint = 'https://tricycheck-api.onrender.com/api/admin/drivers';
       } else if (activeReport === 'tickets') {
         endpoint = 'https://tricycheck-api.onrender.com/api/tickets';
@@ -64,9 +62,12 @@ function ReportsHub() {
       }
 
       const response = await axios.get(endpoint, { ...config, params });
-      
       let finalData = response.data;
-      if (activeReport !== 'rides') {
+
+      if (activeReport === 'renewals') {
+        // Show all verified or pending-renewal drivers so POSO has a complete Compliance & Renewal ledger
+        finalData = finalData.filter(d => d.driverStatus !== 'Rejected');
+      } else if (activeReport !== 'rides') {
         const startDate = new Date(dateRange.start);
         startDate.setHours(0, 0, 0, 0);
         const endDate = new Date(dateRange.end);
@@ -92,7 +93,19 @@ function ReportsHub() {
     }
   };
 
-  // CSV Generation (Updated with KYC Fields Instead of Legacy TODA)
+  const formatExp = (d) => d ? new Date(d).toLocaleDateString() : 'Missing';
+  const getRenewedByLabel = (d) => {
+    if (d.lastRenewedByName) {
+      const roleStr = d.lastRenewedByRole ? ` (${d.lastRenewedByRole.toUpperCase()})` : '';
+      const dateStr = d.lastRenewedAt ? ` on ${new Date(d.lastRenewedAt).toLocaleDateString()}` : '';
+      return `${d.lastRenewedByName}${roleStr}${dateStr}`;
+    }
+    if (d.registeredBy) {
+      return `${d.registeredBy.firstName || ''} ${d.registeredBy.lastName || ''} (${(d.registeredBy.role || 'POSO').toUpperCase()})`;
+    }
+    return 'POSO Command Center';
+  };
+
   const handleDownloadCSV = async () => {
     const data = await generateData();
     if (!data) return;
@@ -121,6 +134,17 @@ function ReportsHub() {
         `"${d.address || 'Calasiao'}"`,
         d.driverStatus || 'Pending'
       ]);
+    } else if (activeReport === 'renewals') {
+      headers = ["Body No.", "Driver Name", "License Expiry", "OR/CR Expiry", "Permit Expiry", "Renewal Status", "Verified / Renewed By (Staff / Superadmin)"];
+      rows = data.map(d => [
+        d.bodyNo || 'N/A',
+        `"${d.firstName} ${d.lastName}"`,
+        formatExp(d.licenseExpiry),
+        formatExp(d.orCrExpiry),
+        formatExp(d.franchisePermitExpiry),
+        d.renewalStatus || 'Active',
+        `"${getRenewedByLabel(d)}"`
+      ]);
     } else if (activeReport === 'tickets') {
       headers = ["Date Filed", "Ticket ID", "Complainant", "Complainant Contact", "Reported Driver", "Driver Contact", "Type", "Priority", "Status", "Description"];
       rows = data.map(t => [
@@ -136,10 +160,10 @@ function ReportsHub() {
         `"${t.description}"`
       ]);
     } else if (activeReport === 'audit') {
-      headers = ["Date", "Time", "Admin", "Module", "Action", "Details"];
+      headers = ["Date", "Time", "Admin / Staff", "Module", "Action", "Details"];
       rows = data.map(a => [
         new Date(a.createdAt).toLocaleDateString(), new Date(a.createdAt).toLocaleTimeString(),
-        `"${a.adminName}"`, a.module, `"${a.action}"`, `"${a.details}"`
+        `"${a.adminName} (${(a.role || 'admin').toUpperCase()})"`, a.module, `"${a.action}"`, `"${a.details}"`
       ]);
     }
 
@@ -153,7 +177,6 @@ function ReportsHub() {
     document.body.removeChild(link);
   };
 
-  // PDF / Print Generation
   const handlePrint = async () => {
     const data = await generateData();
     if (!data) return;
@@ -161,6 +184,7 @@ function ReportsHub() {
     const printWindow = window.open('', '_blank');
     let title = activeReport === 'rides' ? 'Completed Rides' : 
                 activeReport === 'fleet' ? 'Fleet Directory & KYC Registration' : 
+                activeReport === 'renewals' ? 'Compliance & Credential Renewals' :
                 activeReport === 'tickets' ? 'Support & Emergency Tickets' : 'System Audit Trail';
 
     let html = `
@@ -207,6 +231,21 @@ function ReportsHub() {
       });
       html += `</tbody></table>`;
     }
+    else if (activeReport === 'renewals') {
+      html += `<th>Body No</th><th>Driver Name</th><th>License Expiry</th><th>OR/CR Expiry</th><th>Permit Expiry</th><th>Renewal Status</th><th>Accepted / Renewed By (Staff / Superadmin)</th></tr></thead><tbody>`;
+      data.forEach(d => {
+        html += `<tr>
+          <td><b>${d.bodyNo || 'N/A'}</b></td>
+          <td><b>${d.firstName} ${d.lastName}</b><br/>${d.phone || ''}</td>
+          <td>${formatExp(d.licenseExpiry)}</td>
+          <td>${formatExp(d.orCrExpiry)}</td>
+          <td>${formatExp(d.franchisePermitExpiry)}</td>
+          <td><b>${d.renewalStatus === 'Pending' ? 'PENDING AUDIT' : 'VERIFIED'}</b></td>
+          <td><b>${getRenewedByLabel(d)}</b></td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+    }
     else if (activeReport === 'tickets') {
       html += `<th>Date Filed</th><th>Complainant / Contact</th><th>Reported Driver</th><th>Issue Type</th><th>Status</th></tr></thead><tbody>`;
       data.forEach(t => {
@@ -237,10 +276,10 @@ function ReportsHub() {
       html += `</tbody></table>`;
     }
     else if (activeReport === 'audit') {
-      html += `<th>Date & Time</th><th>Admin</th><th>Module</th><th>Action</th><th>Details</th></tr></thead><tbody>`;
+      html += `<th>Date & Time</th><th>Admin / Staff</th><th>Module</th><th>Action</th><th>Details</th></tr></thead><tbody>`;
       data.forEach(a => {
         const dateObj = new Date(a.createdAt);
-        html += `<tr><td>${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}</td><td>${a.adminName}</td><td>${a.module}</td><td>${a.action}</td><td>${a.details}</td></tr>`;
+        html += `<tr><td>${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}</td><td><b>${a.adminName}</b> (${(a.role || 'admin').toUpperCase()})</td><td>${a.module}</td><td>${a.action}</td><td>${a.details}</td></tr>`;
       });
       html += `</tbody></table>`;
     }
@@ -260,6 +299,7 @@ function ReportsHub() {
   const reportTypes = [
     { id: 'rides', name: 'Rides', icon: <IoCarSport />, desc: 'Extract all completed passenger trips.' },
     { id: 'fleet', name: 'Fleet Directory', icon: <IoPeople />, desc: 'Extract registered drivers, plates, licenses, and barangays.' },
+    { id: 'renewals', name: 'Compliance & Renewals', icon: <IoDocumentText />, desc: 'Extract document expiry dates & which POSO officer accepted renewals.' },
     { id: 'tickets', name: 'Support Tickets', icon: <IoWarning />, desc: 'Extract SOS alerts, complaints, and resolution statuses.' },
     { id: 'audit', name: 'System Audit', icon: <IoTime />, desc: 'Extract administrative actions and system modifications.' }
   ];
@@ -278,22 +318,22 @@ function ReportsHub() {
       <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200/60 p-8 flex flex-col md:flex-row gap-8">
           
         {/* LEFT: REPORT SELECTION */}
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 space-y-3">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">1. Select Data Source</h3>
           {reportTypes.map(type => (
             <button 
               key={type.id}
               onClick={() => setActiveReport(type.id)}
-              className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center space-x-4 ${activeReport === type.id ? 'bg-emerald-50 border-emerald-500 shadow-md' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300'}`}
+              className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center space-x-4 ${activeReport === type.id ? 'bg-emerald-50 border-emerald-500 shadow-md' : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300'}`}
             >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0 ${activeReport === type.id ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 shadow-sm'}`}>
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0 ${activeReport === type.id ? 'bg-emerald-500 text-white' : 'bg-white text-slate-500 shadow-sm'}`}>
                 {type.icon}
               </div>
               <div>
-                <h4 className={`font-black ${activeReport === type.id ? 'text-emerald-900' : 'text-slate-700'}`}>{type.name}</h4>
+                <h4 className={`font-black text-sm ${activeReport === type.id ? 'text-emerald-900' : 'text-slate-700'}`}>{type.name}</h4>
                 <p className={`text-[10px] font-bold mt-0.5 ${activeReport === type.id ? 'text-emerald-700' : 'text-slate-400'}`}>{type.desc}</p>
               </div>
-              {activeReport === type.id && <IoCheckmarkCircle className="text-emerald-500 text-2xl ml-auto" />}
+              {activeReport === type.id && <IoCheckmarkCircle className="text-emerald-500 text-2xl ml-auto shrink-0" />}
             </button>
           ))}
         </div>
@@ -302,7 +342,6 @@ function ReportsHub() {
         <div className="flex-1 flex flex-col">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">2. Time Filter & Export</h3>
 
-          {/* 1-CLICK QUICK PRESETS */}
           <div className="grid grid-cols-4 gap-2 mb-4">
             {[
               { id: 'today', label: 'Today' },

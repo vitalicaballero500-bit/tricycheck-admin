@@ -51,12 +51,16 @@ function FleetManagement() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
 
-  // === EDITABLE DRIVER FORM STATE (SYNCED 1:1 WITH MOBILE WIZARD) ===
+  // === EDITABLE DRIVER FORM STATE (SYNCED 1:1 WITH MOBILE WIZARD + ADMIN PHOTO RE-UPLOAD) ===
   const [editForm, setEditForm] = useState({
     firstName: '', lastName: '', phone: '', email: '', address: '',
     tricycleColor: '', bodyNo: '', plateNo: '', licenseNo: '',
     licenseExpiry: '', orCrExpiry: '', franchisePermitExpiry: '', driverStatus: 'Active'
   });
+  const [editFiles, setEditFiles] = useState({
+    profilePic: null, licensePic: null, orPic: null, crPic: null, franchisePic: null
+  });
+  const [inspectingRenewalPreview, setInspectingRenewalPreview] = useState(false);
   
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
   const isSecretary = adminUser.role === 'secretary'; 
@@ -67,16 +71,22 @@ function FleetManagement() {
     return () => clearInterval(interval);
   }, []);
 
-  // === TELEMETRY RECEIVER ENGINE (FROM SUPPORT TICKETS) ===
+  // === TELEMETRY RECEIVER ENGINE (FROM SUPPORT TICKETS OR COMPLIANCE HUB) ===
   useEffect(() => {
     const checkTeleport = () => {
       const teleportId = localStorage.getItem('teleportDriverId');
+      const teleportMode = localStorage.getItem('teleportDriverMode') || 'disciplinary';
       if (teleportId && drivers.length > 0) {
         const targetDriver = drivers.find(d => d.id === teleportId);
         if (targetDriver) {
           localStorage.removeItem('teleportDriverId');
+          localStorage.removeItem('teleportDriverMode');
           setViewMode('directory');
-          setQuickViewModal({ isOpen: true, driver: targetDriver, activeTab: 'disciplinary' });
+          if (teleportMode === 'audit') {
+            openSplitScreenModal(targetDriver, false);
+          } else {
+            setQuickViewModal({ isOpen: true, driver: targetDriver, activeTab: 'disciplinary' });
+          }
         }
       }
     };
@@ -112,6 +122,11 @@ function FleetManagement() {
         crPicUrl: d.crPic || d.orcrPic || '', 
         orcrPicUrl: d.orcrPic || '', 
         franchisePicUrl: d.franchisePic || '',
+        renewalStatus: d.renewalStatus || 'None',
+        pendingRenewal: d.pendingRenewal || null,
+        lastRenewedByName: d.lastRenewedByName || (d.lastRenewedBy ? `${d.lastRenewedBy.firstName} ${d.lastRenewedBy.lastName}` : ''),
+        lastRenewedByRole: d.lastRenewedByRole || (d.lastRenewedBy?.role || ''),
+        lastRenewedAt: d.lastRenewedAt || null,
         registeredBy: d.registeredBy ? `${d.registeredBy.firstName} ${d.registeredBy.lastName}` : 'Self-Onboarded',
         createdAt: d.createdAt || new Date().toISOString(),
         isOnline: d.driverStatus === 'Active',
@@ -131,6 +146,8 @@ function FleetManagement() {
   const openSplitScreenModal = (driver, startInEditMode = false) => {
     setZoomLevel(1);
     setRotation(0);
+    setEditFiles({ profilePic: null, licensePic: null, orPic: null, crPic: null, franchisePic: null });
+    setInspectingRenewalPreview(driver.renewalStatus === 'Pending');
     setEditForm({
       firstName: driver.firstName || '',
       lastName: driver.lastName || '',
@@ -232,18 +249,26 @@ function FleetManagement() {
       formData.append('franchisePermitExpiry', editForm.franchisePermitExpiry);
       formData.append('driverStatus', editForm.driverStatus);
 
+      if (editFiles.profilePic) formData.append('profilePic', editFiles.profilePic);
+      if (editFiles.licensePic) formData.append('licensePic', editFiles.licensePic);
+      if (editFiles.orPic) formData.append('orPic', editFiles.orPic);
+      if (editFiles.crPic) formData.append('crPic', editFiles.crPic);
+      if (editFiles.franchisePic) formData.append('franchisePic', editFiles.franchisePic);
+
       const currentAdminId = adminUser._id || adminUser.id;
       if (currentAdminId) formData.append('adminId', currentAdminId);
 
       const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-      await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}`, formData, {
+      const res = await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}`, formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
         }
       });
 
+      const updatedD = res.data?.driver || {};
       await fetchDrivers();
+      setEditFiles({ profilePic: null, licensePic: null, orPic: null, crPic: null, franchisePic: null });
       setAuditModal(prev => ({
         ...prev,
         isEditing: false,
@@ -263,10 +288,18 @@ function FleetManagement() {
           licenseExpiry: editForm.licenseExpiry,
           orCrExpiry: editForm.orCrExpiry,
           franchisePermitExpiry: editForm.franchisePermitExpiry,
+          profilePicUrl: updatedD.profilePic || prev.driver.profilePicUrl,
+          licensePicUrl: updatedD.licensePic || prev.driver.licensePicUrl,
+          orPicUrl: updatedD.orPic || prev.driver.orPicUrl,
+          crPicUrl: updatedD.crPic || prev.driver.crPicUrl,
+          franchisePicUrl: updatedD.franchisePic || prev.driver.franchisePicUrl,
+          lastRenewedByName: updatedD.lastRenewedByName || prev.driver.lastRenewedByName,
+          lastRenewedByRole: updatedD.lastRenewedByRole || prev.driver.lastRenewedByRole,
+          lastRenewedAt: updatedD.lastRenewedAt || prev.driver.lastRenewedAt,
           status: editForm.driverStatus
         }
       }));
-      setModalState({ isOpen: true, title: "Profile Updated", message: "Driver records have been updated and synced.", type: "success", isConfirm: false });
+      setModalState({ isOpen: true, title: "Profile & Credentials Updated", message: "Driver records and document photos have been updated and synced.", type: "success", isConfirm: false });
     } catch (error) {
       setAuditModal(prev => ({ ...prev, isSubmitting: false }));
       setModalState({ isOpen: true, title: "Update Failed", message: error.response?.data?.error || "Could not update driver profile.", type: "warning", isConfirm: false });
@@ -359,7 +392,7 @@ function FleetManagement() {
     if (targetAction.type === 'REJECT_DRIVER') executeRejectDriver();
   };
 
-  // === STATUS-AWARE COMPLIANCE ENGINE ===
+  // === STATUS-AWARE COMPLIANCE ENGINE (NEXT-DAY EXPIRATION CUTOFF) ===
   const checkCompliance = (driver) => {
     if (driver.status === 'Pending') {
       return { label: 'AWAITING KYC AUDIT', color: 'bg-amber-100 text-amber-800 border border-amber-300' };
@@ -367,12 +400,21 @@ function FleetManagement() {
     if (driver.status === 'Rejected') {
       return { label: 'RETURNED FOR REVISION', color: 'bg-red-100 text-red-700 border border-red-200' };
     }
+    if (driver.renewalStatus === 'Pending') {
+      return { label: 'PENDING RENEWAL AUDIT', color: 'bg-amber-400 text-emerald-950 animate-pulse' };
+    }
 
-    const today = new Date();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+
     const checkDate = (dateString) => {
       if (!dateString) return 'Missing';
-      const daysLeft = Math.ceil((new Date(dateString) - today) / (1000 * 60 * 60 * 24));
-      if (daysLeft < 0) return 'Expired';
+      const d = new Date(dateString);
+      // Driver can still drive ON the day of expiration; locked starting 00:00:00 the next day
+      const endOfExpDay = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999);
+      if (now > endOfExpDay) return 'Expired';
+      const expDayStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
+      const daysLeft = Math.round((expDayStart - startOfToday) / (1000 * 60 * 60 * 24));
       if (daysLeft <= 30) return 'Expiring Soon';
       return 'Valid';
     };
@@ -390,7 +432,7 @@ function FleetManagement() {
                             d.plate.toLowerCase().includes(searchTerm.toLowerCase());
       let matchesFilter = true;
       if (filterStatus === 'Active') matchesFilter = d.status === 'Active' || d.status === 'Offline';
-      if (filterStatus === 'Pending') matchesFilter = d.status === 'Pending';
+      if (filterStatus === 'Pending') matchesFilter = d.status === 'Pending' || d.renewalStatus === 'Pending';
       if (filterStatus === 'Rejected') matchesFilter = d.status === 'Rejected';
       if (filterStatus === 'Suspended') matchesFilter = d.status === 'Suspended';
       return matchesSearch && matchesFilter;
@@ -402,13 +444,14 @@ function FleetManagement() {
       return new Date(b.createdAt) - new Date(a.createdAt); 
     });
 
-  // === CURRENT DOCUMENT URL HELPER FOR ZOOM INSPECTOR (WITH SEPARATE OR & CR) ===
+  // === CURRENT DOCUMENT URL HELPER FOR ZOOM INSPECTOR (SUPPORTS PENDING RENEWAL PHOTOS) ===
   const getCurrentDocUrl = () => {
     if (!auditModal.driver) return '';
-    if (auditModal.activeImageTab === 'license') return auditModal.driver.licensePicUrl;
-    if (auditModal.activeImageTab === 'or') return auditModal.driver.orPicUrl;
-    if (auditModal.activeImageTab === 'cr') return auditModal.driver.crPicUrl;
-    if (auditModal.activeImageTab === 'franchise') return auditModal.driver.franchisePicUrl;
+    const pr = inspectingRenewalPreview && auditModal.driver.pendingRenewal ? auditModal.driver.pendingRenewal : null;
+    if (auditModal.activeImageTab === 'license') return (pr && pr.licensePic) || auditModal.driver.licensePicUrl;
+    if (auditModal.activeImageTab === 'or') return (pr && pr.orPic) || auditModal.driver.orPicUrl;
+    if (auditModal.activeImageTab === 'cr') return (pr && pr.crPic) || auditModal.driver.crPicUrl;
+    if (auditModal.activeImageTab === 'franchise') return (pr && pr.franchisePic) || auditModal.driver.franchisePicUrl;
     if (auditModal.activeImageTab === 'selfie') return auditModal.driver.profilePicUrl;
     return '';
   };
@@ -671,6 +714,100 @@ function FleetManagement() {
                   </div>
                 )}
 
+                {/* PENDING RENEWAL AUDIT BANNER (WHEN DRIVER UPLOADS RENEWED DOCS IN APP) */}
+                {auditModal.driver.renewalStatus === 'Pending' && auditModal.driver.pendingRenewal && (
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 space-y-3 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center">
+                          <IoDocumentText className="mr-1 text-sm" /> Driver Submitted Credential Renewal
+                        </p>
+                        <p className="text-xs font-bold text-slate-700 mt-0.5">
+                          Inspect the newly uploaded photo(s) on the right before approving.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setInspectingRenewalPreview(prev => !prev)}
+                        className="px-2.5 py-1 bg-amber-400 text-emerald-950 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                      >
+                        {inspectingRenewalPreview ? 'Showing New Photos' : 'Show Old Photos'}
+                      </button>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-amber-200 text-[11px] font-bold text-slate-700 space-y-1">
+                      {auditModal.driver.pendingRenewal.licenseExpiry && (
+                        <p>🪪 New License Exp: <b className="text-emerald-700">{String(auditModal.driver.pendingRenewal.licenseExpiry).split('T')[0]}</b></p>
+                      )}
+                      {auditModal.driver.pendingRenewal.orCrExpiry && (
+                        <p>📄 New OR/CR Exp: <b className="text-emerald-700">{String(auditModal.driver.pendingRenewal.orCrExpiry).split('T')[0]}</b></p>
+                      )}
+                      {auditModal.driver.pendingRenewal.franchisePermitExpiry && (
+                        <p>🛺 New Permit Exp: <b className="text-emerald-700">{String(auditModal.driver.pendingRenewal.franchisePermitExpiry).split('T')[0]}</b></p>
+                      )}
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        disabled={auditModal.isSubmitting}
+                        onClick={async () => {
+                          setAuditModal(prev => ({ ...prev, isSubmitting: true }));
+                          try {
+                            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                            await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/approve-renewal`, {
+                              adminId: adminUser._id || adminUser.id
+                            }, { headers: { Authorization: `Bearer ${token}` } });
+                            await fetchDrivers();
+                            setAuditModal(prev => ({ ...prev, isOpen: false, driver: null, isSubmitting: false }));
+                            setModalState({ isOpen: true, title: "Renewal Approved", message: "Updated expiration dates and document photos are now live. Driver's Booking Radar is unlocked.", type: "success" });
+                          } catch (e) {
+                            setAuditModal(prev => ({ ...prev, isSubmitting: false }));
+                            setModalState({ isOpen: true, title: "Approval Failed", message: "Could not approve renewal.", type: "warning" });
+                          }
+                        }}
+                        className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-emerald-500 shadow"
+                      >
+                        ✔ Approve Renewal
+                      </button>
+                      <button
+                        type="button"
+                        disabled={auditModal.isSubmitting}
+                        onClick={async () => {
+                          const reason = window.prompt("Enter reason for returning renewal (e.g. Blurry License Photo):", "Blurry or unreadable document photo");
+                          if (!reason) return;
+                          setAuditModal(prev => ({ ...prev, isSubmitting: true }));
+                          try {
+                            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                            await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/reject-renewal`, {
+                              adminId: adminUser._id || adminUser.id,
+                              reason
+                            }, { headers: { Authorization: `Bearer ${token}` } });
+                            await fetchDrivers();
+                            setAuditModal(prev => ({ ...prev, isOpen: false, driver: null, isSubmitting: false }));
+                            setModalState({ isOpen: true, title: "Renewal Returned", message: "The driver has been notified in their POSO Inbox to re-upload a clear renewal photo.", type: "info" });
+                          } catch (e) {
+                            setAuditModal(prev => ({ ...prev, isSubmitting: false }));
+                          }
+                        }}
+                        className="px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-red-100"
+                      >
+                        Return
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* LAST RENEWED BY OFFICER AUDIT STAMP */}
+                {auditModal.driver.lastRenewedByName && (
+                  <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-emerald-800">Last Verified / Renewed By:</span>
+                    <span className="font-black text-emerald-950 uppercase">
+                      {auditModal.driver.lastRenewedByName} ({auditModal.driver.lastRenewedByRole || 'POSO'})
+                    </span>
+                  </div>
+                )}
+
                 {/* Profile Header */}
                 <div className="flex items-center space-x-4 pb-4 border-b border-slate-100">
                   <div 
@@ -845,13 +982,50 @@ function FleetManagement() {
                       </div>
                     </div>
 
+                    {/* ADMIN DIRECT DOCUMENT PHOTO RE-UPLOAD SECTION */}
+                    <div className="pt-3 border-t border-slate-200 space-y-2.5">
+                      <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                        📷 Re-Upload / Replace Document Photos (Optional)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        {[
+                          { key: 'licensePic', label: "1. Driver's License", tab: 'license' },
+                          { key: 'orPic', label: "2A. LTO Official Receipt", tab: 'or' },
+                          { key: 'crPic', label: "2B. LTO Cert. of Reg.", tab: 'cr' },
+                          { key: 'franchisePic', label: "3. MTOP Permit", tab: 'franchise' },
+                          { key: 'profilePic', label: "4. 2x2 Driver Selfie", tab: 'selfie' }
+                        ].map(item => (
+                          <label
+                            key={item.key}
+                            onClick={() => handleTabSwitch(item.tab)}
+                            className={`p-2.5 rounded-xl border font-bold cursor-pointer flex items-center justify-between transition-all ${
+                              editFiles[item.key]
+                                ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
+                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span className="truncate">{editFiles[item.key] ? `✔ ${item.label}` : `Upload ${item.label}`}</span>
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf"
+                              className="hidden"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) setEditFiles(prev => ({ ...prev, [item.key]: file }));
+                              }}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
                     <button 
                       type="submit" 
                       disabled={auditModal.isSubmitting}
                       className="w-full py-3.5 bg-emerald-600 text-white font-black rounded-xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all flex items-center justify-center space-x-2"
                     >
                       <IoSave className="text-lg" />
-                      <span>{auditModal.isSubmitting ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+                      <span>{auditModal.isSubmitting ? 'Uploading & Saving...' : 'Save Profile & Renewals'}</span>
                     </button>
                   </form>
                 )}
