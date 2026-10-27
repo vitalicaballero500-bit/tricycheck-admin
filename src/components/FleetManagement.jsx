@@ -216,31 +216,34 @@ function FleetManagement() {
     });
   };
 
-  // === DIRECT FILE DOWNLOAD HELPER (DOWNLOADS TO COMPUTER WITHOUT OPENING NEW TAB) ===
+  // === DIRECT FILE DOWNLOAD HELPER (100% IN-PAGE BLOB DOWNLOAD — NEVER OPENS NEW TAB) ===
   const handleDownloadDocument = async (url, label) => {
     if (!url) return;
     setDownloadingDoc(true);
     try {
-      const response = await fetch(url);
+      const downloadUrl = url.includes('/upload/')
+        ? url.replace('/upload/', '/upload/fl_attachment/')
+        : url;
+      const response = await fetch(downloadUrl);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
       const ext = url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'jpg';
-      const safeName = `${auditModal.driver?.bodyNo || 'Driver'}_${label.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
+      const safeName = `POSO_${auditModal.driver?.bodyNo || 'Driver'}_${label.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
       link.setAttribute('download', safeName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
-      window.open(url, '_blank');
+      setModalState({ isOpen: true, title: "Download Error", message: "Could not download the file directly. Please check your connection.", type: "warning", isConfirm: false });
     } finally {
       setDownloadingDoc(false);
     }
   };
 
-  // === FORMATTERS & VALIDATION FOR INLINE EDIT (INCLUDING YEAR 2026-2036 GUARD) ===
+  // === FORMATTERS & DOCUMENT-SPECIFIC EXPIRATION VALIDATOR ===
   const formatTitleCase = (str) => str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
 
   const handleEditFieldChange = (field, value) => {
@@ -257,10 +260,20 @@ function FleetManagement() {
     setEditForm(prev => ({ ...prev, [field]: val }));
   };
 
-  const isReasonableExpiryDate = (dateStr) => {
-    if (!dateStr) return false;
+  // Evaluates both Expiration Status AND Legal Max Year (2036 for License, 2029 for OR/CR & MTOP Permit)
+  const validateEditDateField = (dateStr, maxYear = 2036) => {
+    if (!dateStr) return { isInvalid: true, badge: 'MISSING DATE' };
     const year = parseInt(String(dateStr).split('-')[0], 10);
-    return year >= 2024 && year <= 2036;
+    if (isNaN(year) || year < 2026 || year > maxYear) {
+      return { isInvalid: true, badge: `INVALID YEAR (2026–${maxYear} ONLY)` };
+    }
+    const now = new Date();
+    const d = new Date(dateStr);
+    const endOfExpDay = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999);
+    if (now > endOfExpDay) {
+      return { isInvalid: true, badge: 'EXPIRED DATE' };
+    }
+    return { isInvalid: false, badge: 'VALID' };
   };
 
   const handleSaveInlineEdit = async (e) => {
@@ -274,11 +287,16 @@ function FleetManagement() {
     if (!editForm.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email.trim())) {
       return setModalState({ isOpen: true, title: "Validation Error", message: "A valid official email address is required.", type: "warning", isConfirm: false });
     }
-    if (!isReasonableExpiryDate(editForm.licenseExpiry) || !isReasonableExpiryDate(editForm.orCrExpiry) || !isReasonableExpiryDate(editForm.franchisePermitExpiry)) {
+
+    const licCheck = validateEditDateField(editForm.licenseExpiry, 2036);
+    const orCheck = validateEditDateField(editForm.orCrExpiry, 2029);
+    const permCheck = validateEditDateField(editForm.franchisePermitExpiry, 2029);
+
+    if (licCheck.isInvalid || orCheck.isInvalid || permCheck.isInvalid) {
       return setModalState({
         isOpen: true,
-        title: "Invalid Expiration Year",
-        message: "Document expiration dates must have a realistic year between 2026 and 2036 (e.g. LTO 5-year or 10-year validity).",
+        title: "Invalid or Expired Credential Date",
+        message: "Please fix the red highlighted expiration date(s):\n• LTO Driver's License must be between 2026 and 2036 (5–10 yrs).\n• LTO OR/CR and MTOP Permit must be between 2026 and 2029 (1–3 yrs).",
         type: "warning",
         isConfirm: false
       });
@@ -1095,114 +1113,204 @@ function FleetManagement() {
                       <input required type="text" value={editForm.tricycleColor} onChange={e => handleEditFieldChange('tricycleColor', e.target.value)} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
                     </div>
 
-                    <div className="pt-3 border-t border-slate-200 space-y-3">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Government Credentials (Valid Years: 2026–2036)</h4>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">License No. *</label>
-                          <input required type="text" value={editForm.licenseNo} onChange={e => handleEditFieldChange('licenseNo', e.target.value)} onFocus={() => handleTabSwitch('license')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">License Expiry *</label>
-                          <input required type="date" min="2026-01-01" max="2036-12-31" value={editForm.licenseExpiry} onChange={e => handleEditFieldChange('licenseExpiry', e.target.value)} onFocus={() => handleTabSwitch('license')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
-                        </div>
-                      </div>
+                    {(() => {
+                      const licVal = validateEditDateField(editForm.licenseExpiry, 2036);
+                      const orVal = validateEditDateField(editForm.orCrExpiry, 2029);
+                      const permVal = validateEditDateField(editForm.franchisePermitExpiry, 2029);
+                      const hasAnyInvalidDate = licVal.isInvalid || orVal.isInvalid || permVal.isInvalid;
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Plate / MV No. *</label>
-                          <input required type="text" value={editForm.plateNo} onChange={e => handleEditFieldChange('plateNo', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">OR/CR Expiry *</label>
-                          <input required type="date" min="2026-01-01" max="2036-12-31" value={editForm.orCrExpiry} onChange={e => handleEditFieldChange('orCrExpiry', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
-                        </div>
-                      </div>
+                      return (
+                        <>
+                          <div className="pt-3 border-t border-slate-200 space-y-3">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              Government Credentials (License: 2026–2036 • OR/CR & Permit: 2026–2029)
+                            </h4>
+                            
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">License No. *</label>
+                                <input required type="text" value={editForm.licenseNo} onChange={e => handleEditFieldChange('licenseNo', e.target.value)} onFocus={() => handleTabSwitch('license')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
+                              </div>
+                              <div>
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className={`block text-[10px] font-black uppercase ${licVal.isInvalid ? 'text-red-600 animate-pulse' : 'text-slate-500'}`}>
+                                    License Expiry *
+                                  </label>
+                                  {licVal.isInvalid && (
+                                    <span className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
+                                      {licVal.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <input 
+                                  required 
+                                  type="date" 
+                                  min="2026-01-01" 
+                                  max="2036-12-31" 
+                                  value={editForm.licenseExpiry} 
+                                  onChange={e => handleEditFieldChange('licenseExpiry', e.target.value)} 
+                                  onFocus={() => handleTabSwitch('license')} 
+                                  className={`w-full p-2.5 rounded-xl font-bold text-sm outline-none transition-all ${
+                                    licVal.isInvalid
+                                      ? 'bg-red-50 border-2 border-red-500 text-red-900 shadow-[0_0_14px_rgba(239,68,68,0.45)]'
+                                      : 'bg-slate-50 border border-slate-200 text-slate-800 focus:border-emerald-600'
+                                  }`} 
+                                />
+                              </div>
+                            </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Body No. *</label>
-                          <input required type="text" value={editForm.bodyNo} onChange={e => handleEditFieldChange('bodyNo', e.target.value)} onFocus={() => handleTabSwitch('franchise')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Permit Expiry *</label>
-                          <input required type="date" min="2026-01-01" max="2036-12-31" value={editForm.franchisePermitExpiry} onChange={e => handleEditFieldChange('franchisePermitExpiry', e.target.value)} onFocus={() => handleTabSwitch('franchise')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
-                        </div>
-                      </div>
-                    </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Plate / MV No. *</label>
+                                <input required type="text" value={editForm.plateNo} onChange={e => handleEditFieldChange('plateNo', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
+                              </div>
+                              <div>
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className={`block text-[10px] font-black uppercase ${orVal.isInvalid ? 'text-red-600 animate-pulse' : 'text-slate-500'}`}>
+                                    OR/CR Expiry *
+                                  </label>
+                                  {orVal.isInvalid && (
+                                    <span className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
+                                      {orVal.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <input 
+                                  required 
+                                  type="date" 
+                                  min="2026-01-01" 
+                                  max="2029-12-31" 
+                                  value={editForm.orCrExpiry} 
+                                  onChange={e => handleEditFieldChange('orCrExpiry', e.target.value)} 
+                                  onFocus={() => handleTabSwitch('or')} 
+                                  className={`w-full p-2.5 rounded-xl font-bold text-sm outline-none transition-all ${
+                                    orVal.isInvalid
+                                      ? 'bg-red-50 border-2 border-red-500 text-red-900 shadow-[0_0_14px_rgba(239,68,68,0.45)]'
+                                      : 'bg-slate-50 border border-slate-200 text-slate-800 focus:border-emerald-600'
+                                  }`} 
+                                />
+                              </div>
+                            </div>
 
-                    {/* ADMIN DIRECT DOCUMENT PHOTO RE-UPLOAD SECTION */}
-                    <div className="pt-3 border-t border-slate-200 space-y-2.5">
-                      <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
-                        📷 Re-Upload / Replace Document Photos (Optional)
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        {[
-                          { key: 'licensePic', label: "1. Driver's License", tab: 'license' },
-                          { key: 'orPic', label: "2A. LTO Official Receipt", tab: 'or' },
-                          { key: 'crPic', label: "2B. LTO Cert. of Reg.", tab: 'cr' },
-                          { key: 'franchisePic', label: "3. MTOP Permit", tab: 'franchise' },
-                          { key: 'profilePic', label: "4. 2x2 Driver Selfie", tab: 'selfie' }
-                        ].map(item => (
-                          <label
-                            key={item.key}
-                            onClick={() => handleTabSwitch(item.tab)}
-                            className={`p-2.5 rounded-xl border font-bold cursor-pointer flex items-center justify-between transition-all ${
-                              editFiles[item.key]
-                                ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
-                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Body No. *</label>
+                                <input required type="text" value={editForm.bodyNo} onChange={e => handleEditFieldChange('bodyNo', e.target.value)} onFocus={() => handleTabSwitch('franchise')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-sm focus:border-emerald-600 outline-none" />
+                              </div>
+                              <div>
+                                <div className="flex justify-between items-center mb-1">
+                                  <label className={`block text-[10px] font-black uppercase ${permVal.isInvalid ? 'text-red-600 animate-pulse' : 'text-slate-500'}`}>
+                                    Permit Expiry *
+                                  </label>
+                                  {permVal.isInvalid && (
+                                    <span className="bg-red-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
+                                      {permVal.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <input 
+                                  required 
+                                  type="date" 
+                                  min="2026-01-01" 
+                                  max="2029-12-31" 
+                                  value={editForm.franchisePermitExpiry} 
+                                  onChange={e => handleEditFieldChange('franchisePermitExpiry', e.target.value)} 
+                                  onFocus={() => handleTabSwitch('franchise')} 
+                                  className={`w-full p-2.5 rounded-xl font-bold text-sm outline-none transition-all ${
+                                    permVal.isInvalid
+                                      ? 'bg-red-50 border-2 border-red-500 text-red-900 shadow-[0_0_14px_rgba(239,68,68,0.45)]'
+                                      : 'bg-slate-50 border border-slate-200 text-slate-800 focus:border-emerald-600'
+                                  }`} 
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* ADMIN DIRECT DOCUMENT PHOTO RE-UPLOAD SECTION */}
+                          <div className="pt-3 border-t border-slate-200 space-y-2.5">
+                            <h4 className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                              📷 Re-Upload / Replace Document Photos (Optional)
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2 text-[11px]">
+                              {[
+                                { key: 'licensePic', label: "1. Driver's License", tab: 'license' },
+                                { key: 'orPic', label: "2A. LTO Official Receipt", tab: 'or' },
+                                { key: 'crPic', label: "2B. LTO Cert. of Reg.", tab: 'cr' },
+                                { key: 'franchisePic', label: "3. MTOP Permit", tab: 'franchise' },
+                                { key: 'profilePic', label: "4. 2x2 Driver Selfie", tab: 'selfie' }
+                              ].map(item => (
+                                <label
+                                  key={item.key}
+                                  onClick={() => handleTabSwitch(item.tab)}
+                                  className={`p-2.5 rounded-xl border font-bold cursor-pointer flex items-center justify-between transition-all ${
+                                    editFiles[item.key]
+                                      ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
+                                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className="truncate">{editFiles[item.key] ? `✔ ${item.label}` : `Upload ${item.label}`}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    className="hidden"
+                                    onChange={e => {
+                                      const file = e.target.files?.[0];
+                                      if (file) setEditFiles(prev => ({ ...prev, [item.key]: file }));
+                                    }}
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          <button 
+                            type="submit" 
+                            disabled={auditModal.isSubmitting || hasAnyInvalidDate}
+                            className={`w-full py-3.5 font-black rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 ${
+                              hasAnyInvalidDate
+                                ? 'bg-red-600 text-white opacity-90 cursor-not-allowed'
+                                : 'bg-emerald-600 text-white hover:bg-emerald-500 active:scale-95'
                             }`}
                           >
-                            <span className="truncate">{editFiles[item.key] ? `✔ ${item.label}` : `Upload ${item.label}`}</span>
-                            <input
-                              type="file"
-                              accept="image/*,application/pdf"
-                              className="hidden"
-                              onChange={e => {
-                                const file = e.target.files?.[0];
-                                if (file) setEditFiles(prev => ({ ...prev, [item.key]: file }));
-                              }}
-                            />
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={auditModal.isSubmitting}
-                      className="w-full py-3.5 bg-emerald-600 text-white font-black rounded-xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all flex items-center justify-center space-x-2"
-                    >
-                      <IoSave className="text-lg" />
-                      <span>{auditModal.isSubmitting ? 'Uploading & Saving...' : 'Save Profile & Renewals'}</span>
-                    </button>
+                            <IoSave className="text-lg" />
+                            <span>
+                              {auditModal.isSubmitting
+                                ? 'Uploading & Saving...'
+                                : hasAnyInvalidDate
+                                ? 'Fix Red Highlighted Expiry Date(s) Above'
+                                : 'Save Profile & Renewals'}
+                            </span>
+                          </button>
+                        </>
+                      );
+                    })()}
                   </form>
                 )}
               </div>
 
-              {/* RIGHT COLUMN: DOCUMENT VIEWER (CLICK IMAGE FOR FULL-SCREEN POPUP + DIRECT DOWNLOAD) */}
+              {/* RIGHT COLUMN: DOCUMENT VIEWER (WITH RED ALERT GLOW ON EXPIRED TABS) */}
               <div className="w-full md:w-[62%] bg-slate-900 flex flex-col min-h-0">
                 
                 {/* Document Selector Tabs */}
                 <div className="flex bg-slate-800 p-2 shrink-0 space-x-1.5 border-b border-slate-700">
                   {[
-                    { id: 'license', label: "1. License" },
-                    { id: 'or', label: "2A. LTO OR" },
-                    { id: 'cr', label: "2B. LTO CR" },
-                    { id: 'franchise', label: "3. Permit" },
-                    { id: 'selfie', label: "4. Selfie" }
+                    { id: 'license', label: "1. License", invalid: validateEditDateField(auditModal.isEditing ? editForm.licenseExpiry : auditModal.driver.licenseExpiry, 2036).isInvalid },
+                    { id: 'or', label: "2A. LTO OR", invalid: validateEditDateField(auditModal.isEditing ? editForm.orCrExpiry : auditModal.driver.orCrExpiry, 2029).isInvalid },
+                    { id: 'cr', label: "2B. LTO CR", invalid: validateEditDateField(auditModal.isEditing ? editForm.orCrExpiry : auditModal.driver.orCrExpiry, 2029).isInvalid },
+                    { id: 'franchise', label: "3. Permit", invalid: validateEditDateField(auditModal.isEditing ? editForm.franchisePermitExpiry : auditModal.driver.franchisePermitExpiry, 2029).isInvalid },
+                    { id: 'selfie', label: "4. Selfie", invalid: false }
                   ].map(tab => (
                     <button 
                       key={tab.id}
                       onClick={() => handleTabSwitch(tab.id)} 
-                      className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+                      className={`flex-1 py-2.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center space-x-1 ${
                         auditModal.activeImageTab === tab.id 
-                          ? 'bg-amber-400 text-emerald-950 shadow-md' 
-                          : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                          ? (tab.invalid ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(239,68,68,0.7)]' : 'bg-amber-400 text-emerald-950 shadow-md')
+                          : (tab.invalid ? 'bg-red-950/90 text-red-300 border border-red-500 animate-pulse' : 'text-slate-400 hover:bg-slate-700 hover:text-white')
                       }`}
                     >
-                      {tab.label}
+                      {tab.invalid && <IoWarning className="text-sm shrink-0" />}
+                      <span>{tab.label}</span>
                     </button>
                   ))}
                 </div>
