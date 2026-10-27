@@ -161,29 +161,41 @@ function SupportTickets() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
-              <input 
-                type="date" 
-                className="flex-1 px-2 py-1 bg-transparent outline-none text-[11px] font-bold text-slate-600 cursor-pointer"
-                value={dateFilter.start}
-                onChange={(e) => setDateFilter({...dateFilter, start: e.target.value})}
-              />
-              <span className="text-slate-300 text-xs font-black">-</span>
-              <input 
-                type="date" 
-                className="flex-1 px-2 py-1 bg-transparent outline-none text-[11px] font-bold text-slate-600 cursor-pointer"
-                value={dateFilter.end}
-                onChange={(e) => setDateFilter({...dateFilter, end: e.target.value})}
-              />
-              {(dateFilter.start || dateFilter.end) && (
-                <button 
-                  onClick={() => setDateFilter({ start: '', end: '' })} 
-                  className="px-2 text-slate-400 hover:text-red-500 transition-colors"
-                  title="Clear Dates"
-                >
-                  <IoClose className="text-sm" />
-                </button>
-              )}
+            <div className="grid grid-cols-2 gap-2 bg-white border border-slate-200 rounded-xl p-2 shadow-sm relative">
+              <div>
+                <label className="block text-[9px] font-black text-emerald-700 uppercase tracking-widest mb-0.5 ml-1">
+                  Start Date (From)
+                </label>
+                <input 
+                  type="date" 
+                  className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg outline-none text-[11px] font-bold text-slate-700 cursor-pointer focus:border-emerald-600"
+                  value={dateFilter.start}
+                  onChange={(e) => setDateFilter({...dateFilter, start: e.target.value})}
+                />
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-0.5 px-1">
+                  <label className="block text-[9px] font-black text-emerald-700 uppercase tracking-widest">
+                    End Date (To)
+                  </label>
+                  {(dateFilter.start || dateFilter.end) && (
+                    <button 
+                      type="button"
+                      onClick={() => setDateFilter({ start: '', end: '' })} 
+                      className="text-[9px] font-black text-red-500 hover:underline uppercase"
+                      title="Clear Dates"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <input 
+                  type="date" 
+                  className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg outline-none text-[11px] font-bold text-slate-700 cursor-pointer focus:border-emerald-600"
+                  value={dateFilter.end}
+                  onChange={(e) => setDateFilter({...dateFilter, end: e.target.value})}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -336,6 +348,7 @@ function SupportTickets() {
                           onClick={() => {
                             const targetId = selectedTicket.driverId._id || selectedTicket.driverId.id;
                             localStorage.setItem('teleportDriverId', targetId);
+                            localStorage.setItem('teleportTicketId', selectedTicket._id);
                             window.dispatchEvent(new CustomEvent('fleetTeleport'));
                             window.dispatchEvent(new CustomEvent('forceDashboardTabChange', { detail: 'fleet' }));
                           }}

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { 
   IoSearch, IoPencil, IoKey, IoClose, IoWarning, IoEye, 
   IoFilter, IoSwapVertical, IoStar, IoChatbubbles, IoDocumentText, 
-  IoShieldCheckmark, IoAdd, IoRemove, IoRefresh, IoExpand, IoCheckmarkCircle, IoSave
+  IoShieldCheckmark, IoRefresh, IoExpand, IoCheckmarkCircle, IoSave, IoDownload
 } from 'react-icons/io5';
 import CustomModal from './CustomModal';
 
@@ -16,7 +16,7 @@ const CALASIAO_BARANGAYS = [
 ];
 
 function FleetManagement() {
-  const [viewMode, setViewMode] = useState('directory'); // 'directory' or 'leaderboard'
+  const [viewMode, setViewMode] = useState('directory');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All'); 
   const [sortBy, setSortBy] = useState('Newest'); 
@@ -32,9 +32,11 @@ function FleetManagement() {
   const [liveReviews, setLiveReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
-  // === DISCIPLINARY MODAL STATE ===
+  // === DISCIPLINARY / TRIBUNAL MODAL STATE (WITH AUTOMATED TICKET SELECTOR) ===
   const [quickViewModal, setQuickViewModal] = useState({ isOpen: false, driver: null, activeTab: 'disciplinary' });
-  const [penaltyForm, setPenaltyForm] = useState({ duration: '24h', reason: '', isSubmitting: false });
+  const [penaltyForm, setPenaltyForm] = useState({ duration: '24h', selectedTicketId: 'FIELD_CITATION', reason: '', isSubmitting: false });
+  const [driverTickets, setDriverTickets] = useState([]);
+  const [loadingDriverTickets, setLoadingDriverTickets] = useState(false);
 
   // === UNIFIED SPLIT-SCREEN AUDITOR & INLINE EDITOR STATE ===
   const [auditModal, setAuditModal] = useState({ 
@@ -47,9 +49,16 @@ function FleetManagement() {
     activeImageTab: 'license' 
   });
 
-  // === DOCUMENT ZOOM & ROTATE ENGINE STATE ===
-  const [zoomLevel, setZoomLevel] = useState(1);
+  // === INLINE RENEWAL RETURN REASON STATE (REPLACES NATIVE WINDOW.PROMPT) ===
+  const [renewalReturnState, setRenewalReturnState] = useState({
+    isOpen: false,
+    reason: ''
+  });
+
+  // === FULL-SCREEN IMAGE LIGHTBOX OVERLAY & ROTATION ===
   const [rotation, setRotation] = useState(0);
+  const [fullScreenDoc, setFullScreenDoc] = useState({ isOpen: false, url: '', title: '' });
+  const [downloadingDoc, setDownloadingDoc] = useState(false);
 
   // === EDITABLE DRIVER FORM STATE (SYNCED 1:1 WITH MOBILE WIZARD + ADMIN PHOTO RE-UPLOAD) ===
   const [editForm, setEditForm] = useState({
@@ -63,13 +72,46 @@ function FleetManagement() {
   const [inspectingRenewalPreview, setInspectingRenewalPreview] = useState(false);
   
   const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
-  const isSecretary = adminUser.role === 'secretary'; 
 
   useEffect(() => { 
     fetchDrivers(); 
     const interval = setInterval(fetchDrivers, 8000);
     return () => clearInterval(interval);
   }, []);
+
+  // === OPEN TRIBUNAL MODAL & AUTO-LOAD / AUTO-SELECT LINKED TICKET FOR THAT DRIVER ===
+  const openTribunalModal = async (driver) => {
+    const preselectedTicketId = localStorage.getItem('teleportTicketId');
+    if (preselectedTicketId) localStorage.removeItem('teleportTicketId');
+
+    setQuickViewModal({ isOpen: true, driver, activeTab: 'disciplinary' });
+    setPenaltyForm({ duration: '24h', selectedTicketId: 'FIELD_CITATION', reason: '', isSubmitting: false });
+    setLoadingDriverTickets(true);
+    try {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const res = await axios.get('https://tricycheck-api.onrender.com/api/tickets', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const linked = (res.data || []).filter(t => {
+        const dId = t.driverId?._id || t.driverId;
+        return String(dId) === String(driver.id);
+      });
+      setDriverTickets(linked);
+
+      if (preselectedTicketId) {
+        const matched = linked.find(t => String(t._id) === String(preselectedTicketId));
+        if (matched) {
+          const shortId = matched._id.substring(matched._id.length - 6).toUpperCase();
+          const autoReason = `${matched.type} — Case #${shortId} (${matched.description ? matched.description.slice(0, 45) : 'Verified by POSO'})`;
+          setPenaltyForm(prev => ({ ...prev, selectedTicketId: matched._id, reason: autoReason }));
+        }
+      }
+    } catch (e) {
+      setDriverTickets([]);
+    } finally {
+      setLoadingDriverTickets(false);
+    }
+  };
 
   // === TELEMETRY RECEIVER ENGINE (FROM SUPPORT TICKETS OR COMPLIANCE HUB) ===
   useEffect(() => {
@@ -85,7 +127,7 @@ function FleetManagement() {
           if (teleportMode === 'audit') {
             openSplitScreenModal(targetDriver, false);
           } else {
-            setQuickViewModal({ isOpen: true, driver: targetDriver, activeTab: 'disciplinary' });
+            openTribunalModal(targetDriver);
           }
         }
       }
@@ -144,8 +186,8 @@ function FleetManagement() {
 
   // === OPEN UNIFIED SPLIT-SCREEN MODAL (VIEW, AUDIT, OR EDIT) ===
   const openSplitScreenModal = (driver, startInEditMode = false) => {
-    setZoomLevel(1);
     setRotation(0);
+    setRenewalReturnState({ isOpen: false, reason: '' });
     setEditFiles({ profilePic: null, licensePic: null, orPic: null, crPic: null, franchisePic: null });
     setInspectingRenewalPreview(driver.renewalStatus === 'Pending');
     setEditForm({
@@ -174,7 +216,31 @@ function FleetManagement() {
     });
   };
 
-  // === FORMATTERS & VALIDATION FOR INLINE EDIT ===
+  // === DIRECT FILE DOWNLOAD HELPER (DOWNLOADS TO COMPUTER WITHOUT OPENING NEW TAB) ===
+  const handleDownloadDocument = async (url, label) => {
+    if (!url) return;
+    setDownloadingDoc(true);
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      const ext = url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'jpg';
+      const safeName = `${auditModal.driver?.bodyNo || 'Driver'}_${label.replace(/[^a-zA-Z0-9]/g, '_')}.${ext}`;
+      link.setAttribute('download', safeName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      window.open(url, '_blank');
+    } finally {
+      setDownloadingDoc(false);
+    }
+  };
+
+  // === FORMATTERS & VALIDATION FOR INLINE EDIT (INCLUDING YEAR 2026-2036 GUARD) ===
   const formatTitleCase = (str) => str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
 
   const handleEditFieldChange = (field, value) => {
@@ -191,6 +257,12 @@ function FleetManagement() {
     setEditForm(prev => ({ ...prev, [field]: val }));
   };
 
+  const isReasonableExpiryDate = (dateStr) => {
+    if (!dateStr) return false;
+    const year = parseInt(String(dateStr).split('-')[0], 10);
+    return year >= 2024 && year <= 2036;
+  };
+
   const handleSaveInlineEdit = async (e) => {
     if (e) e.preventDefault();
     if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
@@ -201,6 +273,15 @@ function FleetManagement() {
     }
     if (!editForm.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.email.trim())) {
       return setModalState({ isOpen: true, title: "Validation Error", message: "A valid official email address is required.", type: "warning", isConfirm: false });
+    }
+    if (!isReasonableExpiryDate(editForm.licenseExpiry) || !isReasonableExpiryDate(editForm.orCrExpiry) || !isReasonableExpiryDate(editForm.franchisePermitExpiry)) {
+      return setModalState({
+        isOpen: true,
+        title: "Invalid Expiration Year",
+        message: "Document expiration dates must have a realistic year between 2026 and 2036 (e.g. LTO 5-year or 10-year validity).",
+        type: "warning",
+        isConfirm: false
+      });
     }
 
     // === INSTANT CLIENT-SIDE DUPLICATE CREDENTIAL GUARD ===
@@ -325,22 +406,6 @@ function FleetManagement() {
     }
   };
 
-  const openReviewsModal = async (driver) => {
-    setReviewsModal({ isOpen: true, driverName: driver.name, rating: driver.rating, driverId: driver.id });
-    setLoadingReviews(true);
-    try {
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-      const response = await axios.get(`https://tricycheck-api.onrender.com/api/admin/drivers/${driver.id}/reviews`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setLiveReviews(response.data);
-    } catch (error) {
-      console.error("Failed to fetch reviews");
-    } finally {
-      setLoadingReviews(false);
-    }
-  };
-
   const executeApproveDriver = async () => {
     closeModal();
     if (!auditModal.driver) return;
@@ -392,6 +457,20 @@ function FleetManagement() {
     if (targetAction.type === 'REJECT_DRIVER') executeRejectDriver();
   };
 
+  // === NEXT-DAY EXPIRATION HELPER FOR INDIVIDUAL DOCUMENT CARDS ===
+  const getSingleDocStatus = (dateString) => {
+    if (!dateString) return { state: 'Missing', badge: 'MISSING', isAlert: true };
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const d = new Date(dateString);
+    const endOfExpDay = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999);
+    if (now > endOfExpDay) return { state: 'Expired', badge: 'EXPIRED', isAlert: true };
+    const expDayStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
+    const daysLeft = Math.round((expDayStart - startOfToday) / (1000 * 60 * 60 * 24));
+    if (daysLeft <= 30) return { state: 'Expiring Soon', badge: `${daysLeft}d LEFT`, isAlert: false, isWarn: true };
+    return { state: 'Valid', badge: 'VALID', isAlert: false };
+  };
+
   // === STATUS-AWARE COMPLIANCE ENGINE (NEXT-DAY EXPIRATION CUTOFF) ===
   const checkCompliance = (driver) => {
     if (driver.status === 'Pending') {
@@ -404,21 +483,11 @@ function FleetManagement() {
       return { label: 'PENDING RENEWAL AUDIT', color: 'bg-amber-400 text-emerald-950 animate-pulse' };
     }
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-
-    const checkDate = (dateString) => {
-      if (!dateString) return 'Missing';
-      const d = new Date(dateString);
-      // Driver can still drive ON the day of expiration; locked starting 00:00:00 the next day
-      const endOfExpDay = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999);
-      if (now > endOfExpDay) return 'Expired';
-      const expDayStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
-      const daysLeft = Math.round((expDayStart - startOfToday) / (1000 * 60 * 60 * 24));
-      if (daysLeft <= 30) return 'Expiring Soon';
-      return 'Valid';
-    };
-    const statuses = [ checkDate(driver.licenseExpiry), checkDate(driver.orCrExpiry), checkDate(driver.franchisePermitExpiry) ];
+    const statuses = [
+      getSingleDocStatus(driver.licenseExpiry).state,
+      getSingleDocStatus(driver.orCrExpiry).state,
+      getSingleDocStatus(driver.franchisePermitExpiry).state
+    ];
     if (statuses.includes('Expired')) return { label: 'EXPIRED DOCS', color: 'bg-red-500 text-white animate-pulse' };
     if (statuses.includes('Expiring Soon')) return { label: 'EXPIRING SOON', color: 'bg-yellow-400 text-yellow-900' };
     if (statuses.includes('Missing')) return { label: 'INCOMPLETE', color: 'bg-slate-200 text-slate-500' };
@@ -444,7 +513,6 @@ function FleetManagement() {
       return new Date(b.createdAt) - new Date(a.createdAt); 
     });
 
-  // === CURRENT DOCUMENT URL HELPER FOR ZOOM INSPECTOR (SUPPORTS PENDING RENEWAL PHOTOS) ===
   const getCurrentDocUrl = () => {
     if (!auditModal.driver) return '';
     const pr = inspectingRenewalPreview && auditModal.driver.pendingRenewal ? auditModal.driver.pendingRenewal : null;
@@ -457,7 +525,6 @@ function FleetManagement() {
   };
 
   const handleTabSwitch = (tab) => {
-    setZoomLevel(1);
     setRotation(0);
     setAuditModal(prev => ({ ...prev, activeImageTab: tab }));
   };
@@ -502,8 +569,8 @@ function FleetManagement() {
             <div className="relative">
               <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="appearance-none pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-600 text-sm shadow-sm font-bold text-slate-700 cursor-pointer">
                 <option value="All">All Applications & Drivers</option>
-                <option value="Pending">🟡 Pending KYC Audit</option>
-                <option value="Active">🟢 Verified Active Fleet</option>
+                <option value="Pending">🟡 Pending KYC / Renewal Audit</option>
+                <option value="Active">🟢 Verified Fleet</option>
                 <option value="Rejected">🟠 Returned / Rejected</option>
                 <option value="Suspended">🔴 Suspended</option>
               </select>
@@ -520,7 +587,7 @@ function FleetManagement() {
                   <th className="p-4 pl-6 w-28">Body No.</th>
                   <th className="p-4">Driver Identity</th>
                   <th className="p-4">Plate / Barangay</th>
-                  <th className="p-4">App Status</th>
+                  <th className="p-4">Accreditation</th>
                   <th className="p-4">Compliance</th>
                   <th className="p-4 pr-6 text-right">Actions</th>
                 </tr>
@@ -552,16 +619,23 @@ function FleetManagement() {
                       </td>
 
                       <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border inline-flex items-center space-x-1.5 ${
                           driver.status === 'Active' || driver.status === 'Offline'
-                            ? 'bg-green-100 text-green-700 border-green-200' 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                             : driver.status === 'Pending'
                             ? 'bg-amber-100 text-amber-800 border-amber-300 animate-pulse'
                             : driver.status === 'Rejected'
                             ? 'bg-red-100 text-red-700 border-red-200'
                             : 'bg-slate-900 text-white border-slate-800'
                         }`}>
-                          {driver.status}
+                          {(driver.status === 'Active' || driver.status === 'Offline') ? (
+                            <>
+                              <span className={`w-2 h-2 rounded-full ${driver.status === 'Active' ? 'bg-emerald-500 animate-ping' : 'bg-emerald-600'}`}></span>
+                              <span>VERIFIED</span>
+                            </>
+                          ) : (
+                            <span>{driver.status}</span>
+                          )}
                         </span>
                       </td>
 
@@ -595,7 +669,7 @@ function FleetManagement() {
                         ) : (
                           <>
                             <button 
-                              onClick={() => setQuickViewModal({ isOpen: true, driver: driver, activeTab: 'disciplinary' })} 
+                              onClick={() => openTribunalModal(driver)} 
                               className={`p-2.5 rounded-xl shadow-sm transition-colors ${driver.status === 'Suspended' ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`} 
                               title={driver.status === 'Suspended' ? "Lift Suspension" : "Disciplinary Actions"}
                             >
@@ -639,7 +713,7 @@ function FleetManagement() {
         </div>
       </div>
 
-      {/* === UNIFIED SPLIT-SCREEN KYC AUDITOR, DOCUMENT ZOOM & INLINE PROFILE EDITOR === */}
+      {/* === UNIFIED SPLIT-SCREEN KYC AUDITOR, FULL-SCREEN LIGHTBOX & INLINE PROFILE EDITOR === */}
       {auditModal.isOpen && auditModal.driver && createPortal(
         <div className="fixed inset-0 z-[2050] flex items-center justify-center p-4">
           <div 
@@ -674,7 +748,6 @@ function FleetManagement() {
               </div>
 
               <div className="flex items-center space-x-3">
-                {/* INLINE EDIT TOGGLE BUTTON */}
                 <button
                   type="button"
                   onClick={() => setAuditModal(prev => ({ ...prev, isEditing: !prev.isEditing }))}
@@ -701,7 +774,7 @@ function FleetManagement() {
             {/* SPLIT-SCREEN BODY */}
             <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
               
-              {/* LEFT COLUMN: DRIVER DATA / INLINE EDITOR (SYNCED 1:1 WITH WIZARD) */}
+              {/* LEFT COLUMN: DRIVER DATA / INLINE EDITOR */}
               <div className="w-full md:w-[38%] bg-white border-r border-slate-200 overflow-y-auto p-6 space-y-5">
                 
                 {/* Rejection Banner if Returned */}
@@ -714,7 +787,7 @@ function FleetManagement() {
                   </div>
                 )}
 
-                {/* PENDING RENEWAL AUDIT BANNER (WHEN DRIVER UPLOADS RENEWED DOCS IN APP) */}
+                {/* PENDING RENEWAL AUDIT BANNER (WITH INLINE RETURN REASON MODAL INSTEAD OF WINDOW.PROMPT) */}
                 {auditModal.driver.renewalStatus === 'Pending' && auditModal.driver.pendingRenewal && (
                   <div className="bg-amber-50 border-2 border-amber-400 rounded-2xl p-4 space-y-3 shadow-sm">
                     <div className="flex justify-between items-start">
@@ -729,7 +802,7 @@ function FleetManagement() {
                       <button
                         type="button"
                         onClick={() => setInspectingRenewalPreview(prev => !prev)}
-                        className="px-2.5 py-1 bg-amber-400 text-emerald-950 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                        className="px-2.5 py-1 bg-amber-400 text-emerald-950 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0"
                       >
                         {inspectingRenewalPreview ? 'Showing New Photos' : 'Show Old Photos'}
                       </button>
@@ -747,54 +820,85 @@ function FleetManagement() {
                       )}
                     </div>
 
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        disabled={auditModal.isSubmitting}
-                        onClick={async () => {
-                          setAuditModal(prev => ({ ...prev, isSubmitting: true }));
-                          try {
-                            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-                            await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/approve-renewal`, {
-                              adminId: adminUser._id || adminUser.id
-                            }, { headers: { Authorization: `Bearer ${token}` } });
-                            await fetchDrivers();
-                            setAuditModal(prev => ({ ...prev, isOpen: false, driver: null, isSubmitting: false }));
-                            setModalState({ isOpen: true, title: "Renewal Approved", message: "Updated expiration dates and document photos are now live. Driver's Booking Radar is unlocked.", type: "success" });
-                          } catch (e) {
-                            setAuditModal(prev => ({ ...prev, isSubmitting: false }));
-                            setModalState({ isOpen: true, title: "Approval Failed", message: "Could not approve renewal.", type: "warning" });
-                          }
-                        }}
-                        className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-emerald-500 shadow"
-                      >
-                        ✔ Approve Renewal
-                      </button>
-                      <button
-                        type="button"
-                        disabled={auditModal.isSubmitting}
-                        onClick={async () => {
-                          const reason = window.prompt("Enter reason for returning renewal (e.g. Blurry License Photo):", "Blurry or unreadable document photo");
-                          if (!reason) return;
-                          setAuditModal(prev => ({ ...prev, isSubmitting: true }));
-                          try {
-                            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-                            await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/reject-renewal`, {
-                              adminId: adminUser._id || adminUser.id,
-                              reason
-                            }, { headers: { Authorization: `Bearer ${token}` } });
-                            await fetchDrivers();
-                            setAuditModal(prev => ({ ...prev, isOpen: false, driver: null, isSubmitting: false }));
-                            setModalState({ isOpen: true, title: "Renewal Returned", message: "The driver has been notified in their POSO Inbox to re-upload a clear renewal photo.", type: "info" });
-                          } catch (e) {
-                            setAuditModal(prev => ({ ...prev, isSubmitting: false }));
-                          }
-                        }}
-                        className="px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-red-100"
-                      >
-                        Return
-                      </button>
-                    </div>
+                    {!renewalReturnState.isOpen ? (
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          disabled={auditModal.isSubmitting}
+                          onClick={async () => {
+                            setAuditModal(prev => ({ ...prev, isSubmitting: true }));
+                            try {
+                              const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                              await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/approve-renewal`, {
+                                adminId: adminUser._id || adminUser.id
+                              }, { headers: { Authorization: `Bearer ${token}` } });
+                              await fetchDrivers();
+                              setAuditModal(prev => ({ ...prev, isOpen: false, driver: null, isSubmitting: false }));
+                              setModalState({ isOpen: true, title: "Renewal Approved", message: "Updated expiration dates and document photos are now live. Driver's Booking Radar is unlocked.", type: "success" });
+                            } catch (e) {
+                              setAuditModal(prev => ({ ...prev, isSubmitting: false }));
+                              setModalState({ isOpen: true, title: "Approval Failed", message: "Could not approve renewal.", type: "warning" });
+                            }
+                          }}
+                          className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-wider hover:bg-emerald-500 shadow"
+                        >
+                          ✔ Approve Renewal
+                        </button>
+                        <button
+                          type="button"
+                          disabled={auditModal.isSubmitting}
+                          onClick={() => setRenewalReturnState({ isOpen: true, reason: '' })}
+                          className="px-4 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-red-100"
+                        >
+                          Return
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 pt-2 border-t border-amber-200 animate-fade-in">
+                        <label className="block text-[10px] font-black text-red-700 uppercase tracking-wider">
+                          State Reason for Returning Renewal *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Blurry License Photo or Mismatched Expiry Date"
+                          value={renewalReturnState.reason}
+                          onChange={e => setRenewalReturnState(prev => ({ ...prev, reason: e.target.value }))}
+                          className="w-full p-2.5 bg-white border border-red-300 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-red-600"
+                        />
+                        <div className="flex space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => setRenewalReturnState({ isOpen: false, reason: '' })}
+                            className="flex-1 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold text-xs"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!renewalReturnState.reason.trim() || auditModal.isSubmitting}
+                            onClick={async () => {
+                              setAuditModal(prev => ({ ...prev, isSubmitting: true }));
+                              try {
+                                const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+                                await axios.put(`https://tricycheck-api.onrender.com/api/admin/drivers/${auditModal.driver.id}/reject-renewal`, {
+                                  adminId: adminUser._id || adminUser.id,
+                                  reason: renewalReturnState.reason.trim()
+                                }, { headers: { Authorization: `Bearer ${token}` } });
+                                await fetchDrivers();
+                                setRenewalReturnState({ isOpen: false, reason: '' });
+                                setAuditModal(prev => ({ ...prev, isOpen: false, driver: null, isSubmitting: false }));
+                                setModalState({ isOpen: true, title: "Renewal Returned", message: "The driver has been notified in their POSO Inbox to re-upload a clear renewal photo.", type: "info" });
+                              } catch (e) {
+                                setAuditModal(prev => ({ ...prev, isSubmitting: false }));
+                              }
+                            }}
+                            className="flex-[1.5] py-2 bg-red-600 text-white rounded-xl font-black text-xs uppercase disabled:opacity-50"
+                          >
+                            Confirm Return
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -829,7 +933,7 @@ function FleetManagement() {
                 </div>
 
                 {!auditModal.isEditing ? (
-                  /* === CLEAN READ-ONLY AUDIT VIEW === */
+                  /* === CLEAN READ-ONLY AUDIT VIEW WITH RED GLOWING EXPIRED CARDS === */
                   <div className="space-y-4 animate-fade-in">
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact & Demographics</h4>
@@ -847,65 +951,111 @@ function FleetManagement() {
                       </div>
                     </div>
 
-                    {/* Clickable Credential Cards that switch the Right Document Tab automatically */}
+                    {/* Clickable Credential Cards that Glow Red if Expired/Missing */}
                     <div className="space-y-3">
                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Government KYC Credentials (Click to Verify)</h4>
                       
-                      <div 
-                        onClick={() => handleTabSwitch('license')}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${auditModal.activeImageTab === 'license' ? 'bg-emerald-50/70 border-emerald-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">1. LTO Driver's License</span>
-                          <span className="text-[10px] font-bold text-slate-400">Exp: {auditModal.driver.licenseExpiry || 'N/A'}</span>
-                        </div>
-                        <p className="font-mono font-black text-base text-slate-900">{auditModal.driver.licenseNo || 'NOT RECORDED'}</p>
-                      </div>
+                      {(() => {
+                        const licSt = getSingleDocStatus(auditModal.driver.licenseExpiry);
+                        const orSt = getSingleDocStatus(auditModal.driver.orCrExpiry);
+                        const permSt = getSingleDocStatus(auditModal.driver.franchisePermitExpiry);
 
-                      <div 
-                        onClick={() => handleTabSwitch('or')}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${auditModal.activeImageTab === 'or' || auditModal.activeImageTab === 'cr' ? 'bg-emerald-50/70 border-emerald-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">2. LTO Official Receipt (OR) & CR</span>
-                          <span className="text-[10px] font-bold text-slate-400">Exp: {auditModal.driver.orCrExpiry || 'N/A'}</span>
-                        </div>
-                        <p className="font-mono font-black text-base text-slate-900 mb-2">{auditModal.driver.plate || 'N/A'}</p>
-                        <div className="flex space-x-2">
-                          <button 
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleTabSwitch('or'); }}
-                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${auditModal.activeImageTab === 'or' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
-                          >
-                            View OR
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleTabSwitch('cr'); }}
-                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${auditModal.activeImageTab === 'cr' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
-                          >
-                            View CR
-                          </button>
-                        </div>
-                      </div>
+                        return (
+                          <>
+                            <div 
+                              onClick={() => handleTabSwitch('license')}
+                              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                                licSt.isAlert
+                                  ? 'bg-red-50 border-red-500 shadow-[0_0_16px_rgba(239,68,68,0.35)]'
+                                  : auditModal.activeImageTab === 'license'
+                                  ? 'bg-emerald-50/70 border-emerald-500 shadow-sm'
+                                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${licSt.isAlert ? 'text-red-700' : 'text-emerald-700'}`}>
+                                  1. LTO Driver's License
+                                </span>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                                  licSt.isAlert ? 'bg-red-600 text-white animate-pulse' : licSt.isWarn ? 'bg-amber-400 text-emerald-950' : 'text-slate-500'
+                                }`}>
+                                  Exp: {auditModal.driver.licenseExpiry || 'MISSING'} ({licSt.badge})
+                                </span>
+                              </div>
+                              <p className="font-mono font-black text-base text-slate-900">{auditModal.driver.licenseNo || 'NOT RECORDED'}</p>
+                            </div>
 
-                      <div 
-                        onClick={() => handleTabSwitch('franchise')}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer ${auditModal.activeImageTab === 'franchise' ? 'bg-emerald-50/70 border-emerald-500 shadow-sm' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700">3. Calasiao MTOP Franchise</span>
-                          <span className="text-[10px] font-bold text-slate-400">Exp: {auditModal.driver.franchisePermitExpiry || 'N/A'}</span>
-                        </div>
-                        <p className="font-mono font-black text-base text-slate-900">BODY NO. {auditModal.driver.bodyNo || 'N/A'}</p>
-                      </div>
+                            <div 
+                              onClick={() => handleTabSwitch('or')}
+                              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                                orSt.isAlert
+                                  ? 'bg-red-50 border-red-500 shadow-[0_0_16px_rgba(239,68,68,0.35)]'
+                                  : (auditModal.activeImageTab === 'or' || auditModal.activeImageTab === 'cr')
+                                  ? 'bg-emerald-50/70 border-emerald-500 shadow-sm'
+                                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${orSt.isAlert ? 'text-red-700' : 'text-emerald-700'}`}>
+                                  2. LTO Official Receipt (OR) & CR
+                                </span>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                                  orSt.isAlert ? 'bg-red-600 text-white animate-pulse' : orSt.isWarn ? 'bg-amber-400 text-emerald-950' : 'text-slate-500'
+                                }`}>
+                                  Exp: {auditModal.driver.orCrExpiry || 'MISSING'} ({orSt.badge})
+                                </span>
+                              </div>
+                              <p className="font-mono font-black text-base text-slate-900 mb-2">{auditModal.driver.plate || 'N/A'}</p>
+                              <div className="flex space-x-2">
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleTabSwitch('or'); }}
+                                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${auditModal.activeImageTab === 'or' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+                                >
+                                  View OR
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleTabSwitch('cr'); }}
+                                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border ${auditModal.activeImageTab === 'cr' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200'}`}
+                                >
+                                  View CR
+                                </button>
+                              </div>
+                            </div>
+
+                            <div 
+                              onClick={() => handleTabSwitch('franchise')}
+                              className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                                permSt.isAlert
+                                  ? 'bg-red-50 border-red-500 shadow-[0_0_16px_rgba(239,68,68,0.35)]'
+                                  : auditModal.activeImageTab === 'franchise'
+                                  ? 'bg-emerald-50/70 border-emerald-500 shadow-sm'
+                                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center mb-1">
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${permSt.isAlert ? 'text-red-700' : 'text-emerald-700'}`}>
+                                  3. Calasiao MTOP Franchise
+                                </span>
+                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                                  permSt.isAlert ? 'bg-red-600 text-white animate-pulse' : permSt.isWarn ? 'bg-amber-400 text-emerald-950' : 'text-slate-500'
+                                }`}>
+                                  Exp: {auditModal.driver.franchisePermitExpiry || 'MISSING'} ({permSt.badge})
+                                </span>
+                              </div>
+                              <p className="font-mono font-black text-base text-slate-900">BODY NO. {auditModal.driver.bodyNo || 'N/A'}</p>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 ) : (
-                  /* === CLEAN INLINE EDIT FORM (SYNCED 1:1 WITH MOBILE WIZARD) === */
+                  /* === CLEAN INLINE EDIT FORM (WITH STRICT YEAR 2026-2036 BOUNDS) === */
                   <form onSubmit={handleSaveInlineEdit} className="space-y-4 animate-fade-in">
                     <div className="bg-emerald-50/60 border border-emerald-200 p-3 rounded-xl text-xs font-bold text-emerald-900">
-                      Editing Driver Profile — Fix any typo (such as Gmail or License No.) while referencing the document photos on the right.
+                      Editing Driver Profile — Fix any typo or upload renewed document photos below.
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -946,7 +1096,7 @@ function FleetManagement() {
                     </div>
 
                     <div className="pt-3 border-t border-slate-200 space-y-3">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Government Credentials</h4>
+                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Government Credentials (Valid Years: 2026–2036)</h4>
                       
                       <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -955,7 +1105,7 @@ function FleetManagement() {
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">License Expiry *</label>
-                          <input required type="date" value={editForm.licenseExpiry} onChange={e => handleEditFieldChange('licenseExpiry', e.target.value)} onFocus={() => handleTabSwitch('license')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
+                          <input required type="date" min="2026-01-01" max="2036-12-31" value={editForm.licenseExpiry} onChange={e => handleEditFieldChange('licenseExpiry', e.target.value)} onFocus={() => handleTabSwitch('license')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
                         </div>
                       </div>
 
@@ -966,7 +1116,7 @@ function FleetManagement() {
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">OR/CR Expiry *</label>
-                          <input required type="date" value={editForm.orCrExpiry} onChange={e => handleEditFieldChange('orCrExpiry', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
+                          <input required type="date" min="2026-01-01" max="2036-12-31" value={editForm.orCrExpiry} onChange={e => handleEditFieldChange('orCrExpiry', e.target.value)} onFocus={() => handleTabSwitch('or')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
                         </div>
                       </div>
 
@@ -977,7 +1127,7 @@ function FleetManagement() {
                         </div>
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Permit Expiry *</label>
-                          <input required type="date" value={editForm.franchisePermitExpiry} onChange={e => handleEditFieldChange('franchisePermitExpiry', e.target.value)} onFocus={() => handleTabSwitch('franchise')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
+                          <input required type="date" min="2026-01-01" max="2036-12-31" value={editForm.franchisePermitExpiry} onChange={e => handleEditFieldChange('franchisePermitExpiry', e.target.value)} onFocus={() => handleTabSwitch('franchise')} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-sm focus:border-emerald-600 outline-none" />
                         </div>
                       </div>
                     </div>
@@ -1031,7 +1181,7 @@ function FleetManagement() {
                 )}
               </div>
 
-              {/* RIGHT COLUMN: INTERACTIVE DOCUMENT ZOOM & PAN ENGINE */}
+              {/* RIGHT COLUMN: DOCUMENT VIEWER (CLICK IMAGE FOR FULL-SCREEN POPUP + DIRECT DOWNLOAD) */}
               <div className="w-full md:w-[62%] bg-slate-900 flex flex-col min-h-0">
                 
                 {/* Document Selector Tabs */}
@@ -1057,61 +1207,44 @@ function FleetManagement() {
                   ))}
                 </div>
 
-                {/* Interactive Zoom & Rotate Control Bar */}
+                {/* Action Control Bar: Full-Screen View, Rotate & Direct Download */}
                 <div className="bg-slate-950/90 px-4 py-2.5 flex items-center justify-between border-b border-slate-800 text-white shrink-0">
-                  <span className="text-[11px] font-bold text-slate-400">
-                    💡 Click image to quick-zoom or use controls to inspect fine print
+                  <span className="text-[11px] font-bold text-emerald-400">
+                    💡 Click the document image below to pop it open in Full-Screen View
                   </span>
                   <div className="flex items-center space-x-2">
                     <button 
                       type="button"
-                      onClick={() => setZoomLevel(z => Math.max(0.5, +(z - 0.25).toFixed(2)))} 
-                      className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white transition-colors"
-                      title="Zoom Out"
-                    >
-                      <IoRemove />
-                    </button>
-                    <span className="text-xs font-mono font-black w-14 text-center text-amber-400">
-                      {Math.round(zoomLevel * 100)}%
-                    </span>
-                    <button 
-                      type="button"
-                      onClick={() => setZoomLevel(z => Math.min(3.5, +(z + 0.25).toFixed(2)))} 
-                      className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white transition-colors"
-                      title="Zoom In"
-                    >
-                      <IoAdd />
-                    </button>
-                    <button 
-                      type="button"
                       onClick={() => setRotation(r => (r + 90) % 360)} 
-                      className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-white transition-colors"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-white flex items-center space-x-1.5 transition-colors"
                       title="Rotate 90°"
                     >
-                      <IoRefresh />
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => { setZoomLevel(1); setRotation(0); }} 
-                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-[10px] font-black uppercase tracking-wider"
-                    >
-                      Reset
+                      <IoRefresh /> <span>Rotate</span>
                     </button>
                     {getCurrentDocUrl() && (
-                      <a 
-                        href={getCurrentDocUrl()} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="p-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white transition-colors"
-                        title="Open Full Resolution in New Tab"
-                      >
-                        <IoExpand />
-                      </a>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setFullScreenDoc({ isOpen: true, url: getCurrentDocUrl(), title: `${auditModal.driver.name} • ${auditModal.activeImageTab.toUpperCase()}` })}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold text-amber-400 flex items-center space-x-1.5 transition-colors"
+                        >
+                          <IoExpand /> <span>Full Screen</span>
+                        </button>
+                        <button 
+                          type="button"
+                          disabled={downloadingDoc}
+                          onClick={() => handleDownloadDocument(getCurrentDocUrl(), auditModal.activeImageTab)}
+                          className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-xs font-black text-white flex items-center space-x-1.5 transition-colors shadow-sm"
+                          title="Download Document Image to Computer"
+                        >
+                          <IoDownload /> <span>{downloadingDoc ? '...' : 'Download'}</span>
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
                 
-                {/* Scrollable High-Resolution Image Canvas */}
+                {/* High-Resolution Image Canvas (Click to Open Full Screen Lightbox) */}
                 <div className="flex-1 relative overflow-auto p-6 flex items-center justify-center bg-slate-900">
                   {(() => {
                     const docUrl = getCurrentDocUrl();
@@ -1126,13 +1259,14 @@ function FleetManagement() {
                         <img 
                           src={docUrl} 
                           alt="KYC Document"
-                          onClick={() => setZoomLevel(z => (z === 1 ? 2 : 1))}
+                          onClick={() => setFullScreenDoc({ isOpen: true, url: docUrl, title: `${auditModal.driver.name} (Body #${auditModal.driver.bodyNo || 'N/A'}) • ${auditModal.activeImageTab.toUpperCase()}` })}
                           style={{ 
-                            transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                            transform: `rotate(${rotation}deg)`,
                             transformOrigin: 'center center',
                             transition: 'transform 0.2s ease-out'
                           }}
-                          className={`max-w-full max-h-[62vh] object-contain rounded-xl shadow-2xl border border-slate-700 ${zoomLevel === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'}`} 
+                          className="max-w-full max-h-[62vh] object-contain rounded-xl shadow-2xl border-2 border-slate-700 hover:border-amber-400 cursor-pointer transition-colors" 
+                          title="Click to open Full-Screen View"
                         />
                       </div>
                     );
@@ -1254,7 +1388,49 @@ function FleetManagement() {
         document.body
       )}
 
-      {/* === DISCIPLINARY / SUSPENSION MODAL === */}
+      {/* === FULL-SCREEN DOCUMENT POPUP LIGHTBOX (NO NEW TAB NEEDED) === */}
+      {fullScreenDoc.isOpen && createPortal(
+        <div className="fixed inset-0 z-[2200] bg-slate-950/95 backdrop-blur-md flex flex-col justify-between p-6 animate-fade-in" onClick={() => setFullScreenDoc({ isOpen: false, url: '', title: '' })}>
+          <div className="flex justify-between items-center text-white max-w-6xl w-full mx-auto" onClick={e => e.stopPropagation()}>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 block">POSO High-Resolution Document Viewer</span>
+              <h3 className="text-lg font-black">{fullScreenDoc.title}</h3>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={() => handleDownloadDocument(fullScreenDoc.url, fullScreenDoc.title)}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center space-x-2 shadow-lg"
+              >
+                <IoDownload className="text-base" />
+                <span>Download Photo</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFullScreenDoc({ isOpen: false, url: '', title: '' })}
+                className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+              >
+                <IoClose className="text-2xl" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center overflow-auto my-4" onClick={e => e.stopPropagation()}>
+            <img
+              src={fullScreenDoc.url}
+              alt="Full Screen Document"
+              className="max-w-[95vw] max-h-[82vh] object-contain rounded-2xl shadow-2xl border border-white/15"
+            />
+          </div>
+
+          <div className="text-center text-xs font-bold text-slate-400">
+            Click anywhere outside the image or press the X button to close full-screen view.
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* === DISCIPLINARY / SUSPENSION MODAL WITH AUTOMATED TICKET SELECTOR DROPDOWN === */}
       {quickViewModal.isOpen && quickViewModal.driver && createPortal(
         <div className="fixed inset-0 z-[2060] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setQuickViewModal({ isOpen: false, driver: null })}></div>
@@ -1300,41 +1476,88 @@ function FleetManagement() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100">
-                  <h4 className="font-black text-red-900 text-lg mb-2 flex items-center"><IoWarning className="mr-2"/> Deploy Penalty</h4>
-                  <p className="text-xs font-medium text-red-700 mb-6 leading-relaxed">Suspending a driver will immediately force-logout their mobile app and block dispatch requests.</p>
+                <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100 space-y-4">
+                  <div>
+                    <h4 className="font-black text-red-900 text-lg mb-1 flex items-center"><IoWarning className="mr-2"/> Deploy Penalty</h4>
+                    <p className="text-xs font-medium text-red-700 leading-relaxed">Suspending a driver will immediately lock their Booking Radar and notify them via Gmail and In-App Inbox.</p>
+                  </div>
                   
-                  <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Penalty Duration</label>
-                  <select 
-                    className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm mb-4 outline-none focus:border-red-500 shadow-sm cursor-pointer"
-                    value={penaltyForm.duration}
-                    onChange={(e) => setPenaltyForm({...penaltyForm, duration: e.target.value})}
-                  >
-                    <option value="24h">24 Hours (Minor Violation)</option>
-                    <option value="3d">3 Days (Moderate Violation)</option>
-                    <option value="7d">7 Days (Severe Violation)</option>
-                    <option value="permanent">Permanent Ban (Critical Violation)</option>
-                  </select>
+                  <div>
+                    <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-1.5">1. Penalty Duration</label>
+                    <select 
+                      className="w-full p-3.5 bg-white border border-red-200 rounded-xl font-bold text-sm outline-none focus:border-red-500 shadow-sm cursor-pointer"
+                      value={penaltyForm.duration}
+                      onChange={(e) => setPenaltyForm({...penaltyForm, duration: e.target.value})}
+                    >
+                      <option value="24h">24 Hours (Minor Violation)</option>
+                      <option value="3d">3 Days (Moderate Violation)</option>
+                      <option value="7d">7 Days (Severe Violation)</option>
+                      <option value="permanent">Permanent Ban (Critical Violation)</option>
+                    </select>
+                  </div>
 
-                  <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-2">Reason for Suspension / Ticket Ref.</label>
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Overcharging Fare - Reference Ticket #1024" 
-                    className="w-full p-4 bg-white border border-red-200 rounded-xl font-bold text-sm outline-none focus:border-red-500 shadow-sm"
-                    value={penaltyForm.reason}
-                    onChange={(e) => setPenaltyForm({...penaltyForm, reason: e.target.value})}
-                  />
+                  <div>
+                    <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-1.5">
+                      2. Select Linked Support Ticket or Direct POSO Field Citation
+                    </label>
+                    <select
+                      className="w-full p-3.5 bg-white border border-red-200 rounded-xl font-bold text-xs text-slate-800 outline-none focus:border-red-500 shadow-sm cursor-pointer"
+                      value={penaltyForm.selectedTicketId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'FIELD_CITATION') {
+                          setPenaltyForm(prev => ({ ...prev, selectedTicketId: val, reason: '' }));
+                        } else {
+                          const found = driverTickets.find(t => t._id === val);
+                          if (found) {
+                            const shortId = found._id.substring(found._id.length - 6).toUpperCase();
+                            const autoReason = `${found.type} — Case #${shortId} (${found.description ? found.description.slice(0, 45) : 'Verified by POSO'})`;
+                            setPenaltyForm(prev => ({ ...prev, selectedTicketId: val, reason: autoReason }));
+                          }
+                        }
+                      }}
+                    >
+                      <option value="FIELD_CITATION">🚓 Direct POSO Field / Street Citation (No Ticket Required)</option>
+                      {loadingDriverTickets ? (
+                        <option disabled>Loading driver's tickets...</option>
+                      ) : driverTickets.length === 0 ? (
+                        <option disabled>No passenger tickets filed against this driver</option>
+                      ) : (
+                        driverTickets.map(t => {
+                          const shortId = t._id.substring(t._id.length - 6).toUpperCase();
+                          return (
+                            <option key={t._id} value={t._id}>
+                              🎫 Case #{shortId} • {t.type} [{t.status}] — {new Date(t.createdAt).toLocaleDateString()}
+                            </option>
+                          );
+                        })
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-red-800 uppercase tracking-wider mb-1.5">
+                      3. Violation Details / Official Reason *
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Overcharging Fare or Caught Operating Outside Route" 
+                      className="w-full p-3.5 bg-white border border-red-200 rounded-xl font-bold text-sm outline-none focus:border-red-500 shadow-sm"
+                      value={penaltyForm.reason}
+                      onChange={(e) => setPenaltyForm({...penaltyForm, reason: e.target.value})}
+                    />
+                  </div>
 
                   <button 
-                    className="mt-6 w-full py-4 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50"
-                    disabled={!penaltyForm.reason || penaltyForm.isSubmitting}
+                    className="w-full py-4 bg-red-600 text-white font-black rounded-xl shadow-lg hover:bg-red-700 active:scale-95 transition-all disabled:opacity-50"
+                    disabled={!penaltyForm.reason.trim() || penaltyForm.isSubmitting}
                     onClick={async () => {
                       setPenaltyForm({...penaltyForm, isSubmitting: true});
                       try {
                         const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
                         await axios.post(`https://tricycheck-api.onrender.com/api/admin/drivers/${quickViewModal.driver.id}/suspend`, {
                           duration: penaltyForm.duration,
-                          reason: penaltyForm.reason,
+                          reason: penaltyForm.reason.trim(),
                           adminId: adminUser._id || adminUser.id
                         }, { headers: { Authorization: `Bearer ${token}` }});
                         
@@ -1344,7 +1567,7 @@ function FleetManagement() {
                       } catch (error) {
                         setModalState({ isOpen: true, title: "Execution Failed", message: "Could not deploy penalty.", type: "warning" });
                       } finally {
-                        setPenaltyForm({...penaltyForm, isSubmitting: false, reason: ''});
+                        setPenaltyForm({ duration: '24h', selectedTicketId: 'FIELD_CITATION', isSubmitting: false, reason: '' });
                       }
                     }}
                   >

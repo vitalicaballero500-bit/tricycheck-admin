@@ -11,6 +11,7 @@ function PassengerManagement() {
   const [passengers, setPassengers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [sortBy, setSortBy] = useState('Newest');
   const [loading, setLoading] = useState(true);
 
   const [modalState, setModalState] = useState({ isOpen: false, title: "", message: "", type: "warning", isConfirm: false });
@@ -170,14 +171,24 @@ function PassengerManagement() {
     }
   };
 
-  const filteredPassengers = passengers.filter(p => {
-    const matchesSearch = `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (p.phone && p.phone.includes(searchTerm)) ||
-                          (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()));
-    const currentStatus = p.status || 'Active';
-    const matchesStatus = filterStatus === 'All' || currentStatus === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredPassengers = passengers
+    .filter(p => {
+      const matchesSearch = `${p.firstName} ${p.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (p.phone && p.phone.includes(searchTerm)) ||
+                            (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase()));
+      const currentStatus = p.status || 'Active';
+      const matchesStatus = filterStatus === 'All' || currentStatus === filterStatus;
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim();
+      const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim();
+      if (sortBy === 'A-Z') return nameA.localeCompare(nameB);
+      if (sortBy === 'Z-A') return nameB.localeCompare(nameA);
+      if (sortBy === 'Offenses') return (b.offenseCount || 0) - (a.offenseCount || 0);
+      if (sortBy === 'Oldest') return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
 
   return (
     <div className="h-full flex flex-col animate-fade-in relative">
@@ -190,6 +201,18 @@ function PassengerManagement() {
         </div>
         
         <div className="flex items-center space-x-3">
+          <select 
+            className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-sm font-bold text-slate-600 shadow-sm cursor-pointer"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="Newest">Newest First</option>
+            <option value="Oldest">Oldest First</option>
+            <option value="A-Z">Name (A–Z)</option>
+            <option value="Z-A">Name (Z–A)</option>
+            <option value="Offenses">Most Offenses First</option>
+          </select>
+
           <select 
             className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:border-emerald-600 text-sm font-bold text-slate-600 shadow-sm cursor-pointer"
             value={filterStatus}

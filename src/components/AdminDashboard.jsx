@@ -132,25 +132,38 @@ function AdminDashboard() {
   }, [navigate]);
 
   useEffect(() => {
-    if (activeTab === 'dashboard' && adminUser) {
-      const fetchDashboardData = async () => {
-        const token = localStorage.getItem('adminToken');
-        const config = { headers: { Authorization: `Bearer ${token}` } };
-        try {
-          const statsRes = await axios.get('https://tricycheck-api.onrender.com/api/admin/stats', config);
-          setStats(statsRes.data);
-        } catch (error) {} finally { setLoadingStats(false); }
+    if (!adminUser) return;
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      try {
+        const [statsRes, compRes] = await Promise.all([
+          axios.get('https://tricycheck-api.onrender.com/api/admin/stats', config),
+          axios.get('https://tricycheck-api.onrender.com/api/admin/compliance', config).catch(() => ({ data: [] }))
+        ]);
 
+        const rawStats = statsRes.data || {};
+        const compList = (compRes.data || []).filter(d => d.driverStatus !== 'Pending' && d.driverStatus !== 'Rejected');
+        const pendingRenewalCount = compList.filter(d => d.renewalStatus === 'Pending').length;
+
+        setStats({
+          ...rawStats,
+          pendingDrivers: (rawStats.pendingDrivers || 0) + pendingRenewalCount,
+          expiringDrivers: compList.length > 0 ? compList : (rawStats.expiringDrivers || [])
+        });
+      } catch (error) {} finally { setLoadingStats(false); }
+
+      if (activeTab === 'dashboard') {
         try {
           const currentRole = adminUser.role || 'superadmin'; 
           const logsRes = await axios.get(`https://tricycheck-api.onrender.com/api/admin/activity-feed?role=${currentRole}`, config);
           setAuditLogs(logsRes.data);
         } catch (error) {} finally { setLoadingLogs(false); }
-      };
-      fetchDashboardData();
-      const interval = setInterval(fetchDashboardData, 3000);
-      return () => clearInterval(interval);
-    }
+      }
+    };
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 4000);
+    return () => clearInterval(interval);
   }, [activeTab, adminUser]);
 
   // === CONFIRMED LOGOUT EXECUTION ===
@@ -279,28 +292,30 @@ function AdminDashboard() {
           </div>
         </header>
 
+        {/* GLOBAL RED EMERGENCY BANNER (VISIBLE ACROSS ALL TABS: FLEET, PASSENGERS, COMPLIANCE, ETC.) */}
+        {stats.activeTickets?.some(t => t.priority === 'CRITICAL' || t.priority === 'High') && (
+          <div className="px-6 pt-4 shrink-0 z-30">
+            <div 
+              onClick={() => setActiveTab('reports')}
+              className="bg-red-600 text-white px-5 py-3 rounded-2xl shadow-lg shadow-red-500/30 flex justify-between items-center font-black tracking-widest uppercase text-xs animate-pulse border-2 border-red-400 cursor-pointer hover:bg-red-700 transition-colors"
+            >
+              <div className="flex items-center">
+                <IoWarning className="mr-2.5 text-xl shrink-0" /> 
+                <span>ACTIVE EMERGENCY: UNRESOLVED HIGH-PRIORITY DISTRESS TICKET DETECTED!</span>
+              </div>
+              <span className="bg-white text-red-700 px-3 py-1 rounded-lg text-[10px] font-black shrink-0 ml-4">
+                OPEN SWITCHBOARD &rarr;
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* DYNAMIC MODULE INJECTION */}
         <div className="flex-1 overflow-x-hidden overflow-y-auto w-full relative z-10 flex flex-col min-h-0">
           
           {/* === EXECUTIVE DASHBOARD OVERVIEW (FITS 100% ZOOM WITH ZERO PAGE SCROLL) === */}
           {activeTab === 'dashboard' && (
             <div className="p-6 animate-fade-in w-full max-w-[1600px] mx-auto flex-1 flex flex-col gap-5 min-h-0 overflow-hidden">
-              
-              {/* RED EMERGENCY BANNER */}
-              {stats.activeTickets?.some(t => t.priority === 'CRITICAL' || t.priority === 'High') && (
-                <div 
-                  onClick={() => setActiveTab('reports')}
-                  className="bg-red-600 text-white px-5 py-3 rounded-2xl shadow-lg shadow-red-500/30 flex justify-between items-center font-black tracking-widest uppercase text-xs animate-pulse border-2 border-red-400 cursor-pointer hover:bg-red-700 transition-colors shrink-0"
-                >
-                  <div className="flex items-center">
-                    <IoWarning className="mr-2.5 text-xl shrink-0" /> 
-                    <span>ACTIVE EMERGENCY: UNRESOLVED HIGH-PRIORITY DISTRESS TICKET DETECTED!</span>
-                  </div>
-                  <span className="bg-white text-red-700 px-3 py-1 rounded-lg text-[10px] font-black shrink-0 ml-4">
-                    OPEN SWITCHBOARD &rarr;
-                  </span>
-                </div>
-              )}
 
               {/* 4 COMPACT KPI STAT CARDS (1-CLICK TELEPORTERS) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
@@ -459,16 +474,30 @@ function AdminDashboard() {
                             </tr>
                           ))}
 
-                          {/* 3. EXPIRING DRIVER CREDENTIALS */}
+                          {/* 3. EXPIRING DRIVER CREDENTIALS & UPLOADED RENEWALS */}
                           {stats.expiringDrivers?.map(d => (
                             <tr key={d._id} className="hover:bg-red-50/50 transition-colors">
                               <td className="p-4 pl-8 font-black text-slate-900">Body #{d.bodyNo || 'N/A'}</td>
-                              <td className="p-4 font-bold truncate max-w-[180px]">{d.firstName} {d.lastName} (Expiring Docs)</td>
+                              <td className="p-4 font-bold truncate max-w-[220px]">
+                                {d.firstName} {d.lastName}{' '}
+                                <span className={d.renewalStatus === 'Pending' ? 'text-amber-600 font-black' : 'text-red-600'}>
+                                  {d.renewalStatus === 'Pending' ? '(Renewal Uploaded)' : '(Expiring / Expired Docs)'}
+                                </span>
+                              </td>
                               <td className="p-4 text-right pr-8">
                                 <button 
-                                  onClick={() => setActiveTab('compliance')} 
+                                  onClick={() => {
+                                    if (d.renewalStatus === 'Pending') {
+                                      localStorage.setItem('teleportDriverId', d._id);
+                                      localStorage.setItem('teleportDriverMode', 'audit');
+                                      window.dispatchEvent(new CustomEvent('fleetTeleport'));
+                                      setActiveTab('fleet');
+                                    } else {
+                                      setActiveTab('compliance');
+                                    }
+                                  }} 
                                   className="inline-flex items-center justify-center bg-blue-50 border border-blue-200 text-blue-600 px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-blue-100 active:scale-95 transition-all shadow-sm"
-                                  title="Review in Compliance Hub"
+                                  title="Review Driver Compliance"
                                 >
                                   <IoInformationCircle className="mr-1.5 text-base" /> Review
                                 </button>

@@ -139,7 +139,7 @@ function SystemSettings() {
                         </div>
                         <div>
                             <h4 className="font-black text-slate-800 text-lg">Succeeding Rate (Per KM)</h4>
-                            <p className="text-xs text-slate-500 font-medium">The additional charge applied for every kilometer after the first.</p>
+                            <p className="text-xs text-slate-500 font-medium">The additional charge applied per passenger seat for every kilometer after the first 1,000 meters.</p>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -151,6 +151,55 @@ function SystemSettings() {
                             value={settings.perKmRate}
                             onChange={(e) => setSettings({...settings, perKmRate: e.target.value})}
                         />
+                    </div>
+                </div>
+
+                {/* LIVE PAKYAW (X4 SEATS) SPECIAL TRIP ORDINANCE PREVIEW */}
+                <div className="bg-emerald-950 text-white p-6 rounded-2xl border border-emerald-800 shadow-lg space-y-3">
+                    <div className="flex items-center justify-between border-b border-emerald-800 pb-3">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 block">
+                                Live App Dispatch Formula (4-Seat Pakyaw / Immediate Departure)
+                            </span>
+                            <h4 className="text-base font-black text-white mt-0.5">
+                                Computed On-Demand Tricycle Tariff Preview
+                            </h4>
+                        </div>
+                        <span className="bg-emerald-800 text-emerald-200 text-[10px] font-black px-3 py-1 rounded-full uppercase">
+                            × 4 Capacity Applied
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                        <div className="bg-emerald-900/60 border border-emerald-800 p-3.5 rounded-xl">
+                            <p className="text-[10px] font-bold text-emerald-300 uppercase">First 1,000 Meters (1.0 km)</p>
+                            <p className="text-xl font-black text-white mt-1">
+                                ₱{(Number(settings.baseFare) || 0) * 4}.00
+                            </p>
+                            <p className="text-[10px] font-bold text-emerald-400 mt-0.5">
+                                ₱{settings.baseFare || 0} base × 4 seats
+                            </p>
+                        </div>
+
+                        <div className="bg-emerald-900/60 border border-emerald-800 p-3.5 rounded-xl">
+                            <p className="text-[10px] font-bold text-emerald-300 uppercase">Every Succeeding KM</p>
+                            <p className="text-xl font-black text-amber-400 mt-1">
+                                +₱{(Number(settings.perKmRate) || 0) * 4}.00 / km
+                            </p>
+                            <p className="text-[10px] font-bold text-emerald-400 mt-0.5">
+                                ₱{settings.perKmRate || 0}/km × 4 seats
+                            </p>
+                        </div>
+
+                        <div className="bg-emerald-900/60 border border-emerald-800 p-3.5 rounded-xl">
+                            <p className="text-[10px] font-bold text-emerald-300 uppercase">Sample 1.7 km (1,700m) Ride</p>
+                            <p className="text-xl font-black text-emerald-300 mt-1">
+                                ₱{((Number(settings.baseFare) || 0) * 4) + ((Number(settings.perKmRate) || 0) * 4)}.00
+                            </p>
+                            <p className="text-[10px] font-bold text-emerald-400 mt-0.5">
+                                1,000m Base + 700m (1st Extra KM)
+                            </p>
+                        </div>
                     </div>
                 </div>
 
