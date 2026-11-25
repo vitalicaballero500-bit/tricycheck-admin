@@ -4,7 +4,7 @@ import axios from 'axios';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ResetPassword from './components/ResetPassword';
-
+import DownloadApp from './components/DownloadApp';
 const ALLOWED_ADMIN_ROLES = ['superadmin', 'secretary', 'dispatcher'];
 
 // === FRONTEND SECURITY MIDDLEWARE: ZERO-TRUST ROUTE GUARD ===
@@ -98,7 +98,8 @@ function App() {
 
         {/* === THE MAGIC LINK CATCHER === */}
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-
+ {/* Public Commuter App Download Page (QR Destination) */}
+        <Route path="/download" element={<DownloadApp />} />
         {/* Fallback route: If they type a weird URL, send them to login */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
